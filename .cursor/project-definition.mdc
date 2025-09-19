@@ -1,0 +1,62 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+description: |
+  Implementation guardrails for rebuilding the Peloton scraper as a modular, testable app that updates ytdl-sub configs.
+
+globs:
+  - "src/**/*.py"
+  - "tests/**/*.py"
+  - "Dockerfile"
+  - "pyproject.toml"
+  - "requirements.txt"
+  - "README.md"
+  - "docs/**/*.md"
+
+rules: |
+  - Architecture
+    - Organize code under `src/ytdl_sub_config_manager/` with subpackages: `core`, `io`, `services`, `sources/peloton`.
+    - Keep business logic out of the CLI; compose dependencies explicitly.
+    - Use pure functions and immutable dataclasses where feasible.
+    - No module should import from `tests`.
+
+  - Types and Style
+    - Add type hints to all public functions and class methods.
+    - Prefer explicit names over abbreviations; avoid 1–2 letter variables.
+    - Use guard clauses over deep nesting; handle errors early.
+    - Replace prints with `logging` and structured messages.
+
+  - Config and I/O
+    - Centralize env loading/validation in `core/config.py` and pass `Config` objects.
+    - File and YAML access live in `io/file_manager.py`. No YAML writes outside this module.
+    - Preserve YAML structure and key stability expected by ytdl-sub.
+
+  - Scrapers
+    - Define a scraper protocol in `sources/base.py` (interfaces for session lifecycle and scrape output model).
+    - Selenium session management belongs in `sources/peloton/session.py` with container-friendly flags.
+    - Parsing and page traversal belong in `sources/peloton/scraper.py`. External calls are isolated for mocking.
+
+  - Services
+    - `services/subscriptions.py` handles merge/dedupe, duplicate-title suffixing, and activity mapping.
+    - `services/git_sync.py` wraps repo clone/pull/commit/push/PR with tokens read from config.
+
+  - Testing
+    - Use `pytest`; keep Selenium and network calls mocked.
+    - Mirror package structure in `tests/` and cover core/services thoroughly (≥85% coverage target).
+    - Include fixtures for sample media trees and YAML snippets.
+
+  - Docker/CI
+    - Update Dockerfile to install `chromium` and `chromium-driver`; entrypoint runs the CLI module.
+    - Keep image minimal; use `--no-cache-dir` for pip and remove apt lists.
+    - Adjust GitHub workflow to build from repo root/new paths.
+
+  - Security
+    - Never log secrets or tokens.
+    - Access tokens and credentials only via environment variables.
+
+  - Non-goals for MVP
+    - No additional sources beyond Peloton yet; design must allow easy addition later.
+    - No E2E browser tests; rely on unit tests with mocks.

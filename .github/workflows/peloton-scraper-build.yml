@@ -1,0 +1,37 @@
+name: Build and Push Peloton Scraper Image
+
+on:
+  push:
+    paths:
+      - 'scripts/peloton-scrape/**'
+      - 'Dockerfile'
+      - '.github/workflows/peloton-scraper-build.yaml'
+  workflow_dispatch:
+  
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./scripts/peloton-scrape
+          file: ./scripts/peloton-scrape/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/peloton-scraper:0.3.2
+            ghcr.io/${{ github.repository_owner }}/peloton-scraper:latest
