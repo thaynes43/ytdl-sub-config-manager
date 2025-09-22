@@ -114,8 +114,7 @@ class TestSubscriptionsEpisodeParser:
     @pytest.fixture
     def sample_subscriptions_yaml(self):
         """Create a temporary subscriptions YAML file."""
-        yaml_content = """
-Plex TV Show by Date:
+        yaml_content = """Plex TV Show by Date:
   = Cycling (20 min):
     20 min Pop Ride with Hannah Frankson:
       download: https://members.onepeloton.com/classes/player/abc123
@@ -140,10 +139,14 @@ Plex TV Show by Date:
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
             f.write(yaml_content)
-            yield f.name
+            f.flush()  # Ensure content is written
+            temp_file = f.name
         
-        # Cleanup
-        Path(f.name).unlink()
+        try:
+            yield temp_file
+        finally:
+            # Cleanup
+            Path(temp_file).unlink(missing_ok=True)
     
     def test_parse_episodes_from_subscriptions(self, sample_subscriptions_yaml):
         """Test parsing episodes from subscriptions YAML."""
@@ -280,8 +283,7 @@ class TestFileManager:
             
             # Create subscriptions file
             subs_file = temp_path / "subscriptions.yaml"
-            subs_content = """
-Plex TV Show by Date:
+            subs_content = """Plex TV Show by Date:
   = Cycling (20 min):
     20 min Test Ride:
       download: https://members.onepeloton.com/classes/player/subs456

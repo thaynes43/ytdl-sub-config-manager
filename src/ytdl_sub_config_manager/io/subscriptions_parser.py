@@ -56,6 +56,11 @@ class SubscriptionsEpisodeParser(EpisodeParser):
             self.logger.error(f"Error loading subscriptions YAML: {e}")
             return {}
         
+        # Handle case where YAML is empty or None
+        if not subs_data:
+            self.logger.warning("Subscriptions file is empty or invalid")
+            return {}
+        
         results = {}
         
         # Look for the main TV show section
@@ -193,8 +198,13 @@ class SubscriptionsEpisodeParser(EpisodeParser):
             self.logger.error(f"Error loading subscriptions YAML: {e}")
             return set()
         
+        # Handle case where YAML is empty or None
+        if not subs_data:
+            self.logger.warning("Subscriptions file is empty or invalid")
+            return set()
+        
         ids = set()
-        url_pattern = re.compile(r"https://members\.onepeloton\.com/classes/player/([a-f0-9]+)")
+        url_pattern = re.compile(r"https://members\.onepeloton\.com/classes/player/([a-zA-Z0-9]+)")
         
         # Process all categories
         for cat_key, cat_val in subs_data.items():
@@ -242,7 +252,7 @@ class SubscriptionsEpisodeParser(EpisodeParser):
             return False
         
         changed = False
-        url_pattern = re.compile(r'/classes/player/([a-f0-9]+)')
+        url_pattern = re.compile(r'/classes/player/([a-zA-Z0-9]+)')
         
         # Process 'Plex TV Show by Date' section
         shows = subs_data.get("Plex TV Show by Date", {})

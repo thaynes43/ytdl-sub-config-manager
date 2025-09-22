@@ -97,7 +97,7 @@ class FilesystemEpisodeParser(EpisodeParser):
         folder_name = parts[-1]
         episode_match = re.search(r'S(\d+)E(\d+)', folder_name)
         if not episode_match:
-            self.logger.debug(f"No S{season}E{episode} pattern found in: {folder_name}")
+            self.logger.debug(f"No S{{season}}E{{episode}} pattern found in: {folder_name}")
             return None
         
         season = int(episode_match.group(1))
