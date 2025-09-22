@@ -1,24 +1,38 @@
 # Debug configuration file for ytdl-sub config manager
 # This file is used by VS Code debug configuration
 
-# Peloton credentials (will be overridden by environment variables in debug)
-peloton-username: "config_debug_user"
-peloton-password: "config_debug_password"
-
-# Required paths
-media-dir: "D:\\config\\debug\\media"
-subs-file: "D:\\config\\debug\\subscriptions.yaml"
-
-# Optional GitHub integration (leave empty for local testing)
-github-repo-url: ""
-github-token: ""
-
-# Scraping configuration
-peloton-class-limit-per-activity: 20
-peloton-activity: "cycling,yoga,strength"  # comma-separated list
-peloton-page-scrolls: 5
-run-in-container: false  # Set to false for local debugging
+# Application-wide settings
+application:
+  media-dir: "D:/labspace/tmp/test-media"
+  subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.example.yaml"
+  run-in-container: false  # Set to false for local debugging
+  media-source: "peloton"  # Media source strategy to use
 
 # Logging configuration
-log-level: "DEBUG"
-log-format: "standard"  # Use "json" for structured logging
+logging:
+  level: "DEBUG"
+  format: "standard"  # Use "json" for structured logging
+
+# GitHub integration (leave empty for local testing)
+github:
+  repo-url: ""
+  token: ""
+
+# Peloton source configuration (will be overridden by environment variables in debug)
+peloton:
+  username: ""
+  password: ""
+  class-limit-per-activity: 20
+  activities: "cycling,yoga,strength"  # comma-separated list
+  page-scrolls: 5
+  
+  # Dependency injection configuration for strategies
+  directory_validation_strategies:
+    - "src.io.peloton.activity_based_path_strategy:ActivityBasedPathStrategy"
+  
+  directory_repair_strategies:
+    - "src.io.peloton.repair_5050_strategy:Repair5050Strategy"
+  
+  episode_parsers:
+    - "src.io.peloton.episodes_from_disk:EpisodesFromDisk"
+    - "src.io.peloton.episodes_from_subscriptions:EpisodesFromSubscriptions"

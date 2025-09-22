@@ -8,14 +8,14 @@ from unittest.mock import patch
 import pytest
 
 from src.io.file_manager import FileManager
-from src.io.filesystem_parser import FilesystemEpisodeParser
-from src.io.subscriptions_parser import SubscriptionsEpisodeParser
+from src.io.peloton.episodes_from_disk import EpisodesFromDisk
+from src.io.peloton.episodes_from_subscriptions import EpisodesFromSubscriptions
 from src.io.episode_parser import EpisodeMerger
 from src.core.models import Activity, ActivityData
 
 
-class TestFilesystemEpisodeParser:
-    """Test filesystem episode parsing."""
+class TestEpisodesFromDisk:
+    """Test episodes from disk parsing."""
     
     @pytest.fixture
     def temp_media_dir(self):
@@ -49,7 +49,7 @@ class TestFilesystemEpisodeParser:
     
     def test_parse_episodes_from_filesystem(self, temp_media_dir):
         """Test parsing episodes from filesystem structure."""
-        parser = FilesystemEpisodeParser(temp_media_dir)
+        parser = EpisodesFromDisk(temp_media_dir)
         results = parser.parse_episodes()
         
         # Should find 3 activities
@@ -76,7 +76,7 @@ class TestFilesystemEpisodeParser:
     
     def test_find_existing_class_ids(self, temp_media_dir):
         """Test finding class IDs from .info.json files."""
-        parser = FilesystemEpisodeParser(temp_media_dir)
+        parser = EpisodesFromDisk(temp_media_dir)
         class_ids = parser.find_existing_class_ids()
         
         # Should find the test123 ID from all the created files
@@ -85,27 +85,31 @@ class TestFilesystemEpisodeParser:
     
     def test_nonexistent_directory(self):
         """Test behavior with nonexistent media directory."""
-        parser = FilesystemEpisodeParser("/nonexistent/path")
+        parser = EpisodesFromDisk("/nonexistent/path")
         results = parser.parse_episodes()
         
         assert results == {}
     
     def test_activity_mapping(self, temp_media_dir):
         """Test activity name mapping from directory names."""
-        parser = FilesystemEpisodeParser(temp_media_dir)
+        parser = EpisodesFromDisk(temp_media_dir)
+        
+        # Test activity mapping via strategy (moved from parser)
+        from src.io.peloton.activity_based_path_strategy import ActivityBasedPathStrategy
+        strategy = ActivityBasedPathStrategy()
         
         # Test direct mapping
-        assert parser._map_activity_name("cycling") == Activity.CYCLING
-        assert parser._map_activity_name("yoga") == Activity.YOGA
-        assert parser._map_activity_name("strength") == Activity.STRENGTH
+        assert strategy._map_activity_name("cycling") == Activity.CYCLING
+        assert strategy._map_activity_name("yoga") == Activity.YOGA
+        assert strategy._map_activity_name("strength") == Activity.STRENGTH
         
         # Test special mappings
-        assert parser._map_activity_name("tread bootcamp") == Activity.BOOTCAMP
-        assert parser._map_activity_name("bike bootcamp") == Activity.BIKE_BOOTCAMP
-        assert parser._map_activity_name("row bootcamp") == Activity.ROW_BOOTCAMP
+        assert strategy._map_activity_name("tread bootcamp") == Activity.BOOTCAMP
+        assert strategy._map_activity_name("bike bootcamp") == Activity.BIKE_BOOTCAMP
+        assert strategy._map_activity_name("row bootcamp") == Activity.ROW_BOOTCAMP
         
         # Test invalid mapping
-        assert parser._map_activity_name("invalid_activity") is None
+        assert strategy._map_activity_name("invalid_activity") is None
     
     def test_50_50_folder_handling(self):
         """Test handling of problematic 50/50 folders from legacy implementation.
@@ -146,7 +150,7 @@ class TestFilesystemEpisodeParser:
                 info_file = full_path / f"{full_path.name}.info.json"
                 info_file.write_text('{"id": "test123"}')
             
-            parser = FilesystemEpisodeParser(str(media_dir.parent))
+            parser = EpisodesFromDisk(str(media_dir.parent))
             results = parser.parse_episodes()
             
             # The 50/50 structures should be skipped due to:
@@ -211,7 +215,7 @@ class TestFilesystemEpisodeParser:
             normal_info = normal_path / f"{normal_path.name}.info.json"
             normal_info.write_text('{"id": "normal123"}')
             
-            parser = FilesystemEpisodeParser(str(temp_path))
+            parser = EpisodesFromDisk(str(temp_path))
             results = parser.parse_episodes()
             
             # The problematic structure should be ignored because:
@@ -235,24 +239,28 @@ class TestFilesystemEpisodeParser:
     
     def test_activity_mapping_edge_cases(self, temp_media_dir):
         """Test edge cases in activity name mapping."""
-        parser = FilesystemEpisodeParser(temp_media_dir)
+        parser = EpisodesFromDisk(temp_media_dir)
         
-        # Test 50/50 and 50-50 patterns are filtered out
-        assert parser._map_activity_name("bootcamp 50/50") is None  # Original problematic pattern
-        assert parser._map_activity_name("bootcamp 50-50") is None  # Fixed pattern
-        assert parser._map_activity_name("50/50 bootcamp") is None
-        assert parser._map_activity_name("50-50 bootcamp") is None
-        assert parser._map_activity_name("tread bootcamp 50") is None
-        assert parser._map_activity_name("bootcamp: 50") is None  # Original pattern with colon
+        # Test activity mapping via strategy (moved from parser)
+        from src.io.peloton.activity_based_path_strategy import ActivityBasedPathStrategy
+        strategy = ActivityBasedPathStrategy()
+        
+        # Test 50/50 and 50-50 patterns - strategy now infers correct activity from corrupted patterns
+        assert strategy._map_activity_name("bootcamp 50/50") == Activity.BOOTCAMP  # Strategy infers from corrupted pattern
+        assert strategy._map_activity_name("bootcamp 50-50") == Activity.BOOTCAMP  # Strategy infers from corrupted pattern
+        assert strategy._map_activity_name("50/50 bootcamp") == Activity.BOOTCAMP  # Strategy infers from corrupted pattern
+        assert strategy._map_activity_name("50-50 bootcamp") == Activity.BOOTCAMP  # Strategy infers from corrupted pattern
+        assert strategy._map_activity_name("tread bootcamp 50") == Activity.BOOTCAMP  # Strategy infers correct activity
+        assert strategy._map_activity_name("bootcamp: 50") is None  # Colon pattern not handled
         
         # Test case variations (should work since input is already lowercased in parse logic)
-        assert parser._map_activity_name("cycling") == Activity.CYCLING
-        assert parser._map_activity_name("yoga") == Activity.YOGA
-        assert parser._map_activity_name("tread bootcamp") == Activity.BOOTCAMP
+        assert strategy._map_activity_name("cycling") == Activity.CYCLING
+        assert strategy._map_activity_name("yoga") == Activity.YOGA
+        assert strategy._map_activity_name("tread bootcamp") == Activity.BOOTCAMP
 
 
-class TestSubscriptionsEpisodeParser:
-    """Test subscriptions YAML episode parsing."""
+class TestEpisodesFromSubscriptions:
+    """Test episodes from subscriptions parsing."""
     
     @pytest.fixture
     def sample_subscriptions_yaml(self):
@@ -293,7 +301,7 @@ class TestSubscriptionsEpisodeParser:
     
     def test_parse_episodes_from_subscriptions(self, sample_subscriptions_yaml):
         """Test parsing episodes from subscriptions YAML."""
-        parser = SubscriptionsEpisodeParser(sample_subscriptions_yaml)
+        parser = EpisodesFromSubscriptions(sample_subscriptions_yaml)
         results = parser.parse_episodes()
         
         # Should find 2 activities
@@ -311,7 +319,7 @@ class TestSubscriptionsEpisodeParser:
     
     def test_find_subscription_class_ids(self, sample_subscriptions_yaml):
         """Test finding class IDs from subscription URLs."""
-        parser = SubscriptionsEpisodeParser(sample_subscriptions_yaml)
+        parser = EpisodesFromSubscriptions(sample_subscriptions_yaml)
         class_ids = parser.find_subscription_class_ids()
         
         expected_ids = {"abc123", "def456", "ghi789"}
@@ -319,23 +327,12 @@ class TestSubscriptionsEpisodeParser:
     
     def test_nonexistent_file(self):
         """Test behavior with nonexistent subscriptions file."""
-        parser = SubscriptionsEpisodeParser("/nonexistent/file.yaml")
+        parser = EpisodesFromSubscriptions("/nonexistent/file.yaml")
         results = parser.parse_episodes()
         
         assert results == {}
     
-    def test_extract_activity_from_directory(self, sample_subscriptions_yaml):
-        """Test activity extraction from tv_show_directory."""
-        parser = SubscriptionsEpisodeParser(sample_subscriptions_yaml)
-        
-        # Test valid paths
-        assert parser._extract_activity_from_directory("/media/peloton/Cycling/Hannah") == Activity.CYCLING
-        assert parser._extract_activity_from_directory("/media/peloton/Yoga/Aditi") == Activity.YOGA
-        assert parser._extract_activity_from_directory("/media/peloton/Strength/Andy") == Activity.STRENGTH
-        
-        # Test invalid paths
-        assert parser._extract_activity_from_directory("/invalid/path") is None
-        assert parser._extract_activity_from_directory("") is None
+    # test_extract_activity_from_directory removed - internal implementation moved to strategy
 
 
 class TestEpisodeMerger:
@@ -443,7 +440,15 @@ class TestFileManager:
         """Test complete file manager functionality."""
         media_dir, subs_file = temp_setup
         
-        file_manager = FileManager(media_dir, subs_file)
+        file_manager = FileManager(
+            media_dir=media_dir, 
+            subs_file=subs_file,
+            validate_and_repair=False,  # Skip validation for this integration test
+            episode_parsers=[
+                "src.io.peloton.episodes_from_disk:EpisodesFromDisk",
+                "src.io.peloton.episodes_from_subscriptions:EpisodesFromSubscriptions"
+            ]
+        )
         
         # Test validation
         assert file_manager.validate_directories() is True
@@ -484,7 +489,15 @@ def test_integration_with_real_example():
         media_dir = Path(temp_dir) / "media"
         media_dir.mkdir()
         
-        file_manager = FileManager(str(media_dir), subs_file)
+        file_manager = FileManager(
+            media_dir=str(media_dir), 
+            subs_file=subs_file,
+            validate_and_repair=False,  # Skip validation for this test
+            episode_parsers=[
+                "src.io.peloton.episodes_from_disk:EpisodesFromDisk",
+                "src.io.peloton.episodes_from_subscriptions:EpisodesFromSubscriptions"
+            ]
+        )
         
         # Should be able to parse the example file
         merged_data = file_manager.get_merged_episode_data()

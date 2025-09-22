@@ -1,24 +1,41 @@
 # Example configuration file for ytdl-sub config manager
 # Copy to config.yaml and customize as needed
 
-# Peloton credentials (can also be set via environment variables)
-peloton-username: "your-peloton-username"
-peloton-password: "your-peloton-password"
-
-# Required paths
-media-dir: "/path/to/your/media/directory"
-subs-file: "/path/to/subscriptions.yaml"
-
-# Optional GitHub integration
-github-repo-url: "github.com/username/repo"
-github-token: "your-github-token"
-
-# Scraping configuration
-peloton-class-limit-per-activity: 25
-peloton-activity: "cycling,yoga,strength"  # comma-separated list
-peloton-page-scrolls: 10
-run-in-container: true
+# Application-wide settings
+application:
+  # Use forward slashes for paths (works on both Windows and Unix)
+  # On Windows: "D:/path/to/media" or use single quotes: 'D:\path\to\media'
+  media-dir: "/path/to/your/media/directory"
+  subs-file: "/path/to/subscriptions.yaml"
+  run-in-container: true
+  # Media source strategy to use (peloton, etc.)
+  media-source: "peloton"
 
 # Logging configuration
-log-level: "INFO"
-log-format: "standard"  # or "json" for structured logging
+logging:
+  level: "INFO"
+  format: "standard"  # or "json" for structured logging
+
+# GitHub integration (optional)
+github:
+  repo-url: "github.com/username/repo"
+  token: "your-github-token"
+
+# Peloton source configuration
+peloton:
+  username: "your-peloton-username"
+  password: "your-peloton-password"
+  class-limit-per-activity: 25
+  activities: "cycling,yoga,strength"  # comma-separated list
+  page-scrolls: 10
+  
+  # Dependency injection configuration for strategies
+  directory_validation_strategies:
+    - "src.io.peloton.activity_based_path_strategy:ActivityBasedPathStrategy"
+  
+  directory_repair_strategies:
+    - "src.io.peloton.repair_5050_strategy:Repair5050Strategy"
+  
+  episode_parsers:
+    - "src.io.peloton.episodes_from_disk:EpisodesFromDisk"
+    - "src.io.peloton.episodes_from_subscriptions:EpisodesFromSubscriptions"

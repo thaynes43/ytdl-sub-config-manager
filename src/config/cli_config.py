@@ -51,6 +51,12 @@ Examples:
             help="Set log format (default: standard)"
         )
         
+        parser.add_argument(
+            "--media-source",
+            default="peloton",
+            help="Media source strategy to use (default: peloton)"
+        )
+        
         # Subcommands
         subparsers = parser.add_subparsers(dest="command", help="Available commands")
         

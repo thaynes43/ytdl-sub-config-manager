@@ -32,6 +32,12 @@ class Config:
     peloton_activities: List[Activity] = field(default_factory=list)
     run_in_container: bool = True
     peloton_page_scrolls: int = 10
+    media_source: str = "peloton"
+    
+    # Strategy injection configuration
+    peloton_directory_validation_strategies: List[str] = field(default_factory=list)
+    peloton_directory_repair_strategies: List[str] = field(default_factory=list)
+    peloton_episode_parsers: List[str] = field(default_factory=list)
     
     # Logging configuration
     log_level: str = "INFO"
@@ -233,9 +239,61 @@ class ConfigLoader:
         return config
     
     def _normalize_keys(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Normalize YAML keys to match config field names."""
-        # Map YAML keys to config field names
-        key_mapping = {
+        """Normalize nested YAML structure to flat config field names."""
+        normalized = {}
+        
+        # Handle application section
+        if 'application' in data:
+            app_config = data['application']
+            if 'media-dir' in app_config:
+                normalized['media_dir'] = app_config['media-dir']
+            if 'subs-file' in app_config:
+                normalized['subs_file'] = app_config['subs-file']
+            if 'run-in-container' in app_config:
+                normalized['run_in_container'] = app_config['run-in-container']
+            if 'media-source' in app_config:
+                normalized['media_source'] = app_config['media-source']
+        
+        # Handle logging section
+        if 'logging' in data:
+            log_config = data['logging']
+            if 'level' in log_config:
+                normalized['log_level'] = log_config['level']
+            if 'format' in log_config:
+                normalized['log_format'] = log_config['format']
+        
+        # Handle github section
+        if 'github' in data:
+            github_config = data['github']
+            if 'repo-url' in github_config:
+                normalized['github_repo_url'] = github_config['repo-url']
+            if 'token' in github_config:
+                normalized['github_token'] = github_config['token']
+        
+        # Handle peloton section
+        if 'peloton' in data:
+            peloton_config = data['peloton']
+            if 'username' in peloton_config:
+                normalized['peloton_username'] = peloton_config['username']
+            if 'password' in peloton_config:
+                normalized['peloton_password'] = peloton_config['password']
+            if 'class-limit-per-activity' in peloton_config:
+                normalized['peloton_class_limit_per_activity'] = peloton_config['class-limit-per-activity']
+            if 'activities' in peloton_config:
+                normalized['peloton_activities'] = peloton_config['activities']
+            if 'page-scrolls' in peloton_config:
+                normalized['peloton_page_scrolls'] = peloton_config['page-scrolls']
+            
+            # Handle strategy injection configurations
+            if 'directory_validation_strategies' in peloton_config:
+                normalized['peloton_directory_validation_strategies'] = peloton_config['directory_validation_strategies']
+            if 'directory_repair_strategies' in peloton_config:
+                normalized['peloton_directory_repair_strategies'] = peloton_config['directory_repair_strategies']
+            if 'episode_parsers' in peloton_config:
+                normalized['peloton_episode_parsers'] = peloton_config['episode_parsers']
+        
+        # Handle legacy flat structure (for backwards compatibility)
+        legacy_key_mapping = {
             'peloton-username': 'peloton_username',
             'peloton-password': 'peloton_password',
             'media-dir': 'media_dir',
@@ -247,12 +305,16 @@ class ConfigLoader:
             'run-in-container': 'run_in_container',
             'peloton-page-scrolls': 'peloton_page_scrolls',
             'log-level': 'log_level',
-            'log-format': 'log_format'
+            'log-format': 'log_format',
+            'media-source': 'media_source'
         }
         
-        normalized = {}
         for key, value in data.items():
-            # Use mapping if available, otherwise convert kebab-case to snake_case
-            normalized_key = key_mapping.get(key, key.replace('-', '_').lower())
-            normalized[normalized_key] = value
+            if key not in ['application', 'logging', 'github', 'peloton']:
+                # Handle legacy flat keys
+                normalized_key = legacy_key_mapping.get(key, key.replace('-', '_').lower())
+                # Only add if not already set by nested structure
+                if normalized_key not in normalized:
+                    normalized[normalized_key] = value
+        
         return normalized

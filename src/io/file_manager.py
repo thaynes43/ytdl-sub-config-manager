@@ -1,11 +1,10 @@
-"""File manager that combines filesystem and subscriptions parsing."""
+"""File manager that combines filesystem and subscriptions parsing using dependency injection."""
 
-from typing import Dict, Set
+from typing import Dict, Set, List
 from pathlib import Path
 
-from .episode_parser import EpisodeMerger
-from .filesystem_parser import FilesystemEpisodeParser
-from .subscriptions_parser import SubscriptionsEpisodeParser
+from .generic_directory_validator import GenericDirectoryValidator
+from .generic_episode_manager import GenericEpisodeManager
 from ..core.models import Activity, ActivityData
 from ..core.logging import get_logger
 
@@ -15,27 +14,48 @@ logger = get_logger(__name__)
 class FileManager:
     """Manages episode parsing from multiple sources and provides unified interface."""
     
-    def __init__(self, media_dir: str, subs_file: str, validate_and_repair: bool = True):
+    def __init__(self, media_dir: str, subs_file: str, validate_and_repair: bool = True, 
+                 validation_strategies: List[str] = None, repair_strategies: List[str] = None, 
+                 episode_parsers: List[str] = None):
         """Initialize the file manager.
         
         Args:
             media_dir: Root directory containing downloaded media files
             subs_file: Path to the subscriptions YAML file
             validate_and_repair: If True, validate and repair directory structure on init
+            validation_strategies: List of validation strategy module paths (required if validate_and_repair=True)
+            repair_strategies: List of repair strategy module paths (required if validate_and_repair=True)
+            episode_parsers: List of episode parser module paths (required)
         """
         self.media_dir = media_dir
         self.subs_file = subs_file
         
-        # Initialize directory validator (lazy import to avoid circular imports)
+        # Store strategies for later use
+        self.validation_strategies = validation_strategies or []
+        self.repair_strategies = repair_strategies or []
+        self.episode_parsers = episode_parsers or []
+        
+        # Validate that required strategies are provided
+        if validate_and_repair and (not validation_strategies or not repair_strategies):
+            raise ValueError("validation_strategies and repair_strategies are required when validate_and_repair=True")
+        if not episode_parsers:
+            raise ValueError("episode_parsers are required")
+        
+        # Initialize directory validator
         self.directory_validator = None
         if validate_and_repair:
-            from .directory_validator import DirectoryValidator
-            self.directory_validator = DirectoryValidator(media_dir)
+            self.directory_validator = GenericDirectoryValidator(
+                media_dir=media_dir,
+                validation_strategies=self.validation_strategies,
+                repair_strategies=self.repair_strategies
+            )
         
-        # Initialize parsers
-        self.filesystem_parser = FilesystemEpisodeParser(media_dir)
-        self.subscriptions_parser = SubscriptionsEpisodeParser(subs_file)
-        self.episode_merger = EpisodeMerger()
+        # Initialize episode manager
+        self.episode_manager = GenericEpisodeManager(
+            episode_parser_strategies=self.episode_parsers,
+            media_dir=media_dir,
+            subs_file=subs_file
+        )
         
         self.logger = get_logger(__name__)
         
@@ -47,26 +67,12 @@ class FileManager:
                 raise RuntimeError("Directory structure validation failed")
     
     def get_merged_episode_data(self) -> Dict[Activity, ActivityData]:
-        """Get merged episode data from all sources.
+        """Get merged episode data from all configured parsers.
         
         Returns:
-            Dictionary mapping Activity to ActivityData with max episode numbers
+            Dictionary mapping Activity to ActivityData with merged episode information
         """
-        self.logger.info("Gathering episode data from all sources")
-        
-        # Parse from filesystem
-        filesystem_data = self.filesystem_parser.parse_episodes()
-        self.logger.info(f"Filesystem: {len(filesystem_data)} activities")
-        
-        # Parse from subscriptions
-        subscriptions_data = self.subscriptions_parser.parse_episodes()
-        self.logger.info(f"Subscriptions: {len(subscriptions_data)} activities")
-        
-        # Merge the data
-        merged_data = self.episode_merger.merge_sources(filesystem_data, subscriptions_data)
-        self.logger.info(f"Merged: {len(merged_data)} activities")
-        
-        return merged_data
+        return self.episode_manager.get_merged_episode_data()
     
     def get_next_episode_number(self, activity: Activity, season: int) -> int:
         """Get the next available episode number for an activity and season.
@@ -79,43 +85,30 @@ class FileManager:
             The next available episode number
         """
         merged_data = self.get_merged_episode_data()
-        return self.episode_merger.get_next_episode_number(merged_data, activity, season)
+        
+        # Get next episode number directly from merged data
+        if activity not in merged_data:
+            return 1
+        
+        activity_data = merged_data[activity]
+        current_max = activity_data.max_episode.get(season, 0)
+        return current_max + 1
     
     def find_all_existing_class_ids(self) -> Set[str]:
-        """Find all existing class IDs from both filesystem and subscriptions.
+        """Find all existing class IDs from all configured parsers.
         
         Returns:
-            Set of all class IDs that exist or are configured
+            Set of all existing class IDs
         """
-        self.logger.info("Finding all existing class IDs")
-        
-        # Get IDs from filesystem
-        filesystem_ids = self.filesystem_parser.find_existing_class_ids()
-        
-        # Get IDs from subscriptions
-        subscription_ids = self.subscriptions_parser.find_subscription_class_ids()
-        
-        # Combine both sets
-        all_ids = filesystem_ids | subscription_ids
-        
-        self.logger.info(f"Total existing class IDs: {len(all_ids)} "
-                        f"(filesystem: {len(filesystem_ids)}, subscriptions: {len(subscription_ids)})")
-        
-        return all_ids
+        return self.episode_manager.find_all_existing_class_ids()
     
     def cleanup_subscriptions(self) -> bool:
         """Remove already-downloaded classes from subscriptions.
         
         Returns:
-            True if changes were made, False otherwise
+            True if changes were made, False if no cleanup was needed
         """
-        self.logger.info("Cleaning up subscriptions file")
-        
-        # Get existing class IDs from filesystem
-        existing_ids = self.filesystem_parser.find_existing_class_ids()
-        
-        # Remove them from subscriptions
-        return self.subscriptions_parser.remove_existing_classes(existing_ids)
+        return self.episode_manager.cleanup_subscriptions()
     
     def add_new_classes(self, classes: Dict[str, Dict[str, dict]]) -> bool:
         """Add new classes to the subscriptions file.
@@ -232,6 +225,11 @@ class FileManager:
         self.logger.info(f"Manual directory repair requested (dry_run={dry_run})")
         
         # Create a new validator instance with the specified dry_run setting
-        from .directory_validator import DirectoryValidator
-        validator = DirectoryValidator(self.media_dir, dry_run=dry_run)
+        # Use the same strategies as the main validator
+        validator = GenericDirectoryValidator(
+            media_dir=self.media_dir,
+            validation_strategies=self.validation_strategies,
+            repair_strategies=self.repair_strategies,
+            dry_run=dry_run
+        )
         return validator.validate_and_repair()

@@ -45,7 +45,7 @@ A modular Peloton scraper for ytdl-sub subscriptions. This application periodica
 
 ## Features
 
-- **Multi-source configuration**: Environment variables, CLI args, and YAML files with precedence
+- **Multi-source configuration**: Environment variables, CLI args, and nested YAML files with precedence
 - **Secure credential management**: Uses `.env` files (git-ignored) with masked logging
 - **Episode numbering system**: Intelligent season/episode assignment based on duration and sequence
 - **Directory validation**: Automated detection and repair of corrupted directory structures

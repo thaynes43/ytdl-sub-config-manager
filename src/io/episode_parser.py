@@ -33,7 +33,6 @@ class EpisodeParser(ABC):
     def _update_activity_data(self, activity_data: ActivityData, season: int, episode: int) -> None:
         """Update ActivityData with a new season/episode combination."""
         activity_data.update(season, episode)
-        self.logger.debug(f"Updated {activity_data.activity.name} S{season}E{episode}")
 
 
 class EpisodeMerger:

@@ -50,15 +50,20 @@ rules: |
     - Prefer explicit names over abbreviations; avoid 1–2 letter variables.
     - Use guard clauses over deep nesting; handle errors early.
     - Replace prints with `logging` and structured messages.
+    - **Method Organization**: Place high-level orchestration methods (like `run`, `main`, `execute`) at the top of classes, followed by the specific methods they call. This makes code flow easier to follow and understand.
+    - **Logging Best Practices**: Use summary-based logging instead of per-iteration debug logs. Log meaningful summaries (e.g., "Parsed 184 episodes for 12 activities") rather than individual operations. Avoid tight-loop logging that creates noise.
 
   - Config and I/O
     - **IMPLEMENTED**: `config/config.py` handles multi-source config (env vars, CLI args, YAML files) with precedence.
     - **IMPLEMENTED**: `config/cli_config.py` manages CLI argument parsing separately from configuration loading.
+    - **IMPLEMENTED**: Nested YAML configuration structure with sections: `application`, `logging`, `github`, `peloton` (with backwards compatibility for flat structure).
     - **IMPLEMENTED**: `io/file_manager.py` provides unified interface for filesystem and subscription parsing.
     - **IMPLEMENTED**: `io/directory_validator.py` pre-processes directories to fix corrupted structures and episode conflicts.
     - **IMPLEMENTED**: Episode numbering system with filesystem and subscription parsers in `io/` module.
     - **IMPLEMENTED**: Season = duration (minutes), Episode = sequential numbering per activity/instructor.
     - **IMPLEMENTED**: Robust handling of 50/50 directory corruption issues from legacy implementations.
+    - **Configuration Architecture**: Use nested YAML structure that groups related settings (application-wide, per-source, per-service). This scales better for multiple data sources and makes configuration more maintainable.
+    - **YAML Path Formatting**: Use forward slashes for file paths in YAML (works on both Windows and Unix). Avoid backslashes in double quotes due to YAML escape character conflicts. Example: `"D:/path/to/file"` or `'D:\path\to\file'`.
     - Preserve YAML structure and key stability expected by ytdl-sub.
 
   - Scrapers
