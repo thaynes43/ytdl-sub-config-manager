@@ -1,0 +1,66 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug ytdl-sub Config Manager",
+            "type": "python",
+            "request": "launch",
+            "module": "src.ytdl_sub_config_manager.cli",
+            "args": [
+                "--config",
+                "debug-config.yaml",
+                "--log-level",
+                "DEBUG",
+                "scrape"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "stopOnEntry": false,
+            "justMyCode": true
+        },
+        {
+            "name": "Debug with Environment Only",
+            "type": "python",
+            "request": "launch",
+            "module": "src.ytdl_sub_config_manager.cli",
+            "args": [
+                "--log-level",
+                "DEBUG",
+                "scrape",
+                "--activities",
+                "cycling,yoga",
+                "--limit",
+                "10"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "stopOnEntry": false,
+            "justMyCode": true
+        },
+        {
+            "name": "Debug CLI Help",
+            "type": "python",
+            "request": "launch",
+            "module": "src.ytdl_sub_config_manager.cli",
+            "args": [
+                "--help"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "stopOnEntry": false,
+            "justMyCode": true
+        }
+    ]
+}

@@ -1,0 +1,24 @@
+# Debug configuration file for ytdl-sub config manager
+# This file is used by VS Code debug configuration
+
+# Peloton credentials (will be overridden by environment variables in debug)
+peloton-username: "config_debug_user"
+peloton-password: "config_debug_password"
+
+# Required paths
+media-dir: "D:\\config\\debug\\media"
+subs-file: "D:\\config\\debug\\subscriptions.yaml"
+
+# Optional GitHub integration (leave empty for local testing)
+github-repo-url: ""
+github-token: ""
+
+# Scraping configuration
+peloton-class-limit-per-activity: 20
+peloton-activity: "cycling,yoga,strength"  # comma-separated list
+peloton-page-scrolls: 5
+run-in-container: false  # Set to false for local debugging
+
+# Logging configuration
+log-level: "DEBUG"
+log-format: "standard"  # Use "json" for structured logging

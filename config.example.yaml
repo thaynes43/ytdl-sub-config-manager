@@ -1,0 +1,24 @@
+# Example configuration file for ytdl-sub config manager
+# Copy to config.yaml and customize as needed
+
+# Peloton credentials (can also be set via environment variables)
+peloton-username: "your-peloton-username"
+peloton-password: "your-peloton-password"
+
+# Required paths
+media-dir: "/path/to/your/media/directory"
+subs-file: "/path/to/subscriptions.yaml"
+
+# Optional GitHub integration
+github-repo-url: "github.com/username/repo"
+github-token: "your-github-token"
+
+# Scraping configuration
+peloton-class-limit-per-activity: 25
+peloton-activity: "cycling,yoga,strength"  # comma-separated list
+peloton-page-scrolls: 10
+run-in-container: true
+
+# Logging configuration
+log-level: "INFO"
+log-format: "standard"  # or "json" for structured logging
