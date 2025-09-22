@@ -11,14 +11,20 @@ globs:
   - "src/**/*.py"
   - "tests/**/*.py"
   - "Dockerfile"
-  - "pyproject.toml"
+  - "docker-compose.yml"
+  - "pytest.ini"
   - "requirements.txt"
   - "README.md"
   - "docs/**/*.md"
+  - "scripts/**/*.sh"
+  - "scripts/**/*.ps1"
+  - ".github/workflows/**/*.yaml"
+  - ".vscode/**/*.json"
 
 rules: |
   - Architecture
     - Organize code under `src/ytdl_sub_config_manager/` with subpackages: `core`, `io`, `services`, `sources/peloton`.
+    - **IMPLEMENTED**: `core` (config, logging, models), `io` (episode parsing, file management) modules are complete.
     - Keep business logic out of the CLI; compose dependencies explicitly.
     - Use pure functions and immutable dataclasses where feasible.
     - No module should import from `tests`.
@@ -30,8 +36,10 @@ rules: |
     - Replace prints with `logging` and structured messages.
 
   - Config and I/O
-    - Centralize env loading/validation in `core/config.py` and pass `Config` objects.
-    - File and YAML access live in `io/file_manager.py`. No YAML writes outside this module.
+    - **IMPLEMENTED**: `core/config.py` handles multi-source config (env vars, CLI args, YAML files) with precedence.
+    - **IMPLEMENTED**: `io/file_manager.py` provides unified interface for filesystem and subscription parsing.
+    - **IMPLEMENTED**: Episode numbering system with filesystem and subscription parsers in `io/` module.
+    - **IMPLEMENTED**: Season = duration (minutes), Episode = sequential numbering per activity/instructor.
     - Preserve YAML structure and key stability expected by ytdl-sub.
 
   - Scrapers
@@ -43,17 +51,34 @@ rules: |
     - `services/subscriptions.py` handles merge/dedupe, duplicate-title suffixing, and activity mapping.
     - `services/git_sync.py` wraps repo clone/pull/commit/push/PR with tokens read from config.
 
-  - Testing
+  - Testing (CRITICAL - PROJECT IS TEST-GATED)
+    - **ALL CODE CHANGES MUST PASS TESTS** - The CI/CD pipeline will fail if tests don't pass.
+    - **NEW FUNCTIONALITY REQUIRES NEW TESTS** - Any new feature, class, or function must include corresponding test coverage.
+    - **COVERAGE TARGET: 80%** - Maintain at least 80% test coverage across the codebase.
+    - **UPDATE EXISTING TESTS** - When modifying existing code, update the corresponding tests to reflect changes.
+    - **RUN TESTS LOCALLY** - Always run `pytest tests/` before committing changes.
+    - **IMPLEMENTED**: Comprehensive test suite in `tests/` with `pytest.ini` configuration.
+    - **IMPLEMENTED**: `tests/core/` for core functionality, `tests/io/` for episode parsing.
+    - **IMPLEMENTED**: Test fixtures, integration tests, and edge case coverage.
+    - **IMPLEMENTED**: Helper scripts `scripts/run-tests.sh` and `scripts/run-tests.ps1`.
     - Use `pytest`; keep Selenium and network calls mocked.
-    - Mirror package structure in `tests/` and cover core/services thoroughly (≥85% coverage target).
+    - Mirror package structure in `tests/` and cover core/services thoroughly.
     - Include fixtures for sample media trees and YAML snippets.
+    - **TEST-DRIVEN DEVELOPMENT** - Consider writing tests first, then implementing functionality.
+    - **INTEGRATION TESTS** - Include integration tests for complete workflows (file parsing, episode numbering, etc.).
+    - **EDGE CASE TESTING** - Test error conditions, invalid inputs, and boundary cases.
 
   - Docker/CI
-    - Update Dockerfile to install `chromium` and `chromium-driver`; entrypoint runs the CLI module.
+    - **IMPLEMENTED**: Dockerfile with chromium/chromedriver, proper entrypoint, and semantic versioning.
+    - **IMPLEMENTED**: Docker Compose configuration for local development.
+    - **IMPLEMENTED**: GitHub Actions workflow with test-gated builds (tests must pass before Docker image builds).
+    - **IMPLEMENTED**: Helper scripts in `scripts/` for Docker operations and version management.
+    - **IMPLEMENTED**: VS Code debug configurations with .env file support.
     - Keep image minimal; use `--no-cache-dir` for pip and remove apt lists.
-    - Adjust GitHub workflow to build from repo root/new paths.
+    - Semantic versioning with 0.1.0 initial version.
 
   - Security
+    - **IMPLEMENTED**: Secure credential handling with .env files (git-ignored) and masked logging.
     - Never log secrets or tokens.
     - Access tokens and credentials only via environment variables.
 
