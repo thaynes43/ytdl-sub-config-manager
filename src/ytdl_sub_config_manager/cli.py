@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any
 
 from .core.config import ConfigLoader
 from .core.logging import setup_logging, get_logger
+from . import __version__
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -20,6 +21,13 @@ Examples:
   %(prog)s scrape --activities cycling,yoga --subs-file /path/to/subs.yaml
   %(prog)s scrape --config config.yaml --log-level DEBUG
         """
+    )
+    
+    # Add version argument
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"ytdl-sub Config Manager {__version__}"
     )
     
     # Global options

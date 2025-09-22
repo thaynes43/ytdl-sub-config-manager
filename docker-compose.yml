@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  ytdl-sub-config-manager:
+    # Option 1: Build from source
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # Option 2: Use pre-built image (uncomment to use)
+    # image: ghcr.io/owner/ytdl-sub-config-manager:0.1.0
+    container_name: ytdl-sub-config-manager
+    environment:
+      # Required configuration
+      - PELOTON_USERNAME=${PELOTON_USERNAME}
+      - PELOTON_PASSWORD=${PELOTON_PASSWORD}
+      - MEDIA_DIR=${MEDIA_DIR:-/media}
+      
+      # Optional configuration
+      - SUBS_FILE=${SUBS_FILE:-/app/subscriptions.yaml}
+      - GITHUB_REPO_URL=${GITHUB_REPO_URL:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - PELOTON_CLASS_LIMIT_PER_ACTIVITY=${PELOTON_CLASS_LIMIT_PER_ACTIVITY:-25}
+      - PELOTON_ACTIVITY=${PELOTON_ACTIVITY:-cycling,yoga,strength}
+      - RUN_IN_CONTAINER=True
+      - PELOTON_PAGE_SCROLLS=${PELOTON_PAGE_SCROLLS:-10}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-standard}
+    volumes:
+      # Mount your local media directory
+      - "${MEDIA_DIR:-./media}:/media"
+      # Mount subscriptions file if local
+      - "${SUBS_FILE:-./subscriptions.yaml}:/app/subscriptions.yaml"
+      # Optional: mount config file
+      - "./config.yaml:/app/config.yaml"
+    # Remove this if you don't need to keep the container running
+    # restart: unless-stopped
+    
+    # For debugging: override the entrypoint
+    # entrypoint: ["/bin/bash"]
+    # tty: true
+    # stdin_open: true

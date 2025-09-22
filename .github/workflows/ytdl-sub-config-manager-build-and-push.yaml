@@ -1,16 +1,20 @@
-name: Build and Push Peloton Scraper Image
+name: Build and Push ytdl-sub Config Manager Image
 
 on:
   push:
     paths:
-      - 'scripts/peloton-scrape/**'
+      - 'src/**'
+      - 'requirements.txt'
       - 'Dockerfile'
-      - '.github/workflows/peloton-scraper-build.yaml'
+      - '.github/workflows/ytdl-sub-config-manager-build-and-push.yaml'
   workflow_dispatch:
   
 permissions:
   contents: read
   packages: write
+
+env:
+  VERSION: "0.1.0"
 
 jobs:
   build-and-push:
@@ -29,9 +33,12 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./scripts/peloton-scrape
-          file: ./scripts/peloton-scrape/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
+          build-args: |
+            VERSION=${{ env.VERSION }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/peloton-scraper:0.3.2
-            ghcr.io/${{ github.repository_owner }}/peloton-scraper:latest
+            ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:latest
+            ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:${{ env.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:${{ github.sha }}

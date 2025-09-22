@@ -147,3 +147,12 @@ test-config.yaml
 *.log
 temp/
 tmp/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Local development files
+media/
+subscriptions.yaml
+config.yaml
