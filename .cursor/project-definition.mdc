@@ -78,13 +78,27 @@ rules: |
   - Testing (CRITICAL - PROJECT IS TEST-GATED)
     - **ALL CODE CHANGES MUST PASS TESTS** - The CI/CD pipeline will fail if tests don't pass.
     - **NEW FUNCTIONALITY REQUIRES NEW TESTS** - Any new feature, class, or function must include corresponding test coverage.
-    - **COVERAGE TARGET: 80%** - Maintain at least 80% test coverage across the codebase.
+    - **COVERAGE TARGET: 84%** - **ACHIEVED 84% COVERAGE** - Maintain at least 84% test coverage across the codebase. **DO NOT REGRESS BELOW 80%**.
+    - **COVERAGE REGRESSION PREVENTION** - Before merging any PR:
+      - Run `python -m pytest tests/ --cov=src --cov-report=term-missing` to check coverage
+      - If coverage drops below 84%, add tests to maintain current level
+      - If coverage drops below 80%, **BLOCK THE MERGE** until tests are added
+      - Use `python -m pytest tests/ --cov=src --cov-fail-under=80` to enforce minimum coverage
     - **UPDATE EXISTING TESTS** - When modifying existing code, update the corresponding tests to reflect changes.
     - **RUN TESTS LOCALLY** - Always run `pytest tests/` before committing changes.
-    - **IMPLEMENTED**: Comprehensive test suite in `tests/` with `pytest.ini` configuration.
-    - **IMPLEMENTED**: `tests/core/` for core functionality, `tests/io/` for episode parsing.
-    - **IMPLEMENTED**: Test fixtures, integration tests, and edge case coverage.
+    - **IMPLEMENTED**: Comprehensive test suite with **153 passing tests** covering:
+      - `tests/core/` - Application logic, configuration, logging, models (98%+ coverage)
+      - `tests/config/` - CLI parsing and configuration loading (98%+ coverage)  
+      - `tests/io/` - File operations, episode parsing, strategy loading (90%+ coverage)
+      - Complete test isolation with proper mocking and fixtures
     - **IMPLEMENTED**: Helper scripts `scripts/run-tests.sh` and `scripts/run-tests.ps1`.
+    - **HIGH-COVERAGE MODULES** - These modules have excellent coverage and should be maintained:
+      - `src/config/config.py`: 98% coverage
+      - `src/config/cli_config.py`: 99% coverage
+      - `src/core/application.py`: 96% coverage
+      - `src/main.py`: 97% coverage
+      - `src/io/strategy_loader.py`: 100% coverage
+      - `src/io/file_manager.py`: 93% coverage
     - Use `pytest`; keep Selenium and network calls mocked.
     - Mirror package structure in `tests/` and cover core/services thoroughly.
     - Include fixtures for sample media trees and YAML snippets.

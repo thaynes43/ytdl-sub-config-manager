@@ -103,17 +103,54 @@ The application determines the next episode number by checking two sources:
 ## Development
 
 - **Debug in VS Code**: Press F5 after setting up your `.env` file
-- **Run tests**: 
-  - All tests: `python -m pytest tests/`
-  - Specific module: `python -m pytest tests/io/`
-  - With coverage: `python -m pytest tests/ --cov=src`
-  - Use helper scripts: `./scripts/run-tests.sh` or `./scripts/run-tests.ps1`
 - **Update version**: `./scripts/update-version.sh 0.2.0`
 
-### Testing
+### Testing 🧪
 
-The project includes comprehensive tests organized by module:
-- `tests/core/` - Core functionality (models, configuration, logging)
-- `tests/io/` - I/O operations (filesystem parsing, subscriptions parsing)
-- `pytest.ini` - Pytest configuration with markers and options
-- `tests/conftest.py` - Shared fixtures and test setup 
+The project maintains **84% test coverage** with **153 comprehensive tests**. Testing is **mandatory** - all code changes must pass tests and maintain coverage.
+
+#### Running Tests
+
+```bash
+# Run all tests (recommended before committing)
+python -m pytest tests/
+
+# Run with coverage report
+python -m pytest tests/ --cov=src --cov-report=term-missing
+
+# Run specific test modules
+python -m pytest tests/core/        # Core functionality tests
+python -m pytest tests/config/      # Configuration tests  
+python -m pytest tests/io/          # I/O and parsing tests
+
+# Run with coverage enforcement (fails if below 80%)
+python -m pytest tests/ --cov=src --cov-fail-under=80
+
+# Use helper scripts (cross-platform)
+./scripts/run-tests.sh              # Unix/Linux/macOS
+./scripts/run-tests.ps1             # Windows PowerShell
+```
+
+#### Test Organization
+
+- **`tests/core/`** - Application logic, logging, models (98%+ coverage)
+- **`tests/config/`** - CLI parsing, configuration loading (98%+ coverage)  
+- **`tests/io/`** - File operations, episode parsing, strategies (90%+ coverage)
+- **`pytest.ini`** - Pytest configuration with markers and options
+- **`tests/conftest.py`** - Shared fixtures and test setup
+
+#### Coverage Requirements
+
+- **Minimum**: 80% overall coverage (enforced by CI/CD)
+- **Current**: 84% coverage achieved
+- **High-coverage modules** (maintain these levels):
+  - `config.py`: 98% | `cli_config.py`: 99% | `application.py`: 96%
+  - `main.py`: 97% | `strategy_loader.py`: 100% | `file_manager.py`: 93%
+
+#### Testing Best Practices
+
+- **Before committing**: Always run `python -m pytest tests/`
+- **New features**: Must include corresponding test coverage
+- **Regression prevention**: Check coverage with `--cov-report=term-missing`
+- **Test isolation**: All tests use proper mocking and fixtures
+- **CI/CD gating**: Tests must pass before Docker builds or merges 

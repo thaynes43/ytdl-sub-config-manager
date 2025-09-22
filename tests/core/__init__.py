@@ -1,1 +1,1 @@
-"""Core tests package."""
+"""Tests for core modules."""
