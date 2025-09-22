@@ -7,7 +7,7 @@
             "command": "python",
             "args": [
                 "-m",
-                "src.ytdl_sub_config_manager.cli",
+                "src",
                 "--config",
                 "debug-config.yaml",
                 "--log-level",
@@ -37,7 +37,7 @@
                 "pytest",
                 "tests/",
                 "-v",
-                "--cov=src/ytdl_sub_config_manager",
+                "--cov=src",
                 "--cov-report=html"
             ],
             "group": "test",

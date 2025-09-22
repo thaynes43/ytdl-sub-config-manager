@@ -32,7 +32,7 @@ ENV PYTHONPATH=/app
 ENV RUN_IN_CONTAINER=True
 
 # Create entrypoint script
-RUN echo '#!/bin/bash\npython -m src.ytdl_sub_config_manager.cli "$@"' > /app/entrypoint.sh && \
+RUN echo '#!/bin/bash\npython -m src "$@"' > /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]

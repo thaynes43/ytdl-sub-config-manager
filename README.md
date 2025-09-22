@@ -12,7 +12,11 @@ A modular Peloton scraper for ytdl-sub subscriptions. This application periodica
 
 2. **Run locally**:
    ```bash
-   python -m src.ytdl_sub_config_manager.cli scrape
+   # Run the full scraping workflow
+   python -m src scrape
+   
+   # Or validate/repair directory structure only
+   python -m src validate --media-dir ./media --dry-run
    ```
 
 3. **Run with Docker**:
@@ -23,12 +27,13 @@ A modular Peloton scraper for ytdl-sub subscriptions. This application periodica
 
 ## Project Structure
 
-- `src/ytdl_sub_config_manager/` - Main application code
-  - `core/` - Configuration, logging, and data models
-  - `cli.py` - Command-line interface
+- `src/` - Main application code (flattened package structure)
+  - `config/` - Configuration management (CLI parsing, config loading)
+  - `core/` - Core application logic, logging, and data models
+  - `io/` - File and directory operations, episode parsing
+  - `main.py` - Main entry point
+- `tests/` - Comprehensive test suite with pytest
 - `scripts/` - Helper scripts for development and deployment
-  - `docker-run.sh` - Docker build and run helper
-  - `update-version.sh` - Version management script
 - `.vscode/` - VS Code debug configurations
 - `docs/` - Documentation and requirements
 
@@ -40,12 +45,14 @@ A modular Peloton scraper for ytdl-sub subscriptions. This application periodica
 
 ## Features
 
-- **Multi-source configuration**: Environment variables, CLI args, and YAML files
-- **Secure credential management**: Uses `.env` files (git-ignored)
+- **Multi-source configuration**: Environment variables, CLI args, and YAML files with precedence
+- **Secure credential management**: Uses `.env` files (git-ignored) with masked logging
+- **Episode numbering system**: Intelligent season/episode assignment based on duration and sequence
+- **Directory validation**: Automated detection and repair of corrupted directory structures
+- **Comprehensive testing**: Test-gated development with 80% coverage target
 - **Docker support**: Full containerization with helper scripts
 - **VS Code integration**: Debug configurations and tasks
-- **Semantic versioning**: Automated version management
-- **GitHub Actions**: CI/CD with container registry publishing
+- **CI/CD pipeline**: GitHub Actions with test-gated builds and semantic versioning
 
 ## Episode Naming Strategy
 
@@ -99,7 +106,7 @@ The application determines the next episode number by checking two sources:
 - **Run tests**: 
   - All tests: `python -m pytest tests/`
   - Specific module: `python -m pytest tests/io/`
-  - With coverage: `python -m pytest tests/ --cov=src/ytdl_sub_config_manager`
+  - With coverage: `python -m pytest tests/ --cov=src`
   - Use helper scripts: `./scripts/run-tests.sh` or `./scripts/run-tests.ps1`
 - **Update version**: `./scripts/update-version.sh 0.2.0`
 

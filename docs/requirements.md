@@ -70,7 +70,7 @@ Reference: `ytdl-sub` repository and configuration format are documented here: [
 
 Use a package name and layout that keeps core logic separate from I/O:
 
-- `src/ytdl_sub_config_manager/`
+- `src/`
   - `core/`
     - `config.py`: Load/validate env vars, provide immutable Config object
     - `models.py`: `Activity` enum, `ActivityData`, and related data classes
@@ -85,10 +85,10 @@ Use a package name and layout that keeps core logic separate from I/O:
     - `peloton/`
       - `session.py`: Selenium session management (headless Chromium in container)
       - `scraper.py`: list page scraping, parsing, result mapping to episodes
-  - `cli.py`: CLI entrypoint to run the end-to-end flow
+  - `main.py`: Main entrypoint to run the end-to-end flow
 
 Notes:
-- No business logic in `cli.py`—compose services and call into modules.
+- No business logic in `main.py`—compose services and call into modules.
 - No global mutable state; pass `Config` and explicit dependencies.
 
 ## Implementation Requirements

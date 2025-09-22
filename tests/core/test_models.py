@@ -2,7 +2,7 @@
 
 import pytest
 
-from ytdl_sub_config_manager.core.models import Activity, ActivityData
+from src.core.models import Activity, ActivityData
 
 
 class TestActivity:

@@ -43,7 +43,7 @@ This directory contains helper scripts for development, deployment, and maintena
 **Usage**: `./scripts/update-version.sh <new-version>`
 
 **What it updates**:
-- `src/ytdl_sub_config_manager/__init__.py` - Package version
+- `src/__init__.py` - Package version
 - `.github/workflows/ytdl-sub-config-manager-build-and-push.yaml` - Workflow version
 - `docs/docker.md` - Documentation examples
 - `docker-compose.yml` - Image tag references

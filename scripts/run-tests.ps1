@@ -47,7 +47,7 @@ switch ($TestType) {
     }
     "coverage" {
         Write-Host "Running tests with coverage..." -ForegroundColor $Yellow
-        pytest tests/ --cov=src/ytdl_sub_config_manager --cov-report=html --cov-report=term-missing -v
+        pytest tests/ --cov=src --cov-report=html --cov-report=term-missing -v
         Write-Host "Coverage report generated in htmlcov/index.html" -ForegroundColor $Green
     }
     "fast" {

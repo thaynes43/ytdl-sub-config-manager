@@ -7,11 +7,11 @@ from unittest.mock import patch
 
 import pytest
 
-from ytdl_sub_config_manager.io.file_manager import FileManager
-from ytdl_sub_config_manager.io.filesystem_parser import FilesystemEpisodeParser
-from ytdl_sub_config_manager.io.subscriptions_parser import SubscriptionsEpisodeParser
-from ytdl_sub_config_manager.io.episode_parser import EpisodeMerger
-from ytdl_sub_config_manager.core.models import Activity, ActivityData
+from src.io.file_manager import FileManager
+from src.io.filesystem_parser import FilesystemEpisodeParser
+from src.io.subscriptions_parser import SubscriptionsEpisodeParser
+from src.io.episode_parser import EpisodeMerger
+from src.core.models import Activity, ActivityData
 
 
 class TestFilesystemEpisodeParser:
@@ -106,6 +106,149 @@ class TestFilesystemEpisodeParser:
         
         # Test invalid mapping
         assert parser._map_activity_name("invalid_activity") is None
+    
+    def test_50_50_folder_handling(self):
+        """Test handling of problematic 50/50 folders from legacy implementation.
+        
+        The 50/50 pattern creates extra directory levels that break the expected structure:
+        Expected: /media/peloton/{Activity}/{Instructor}/S{season}E{episode}
+        Problematic: /media/peloton/Bootcamp 50/50/{Instructor}/S{season}E{episode}
+        """
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            media_dir = temp_path / "media" / "peloton"
+            
+            # Create problematic directories with 50/50 pattern that creates extra subdirectories
+            problematic_structures = [
+                # This represents "Bootcamp: 50/50" -> creates extra directory level
+                "Bootcamp 50/50/Instructor/S30E001 - 2024-01-15 - 30 min Bootcamp",
+                # Regular 50-50 pattern (replacement fix) - still problematic activity name
+                "Bootcamp 50-50/Instructor/S30E002 - 2024-01-16 - 30 min Mixed",
+                # Other bootcamp 50 patterns
+                "Tread Bootcamp 50/Instructor/S30E003 - 2024-01-17 - Bootcamp 50 min",
+            ]
+            
+            # Create valid directories that should be processed
+            valid_dirs = [
+                "Cycling/Hannah Frankson/S20E001 - 2024-01-15 - 20 min Pop Ride",
+                "Strength/Andy Speer/S10E001 - 2024-01-15 - 10 min Core",
+                # Valid bootcamp without 50/50 issues
+                "Bootcamp/Jess Sims/S30E001 - 2024-01-15 - 30 min Regular Bootcamp",
+            ]
+            
+            # Create all directories
+            all_dirs = problematic_structures + valid_dirs
+            for dir_path in all_dirs:
+                full_path = media_dir / dir_path
+                full_path.mkdir(parents=True, exist_ok=True)
+                
+                # Create dummy .info.json files
+                info_file = full_path / f"{full_path.name}.info.json"
+                info_file.write_text('{"id": "test123"}')
+            
+            parser = FilesystemEpisodeParser(str(media_dir.parent))
+            results = parser.parse_episodes()
+            
+            # The 50/50 structures should be skipped due to:
+            # 1. Wrong directory depth (extra level breaks parsing)
+            # 2. Activity name filtering (50/50 patterns are filtered out)
+            
+            # Should find valid activities (Cycling, Strength, valid Bootcamp)
+            # Should NOT find any episodes from problematic 50/50 structures
+            assert len(results) == 3
+            assert Activity.CYCLING in results
+            assert Activity.STRENGTH in results
+            assert Activity.BOOTCAMP in results
+            
+            # Verify the valid episodes were parsed correctly
+            cycling_data = results[Activity.CYCLING]
+            assert cycling_data.max_episode[20] == 1
+            
+            strength_data = results[Activity.STRENGTH]
+            assert strength_data.max_episode[10] == 1
+            
+        # Should only have the valid bootcamp episode, not the 50/50 ones
+        bootcamp_data = results[Activity.BOOTCAMP]
+        assert bootcamp_data.max_episode[30] == 1  # Only the valid one
+    
+    def test_50_slash_50_directory_structure_issue(self):
+        """Test the specific 50/50 directory structure issue from old implementation.
+        
+        This test demonstrates the exact problem: when a class title contains "50/50",
+        it creates an extra directory level that breaks the expected parsing structure.
+        
+        Example problematic structure:
+        /media/peloton/Bootcamp 50/50/Instructor/S30E001 - title
+        
+        Instead of the expected:
+        /media/peloton/Bootcamp/Instructor/S30E001 - title
+        """
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # Simulate the actual problematic structure that would be created
+            # when ytdl-sub downloads a class with "50/50" in the title
+            problematic_path = (
+                temp_path / "media" / "peloton" / 
+                "Bootcamp 50" / "50" /  # This is what happens with "50/50" in name
+                "Jess Sims" / 
+                "S30E001 - 2024-01-15 - 30 min Full Body Bootcamp"
+            )
+            problematic_path.mkdir(parents=True)
+            
+            # Create info file
+            info_file = problematic_path / f"{problematic_path.name}.info.json"
+            info_file.write_text('{"id": "problematic123"}')
+            
+            # Also create a normal bootcamp for comparison
+            normal_path = (
+                temp_path / "media" / "peloton" /
+                "Bootcamp" /
+                "Jess Sims" /
+                "S30E002 - 2024-01-16 - 30 min Upper Body Bootcamp"
+            )
+            normal_path.mkdir(parents=True)
+            normal_info = normal_path / f"{normal_path.name}.info.json"
+            normal_info.write_text('{"id": "normal123"}')
+            
+            parser = FilesystemEpisodeParser(str(temp_path))
+            results = parser.parse_episodes()
+            
+            # The problematic structure should be ignored because:
+            # 1. The activity name "Bootcamp 50" doesn't match our Activity enum
+            # 2. The "50/50" pattern is explicitly filtered out
+            # 3. The directory structure is wrong (too deep)
+            
+            # Should only find the normal bootcamp
+            assert len(results) == 1
+            assert Activity.BOOTCAMP in results
+            
+            bootcamp_data = results[Activity.BOOTCAMP]
+            assert bootcamp_data.max_episode[30] == 2  # Only the normal episode
+            
+            # Note: find_existing_class_ids() scans ALL .info.json files regardless of structure
+            # This is correct behavior - we want to know about all existing downloads
+            # The episode parsing logic is what filters out problematic structures
+            class_ids = parser.find_existing_class_ids()
+            assert "normal123" in class_ids
+            assert "problematic123" in class_ids  # Found by file scan, but ignored by episode parsing
+    
+    def test_activity_mapping_edge_cases(self, temp_media_dir):
+        """Test edge cases in activity name mapping."""
+        parser = FilesystemEpisodeParser(temp_media_dir)
+        
+        # Test 50/50 and 50-50 patterns are filtered out
+        assert parser._map_activity_name("bootcamp 50/50") is None  # Original problematic pattern
+        assert parser._map_activity_name("bootcamp 50-50") is None  # Fixed pattern
+        assert parser._map_activity_name("50/50 bootcamp") is None
+        assert parser._map_activity_name("50-50 bootcamp") is None
+        assert parser._map_activity_name("tread bootcamp 50") is None
+        assert parser._map_activity_name("bootcamp: 50") is None  # Original pattern with colon
+        
+        # Test case variations (should work since input is already lowercased in parse logic)
+        assert parser._map_activity_name("cycling") == Activity.CYCLING
+        assert parser._map_activity_name("yoga") == Activity.YOGA
+        assert parser._map_activity_name("tread bootcamp") == Activity.BOOTCAMP
 
 
 class TestSubscriptionsEpisodeParser:

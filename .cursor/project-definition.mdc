@@ -23,11 +23,27 @@ globs:
 
 rules: |
   - Architecture
-    - Organize code under `src/ytdl_sub_config_manager/` with subpackages: `core`, `io`, `services`, `sources/peloton`.
-    - **IMPLEMENTED**: `core` (config, logging, models), `io` (episode parsing, file management) modules are complete.
-    - Keep business logic out of the CLI; compose dependencies explicitly.
+    - **IMPLEMENTED**: Flattened package structure under `src/` with subpackages: `config`, `core`, `io`.
+    - **IMPLEMENTED**: `main.py` as clean entry point delegating to `core/application.py` for business logic.
+    - **IMPLEMENTED**: `config/` handles CLI parsing and configuration loading separately from business logic.
+    - **IMPLEMENTED**: `core` (application, logging, models), `io` (episode parsing, file management, directory validation) modules complete.
+    - **IMPLEMENTED**: Directory structure validation and repair system for handling corrupted 50/50 patterns.
+    - Keep business logic out of the main entry point; compose dependencies explicitly.
     - Use pure functions and immutable dataclasses where feasible.
     - No module should import from `tests`.
+
+  - Documentation Synchronization (CRITICAL)
+    - **ALWAYS UPDATE DOCUMENTATION** when making code changes that affect:
+      - Package structure or file organization
+      - CLI commands, arguments, or usage examples
+      - Configuration options or environment variables
+      - Major features or functionality
+      - Testing procedures or coverage requirements
+    - **MANDATORY UPDATES** for any architectural changes:
+      - Update `.cursor/project-definition.mdc` to reflect current implementation status
+      - Update `README.md` project structure, usage examples, and feature descriptions
+      - Update any affected documentation in `docs/` folder
+    - **NO CODE CHANGES WITHOUT DOC UPDATES** - Documentation must be kept current with the codebase.
 
   - Types and Style
     - Add type hints to all public functions and class methods.
@@ -36,10 +52,13 @@ rules: |
     - Replace prints with `logging` and structured messages.
 
   - Config and I/O
-    - **IMPLEMENTED**: `core/config.py` handles multi-source config (env vars, CLI args, YAML files) with precedence.
+    - **IMPLEMENTED**: `config/config.py` handles multi-source config (env vars, CLI args, YAML files) with precedence.
+    - **IMPLEMENTED**: `config/cli_config.py` manages CLI argument parsing separately from configuration loading.
     - **IMPLEMENTED**: `io/file_manager.py` provides unified interface for filesystem and subscription parsing.
+    - **IMPLEMENTED**: `io/directory_validator.py` pre-processes directories to fix corrupted structures and episode conflicts.
     - **IMPLEMENTED**: Episode numbering system with filesystem and subscription parsers in `io/` module.
     - **IMPLEMENTED**: Season = duration (minutes), Episode = sequential numbering per activity/instructor.
+    - **IMPLEMENTED**: Robust handling of 50/50 directory corruption issues from legacy implementations.
     - Preserve YAML structure and key stability expected by ytdl-sub.
 
   - Scrapers

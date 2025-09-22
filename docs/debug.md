@@ -65,7 +65,7 @@ PELOTON_CLASS_LIMIT_PER_ACTIVITY=5
 
 ### Setting Breakpoints
 - Click in the left margin of any Python file to set breakpoints
-- Breakpoints work in all modules: `core/`, `cli.py`, etc.
+- Breakpoints work in all modules: `core/`, `main.py`, etc.
 - Use conditional breakpoints for specific scenarios
 
 ### Configuration Precedence Testing
@@ -142,7 +142,7 @@ Add to `.vscode/launch.json` → `configurations` array:
     "name": "Your Custom Debug",
     "type": "python",
     "request": "launch",
-    "module": "src.ytdl_sub_config_manager.cli",
+    "module": "src",
     "args": ["your", "args"],
     "console": "integratedTerminal",
     "cwd": "${workspaceFolder}",

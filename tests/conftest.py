@@ -11,7 +11,7 @@ src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
 # Import after path setup
-from ytdl_sub_config_manager.core.logging import setup_logging
+from core.logging import setup_logging
 
 
 @pytest.fixture(scope="session", autouse=True)

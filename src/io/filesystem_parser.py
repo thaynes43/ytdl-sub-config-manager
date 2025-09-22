@@ -136,8 +136,10 @@ class FilesystemEpisodeParser(EpisodeParser):
             return self.special_mappings[activity_name]
         
         # Handle edge cases from legacy implementation
-        if "50-50" in activity_name or "bootcamp: 50" in activity_name.lower():
-            self.logger.warning(f"Skipping problematic folder with 50-50 pattern: {activity_name}")
+        # Skip problematic folders with 50/50 pattern (creates extra subdirectories)
+        if ("50/50" in activity_name or "50-50" in activity_name or 
+            "bootcamp 50" in activity_name.lower() or "bootcamp: 50" in activity_name.lower()):
+            self.logger.warning(f"Skipping problematic folder with 50/50 pattern: {activity_name}")
             return None
         
         # If we can't map it, this is an error in the legacy implementation

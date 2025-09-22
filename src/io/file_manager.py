@@ -15,15 +15,22 @@ logger = get_logger(__name__)
 class FileManager:
     """Manages episode parsing from multiple sources and provides unified interface."""
     
-    def __init__(self, media_dir: str, subs_file: str):
+    def __init__(self, media_dir: str, subs_file: str, validate_and_repair: bool = True):
         """Initialize the file manager.
         
         Args:
             media_dir: Root directory containing downloaded media files
             subs_file: Path to the subscriptions YAML file
+            validate_and_repair: If True, validate and repair directory structure on init
         """
         self.media_dir = media_dir
         self.subs_file = subs_file
+        
+        # Initialize directory validator (lazy import to avoid circular imports)
+        self.directory_validator = None
+        if validate_and_repair:
+            from .directory_validator import DirectoryValidator
+            self.directory_validator = DirectoryValidator(media_dir)
         
         # Initialize parsers
         self.filesystem_parser = FilesystemEpisodeParser(media_dir)
@@ -31,6 +38,13 @@ class FileManager:
         self.episode_merger = EpisodeMerger()
         
         self.logger = get_logger(__name__)
+        
+        # Validate and repair directory structure if requested
+        if validate_and_repair and self.directory_validator:
+            self.logger.info("Validating and repairing directory structure")
+            if not self.directory_validator.validate_and_repair():
+                self.logger.error("Directory validation and repair failed!")
+                raise RuntimeError("Directory structure validation failed")
     
     def get_merged_episode_data(self) -> Dict[Activity, ActivityData]:
         """Get merged episode data from all sources.
@@ -205,3 +219,19 @@ class FileManager:
         
         self.logger.info("Directory validation passed")
         return True
+    
+    def repair_directory_structure(self, dry_run: bool = False) -> bool:
+        """Manually trigger directory structure validation and repair.
+        
+        Args:
+            dry_run: If True, only report issues without making changes
+            
+        Returns:
+            True if validation passed or repairs were successful, False otherwise
+        """
+        self.logger.info(f"Manual directory repair requested (dry_run={dry_run})")
+        
+        # Create a new validator instance with the specified dry_run setting
+        from .directory_validator import DirectoryValidator
+        validator = DirectoryValidator(self.media_dir, dry_run=dry_run)
+        return validator.validate_and_repair()

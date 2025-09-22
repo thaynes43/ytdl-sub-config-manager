@@ -45,7 +45,7 @@ case "${1:-all}" in
         ;;
     "coverage")
         echo -e "${YELLOW}Running tests with coverage...${NC}"
-        pytest tests/ --cov=src/ytdl_sub_config_manager --cov-report=html --cov-report=term-missing -v
+        pytest tests/ --cov=src --cov-report=html --cov-report=term-missing -v
         echo -e "${GREEN}Coverage report generated in htmlcov/index.html${NC}"
         ;;
     "fast")

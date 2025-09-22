@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from dotenv import load_dotenv
 
-from .models import Activity, ActivityData
-from .logging import get_logger
+from ..core.models import Activity, ActivityData
+from ..core.logging import get_logger
 
 logger = get_logger(__name__)
 

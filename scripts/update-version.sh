@@ -32,8 +32,8 @@ fi
 echo -e "${YELLOW}Updating version to: ${NEW_VERSION}${NC}"
 
 # Update package version
-echo "Updating src/ytdl_sub_config_manager/__init__.py..."
-sed -i.bak "s/__version__ = \".*\"/__version__ = \"${NEW_VERSION}\"/" src/ytdl_sub_config_manager/__init__.py
+echo "Updating src/__init__.py..."
+sed -i.bak "s/__version__ = \".*\"/__version__ = \"${NEW_VERSION}\"/" src/__init__.py
 
 # Update GitHub workflow
 echo "Updating .github/workflows/ytdl-sub-config-manager-build-and-push.yaml..."
@@ -48,7 +48,7 @@ echo "Updating docker-compose.yml..."
 sed -i.bak "s/ytdl-sub-config-manager:[0-9]\+\.[0-9]\+\.[0-9]\+/ytdl-sub-config-manager:${NEW_VERSION}/g" docker-compose.yml
 
 # Clean up backup files
-rm -f src/ytdl_sub_config_manager/__init__.py.bak
+rm -f src/__init__.py.bak
 rm -f .github/workflows/ytdl-sub-config-manager-build-and-push.yaml.bak
 rm -f docs/docker.md.bak
 rm -f docker-compose.yml.bak
@@ -56,7 +56,7 @@ rm -f docker-compose.yml.bak
 echo -e "${GREEN}Version updated successfully to ${NEW_VERSION}${NC}"
 echo ""
 echo "Files updated:"
-echo "  - src/ytdl_sub_config_manager/__init__.py"
+echo "  - src/__init__.py"
 echo "  - .github/workflows/ytdl-sub-config-manager-build-and-push.yaml"
 echo "  - docs/docker.md"
 echo "  - docker-compose.yml"
