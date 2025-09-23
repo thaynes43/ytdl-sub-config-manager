@@ -59,9 +59,10 @@ class TestApplication:
         assert result == 1
 
     @patch('src.core.application.FileManager')
-    def test_run_scrape_command_detailed(self, mock_file_manager_class):
+    @patch('src.webscraper.scraper_factory.ScraperFactory')
+    def test_run_scrape_command_detailed(self, mock_scraper_factory, mock_file_manager_class):
         """Test detailed execution of run_scrape_command."""
-        # Setup mock config
+        # Setup mock config with scraper configuration
         mock_config = MagicMock()
         mock_config.media_dir = '/test/media'
         mock_config.subs_file = '/test/subs.yaml'
@@ -69,6 +70,20 @@ class TestApplication:
         mock_config.peloton_directory_repair_strategies = ['repair1']
         mock_config.peloton_episode_parsers = ['parser1']
         mock_config.skip_validation = False
+        
+        # Mock scraper configuration
+        mock_config.scrapers = {
+            'peloton.com': {
+                'login_strategy': 'src.webscraper.peloton.login_strategy:PelotonLoginStrategy',
+                'session_manager': 'src.webscraper.session_manager:GenericSessionManager',
+                'scraper_strategy': 'src.webscraper.peloton.scraper_strategy:PelotonScraperStrategy'
+            }
+        }
+        mock_config.peloton_activities = [Activity.CYCLING]
+        mock_config.peloton_username = 'test_user'
+        mock_config.peloton_password = 'test_pass'
+        mock_config.peloton_class_limit_per_activity = 25
+        mock_config.peloton_page_scrolls = 10
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
@@ -81,8 +96,21 @@ class TestApplication:
         
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2', 'id3'}
         mock_file_manager.cleanup_subscriptions.return_value = True
+        mock_file_manager.add_new_classes.return_value = None
         
         mock_file_manager_class.return_value = mock_file_manager
+
+        # Setup mock scraper manager
+        mock_scraper_manager = MagicMock()
+        mock_scraping_results = {
+            'cycling': MagicMock()
+        }
+        mock_scraping_results['cycling'].status.value = 'completed'
+        mock_scraping_results['cycling'].classes = [MagicMock()]
+        mock_scraping_results['cycling'].get_subscription_data.return_value = {'test': 'data'}
+        
+        mock_scraper_manager.scrape_activities.return_value = mock_scraping_results
+        mock_scraper_factory.create_scraper.return_value = mock_scraper_manager
 
         app = Application()
         result = app.run_scrape_command(mock_config)
@@ -102,11 +130,13 @@ class TestApplication:
         # Verify method calls
         mock_config.log_config.assert_called_once()
         mock_file_manager.get_merged_episode_data.assert_called_once()
-        mock_file_manager.find_all_existing_class_ids.assert_called_once()
+        # find_all_existing_class_ids is called twice - once for initial processing and once for scraping
+        assert mock_file_manager.find_all_existing_class_ids.call_count == 2
         mock_file_manager.cleanup_subscriptions.assert_called_once()
 
     @patch('src.core.application.FileManager')
-    def test_run_scrape_command_with_skip_validation(self, mock_file_manager_class):
+    @patch('src.webscraper.scraper_factory.ScraperFactory')
+    def test_run_scrape_command_with_skip_validation(self, mock_scraper_factory, mock_file_manager_class):
         """Test run_scrape_command with skip_validation=True."""
         # Setup mock config with skip_validation
         mock_config = MagicMock()
@@ -116,6 +146,14 @@ class TestApplication:
         mock_config.peloton_directory_repair_strategies = ['repair1']
         mock_config.peloton_episode_parsers = ['parser1']
         mock_config.skip_validation = True
+        
+        # Mock scraper configuration
+        mock_config.scrapers = {'peloton.com': {'test': 'config'}}
+        mock_config.peloton_activities = []
+        mock_config.peloton_username = 'test_user'
+        mock_config.peloton_password = 'test_pass'
+        mock_config.peloton_class_limit_per_activity = 25
+        mock_config.peloton_page_scrolls = 10
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
@@ -124,6 +162,11 @@ class TestApplication:
         mock_file_manager.cleanup_subscriptions.return_value = False
         
         mock_file_manager_class.return_value = mock_file_manager
+        
+        # Setup mock scraper
+        mock_scraper_manager = MagicMock()
+        mock_scraper_manager.scrape_activities.return_value = {}
+        mock_scraper_factory.create_scraper.return_value = mock_scraper_manager
 
         app = Application()
         result = app.run_scrape_command(mock_config)
@@ -141,7 +184,8 @@ class TestApplication:
         )
 
     @patch('src.core.application.FileManager')
-    def test_run_scrape_command_no_cleanup_needed(self, mock_file_manager_class):
+    @patch('src.webscraper.scraper_factory.ScraperFactory')
+    def test_run_scrape_command_no_cleanup_needed(self, mock_scraper_factory, mock_file_manager_class):
         """Test run_scrape_command when no cleanup is needed."""
         # Setup mock config
         mock_config = MagicMock()
@@ -151,6 +195,14 @@ class TestApplication:
         mock_config.peloton_directory_repair_strategies = []
         mock_config.peloton_episode_parsers = []
         mock_config.skip_validation = False
+        
+        # Mock scraper configuration
+        mock_config.scrapers = {'peloton.com': {'test': 'config'}}
+        mock_config.peloton_activities = []
+        mock_config.peloton_username = 'test_user'
+        mock_config.peloton_password = 'test_pass'
+        mock_config.peloton_class_limit_per_activity = 25
+        mock_config.peloton_page_scrolls = 10
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
@@ -159,6 +211,11 @@ class TestApplication:
         mock_file_manager.cleanup_subscriptions.return_value = False  # No cleanup needed
         
         mock_file_manager_class.return_value = mock_file_manager
+        
+        # Setup mock scraper
+        mock_scraper_manager = MagicMock()
+        mock_scraper_manager.scrape_activities.return_value = {}
+        mock_scraper_factory.create_scraper.return_value = mock_scraper_manager
 
         app = Application()
         result = app.run_scrape_command(mock_config)
@@ -166,7 +223,8 @@ class TestApplication:
         assert result == 0
 
     @patch('src.core.application.FileManager')
-    def test_run_scrape_command_multiple_activities(self, mock_file_manager_class):
+    @patch('src.webscraper.scraper_factory.ScraperFactory')
+    def test_run_scrape_command_multiple_activities(self, mock_scraper_factory, mock_file_manager_class):
         """Test run_scrape_command with multiple activities."""
         # Setup mock config
         mock_config = MagicMock()
@@ -176,6 +234,14 @@ class TestApplication:
         mock_config.peloton_directory_repair_strategies = []
         mock_config.peloton_episode_parsers = []
         mock_config.skip_validation = False
+        
+        # Mock scraper configuration
+        mock_config.scrapers = {'peloton.com': {'test': 'config'}}
+        mock_config.peloton_activities = [Activity.CYCLING, Activity.YOGA]
+        mock_config.peloton_username = 'test_user'
+        mock_config.peloton_password = 'test_pass'
+        mock_config.peloton_class_limit_per_activity = 25
+        mock_config.peloton_page_scrolls = 10
 
         # Setup mock file manager with multiple activities
         mock_file_manager = MagicMock()
@@ -193,8 +259,22 @@ class TestApplication:
         mock_file_manager.get_merged_episode_data.return_value = merged_data
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2'}
         mock_file_manager.cleanup_subscriptions.return_value = True
+        mock_file_manager.add_new_classes.return_value = None
         
         mock_file_manager_class.return_value = mock_file_manager
+        
+        # Setup mock scraper
+        mock_scraper_manager = MagicMock()
+        mock_scraping_results = {
+            'cycling': MagicMock(),
+            'yoga': MagicMock()
+        }
+        for result in mock_scraping_results.values():
+            result.status.value = 'completed'
+            result.classes = [MagicMock()]
+            result.get_subscription_data.return_value = {'test': 'data'}
+        mock_scraper_manager.scrape_activities.return_value = mock_scraping_results
+        mock_scraper_factory.create_scraper.return_value = mock_scraper_manager
 
         app = Application()
         result = app.run_scrape_command(mock_config)
@@ -273,7 +353,8 @@ class TestApplication:
         assert result == 1
 
     @patch('src.core.application.FileManager')
-    def test_run_scrape_command_with_getattr_default(self, mock_file_manager_class):
+    @patch('src.webscraper.scraper_factory.ScraperFactory')
+    def test_run_scrape_command_with_getattr_default(self, mock_scraper_factory, mock_file_manager_class):
         """Test run_scrape_command when config doesn't have skip_validation attribute."""
         # Setup mock config without skip_validation attribute
         mock_config = MagicMock()
@@ -285,6 +366,14 @@ class TestApplication:
         
         # Remove skip_validation attribute to test getattr default
         del mock_config.skip_validation
+        
+        # Mock scraper configuration
+        mock_config.scrapers = {'peloton.com': {'test': 'config'}}
+        mock_config.peloton_activities = []
+        mock_config.peloton_username = 'test_user'
+        mock_config.peloton_password = 'test_pass'
+        mock_config.peloton_class_limit_per_activity = 25
+        mock_config.peloton_page_scrolls = 10
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
@@ -293,6 +382,11 @@ class TestApplication:
         mock_file_manager.cleanup_subscriptions.return_value = False
         
         mock_file_manager_class.return_value = mock_file_manager
+        
+        # Setup mock scraper
+        mock_scraper_manager = MagicMock()
+        mock_scraper_manager.scrape_activities.return_value = {}
+        mock_scraper_factory.create_scraper.return_value = mock_scraper_manager
 
         app = Application()
         result = app.run_scrape_command(mock_config)
@@ -310,7 +404,8 @@ class TestApplication:
         )
 
     @patch('src.core.application.FileManager')
-    def test_run_scrape_command_empty_episode_data(self, mock_file_manager_class):
+    @patch('src.webscraper.scraper_factory.ScraperFactory')
+    def test_run_scrape_command_empty_episode_data(self, mock_scraper_factory, mock_file_manager_class):
         """Test run_scrape_command with empty episode data."""
         # Setup mock config
         mock_config = MagicMock()
@@ -320,6 +415,14 @@ class TestApplication:
         mock_config.peloton_directory_repair_strategies = []
         mock_config.peloton_episode_parsers = []
         mock_config.skip_validation = False
+        
+        # Mock scraper configuration
+        mock_config.scrapers = {'peloton.com': {'test': 'config'}}
+        mock_config.peloton_activities = []
+        mock_config.peloton_username = 'test_user'
+        mock_config.peloton_password = 'test_pass'
+        mock_config.peloton_class_limit_per_activity = 25
+        mock_config.peloton_page_scrolls = 10
 
         # Setup mock file manager with empty data
         mock_file_manager = MagicMock()
@@ -328,6 +431,11 @@ class TestApplication:
         mock_file_manager.cleanup_subscriptions.return_value = False
         
         mock_file_manager_class.return_value = mock_file_manager
+        
+        # Setup mock scraper
+        mock_scraper_manager = MagicMock()
+        mock_scraper_manager.scrape_activities.return_value = {}
+        mock_scraper_factory.create_scraper.return_value = mock_scraper_manager
 
         app = Application()
         result = app.run_scrape_command(mock_config)

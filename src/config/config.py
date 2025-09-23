@@ -39,6 +39,9 @@ class Config:
     peloton_directory_repair_strategies: List[str] = field(default_factory=list)
     peloton_episode_parsers: List[str] = field(default_factory=list)
     
+    # Web scraper configuration
+    scrapers: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    
     # Logging configuration
     log_level: str = "INFO"
     log_format: str = "standard"
@@ -291,6 +294,10 @@ class ConfigLoader:
                 normalized['peloton_directory_repair_strategies'] = peloton_config['directory_repair_strategies']
             if 'episode_parsers' in peloton_config:
                 normalized['peloton_episode_parsers'] = peloton_config['episode_parsers']
+        
+        # Handle scrapers section
+        if 'scrapers' in data:
+            normalized['scrapers'] = data['scrapers']
         
         # Handle legacy flat structure (for backwards compatibility)
         legacy_key_mapping = {

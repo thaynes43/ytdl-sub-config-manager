@@ -39,3 +39,20 @@ peloton:
   episode_parsers:
     - "src.io.peloton.episodes_from_disk:EpisodesFromDisk"
     - "src.io.peloton.episodes_from_subscriptions:EpisodesFromSubscriptions"
+
+# Web scraper configuration
+scrapers:
+  peloton.com:
+    # Session management
+    session_manager: "src.webscraper.session_manager:GenericSessionManager"
+    login_strategy: "src.webscraper.peloton.login_strategy:PelotonLoginStrategy"
+    
+    # Scraping strategy
+    scraper_strategy: "src.webscraper.peloton.scraper_strategy:PelotonScraperStrategy"
+    
+    # Scraping configuration
+    headless: true
+    container_mode: true  # Set to true for container/production mode
+    scroll_pause_time: 3.0
+    login_wait_time: 15.0
+    page_load_wait_time: 10.0

@@ -108,14 +108,85 @@ class Application:
         else:
             logger.info("No cleanup needed in subscriptions file")
         
-        # TODO: Implement actual Peloton scraping
-        logger.warning("Actual Peloton scraping not yet implemented")
-        logger.info("Scraping workflow would continue with:")
-        logger.info("1. Initialize Peloton session")
-        logger.info("2. Scrape classes for each configured activity")
-        logger.info("3. Generate episode data with correct numbering")
-        logger.info("4. Update subscriptions file")
-        logger.info("5. Create GitHub PR if configured")
+        # Implement actual Peloton scraping
+        logger.info("Starting web scraping workflow")
+        
+        # Get scraper configuration
+        scrapers_config = getattr(config, 'scrapers', {})
+        if not scrapers_config:
+            logger.error("No scrapers configuration found")
+            return 1
+        
+        # Find Peloton scraper
+        peloton_scraper_config = scrapers_config.get('peloton.com')
+        if not peloton_scraper_config:
+            logger.error("No peloton.com scraper configuration found")
+            return 1
+        
+        try:
+            # Create scraper manager
+            from ..webscraper.scraper_factory import ScraperFactory
+            from ..webscraper.models import ScrapingConfig
+            
+            logger.info("Creating Peloton scraper")
+            scraper_manager = ScraperFactory.create_scraper(peloton_scraper_config)
+            
+            # Prepare scraping configurations for each activity
+            scraping_configs = {}
+            existing_class_ids = file_manager.find_all_existing_class_ids()
+            
+            for activity in config.peloton_activities:
+                # Get episode numbering data for this activity
+                activity_data = merged_data.get(activity)
+                episode_numbering = {}
+                if activity_data:
+                    episode_numbering = dict(activity_data.max_episode)
+                
+                scraping_configs[activity.value] = ScrapingConfig(
+                    activity=activity.value,
+                    max_classes=config.peloton_class_limit_per_activity,
+                    page_scrolls=config.peloton_page_scrolls,
+                    existing_class_ids=existing_class_ids,
+                    episode_numbering_data=episode_numbering,
+                    headless=peloton_scraper_config.get('headless', True),
+                    container_mode=peloton_scraper_config.get('container_mode', True),
+                    scroll_pause_time=peloton_scraper_config.get('scroll_pause_time', 3.0),
+                    login_wait_time=peloton_scraper_config.get('login_wait_time', 15.0),
+                    page_load_wait_time=peloton_scraper_config.get('page_load_wait_time', 10.0)
+                )
+            
+            # Perform scraping
+            logger.info(f"Scraping {len(config.peloton_activities)} activities")
+            scraping_results = scraper_manager.scrape_activities(
+                username=config.peloton_username,
+                password=config.peloton_password,
+                activities=[activity.value for activity in config.peloton_activities],
+                configs=scraping_configs
+            )
+            
+            # Process results and update subscriptions
+            total_new_classes = 0
+            for activity_name, result in scraping_results.items():
+                if result.status.value == "completed":
+                    subscription_data = result.get_subscription_data()
+                    if subscription_data:
+                        # Add to subscriptions file
+                        file_manager.add_new_classes(subscription_data)
+                        total_new_classes += len(result.classes)
+                        logger.info(f"Added {len(result.classes)} new {activity_name} classes")
+                    else:
+                        logger.info(f"No new {activity_name} classes to add")
+                else:
+                    logger.error(f"Failed to scrape {activity_name}: {result.error_message}")
+            
+            if total_new_classes > 0:
+                logger.info(f"Successfully added {total_new_classes} new classes to subscriptions")
+            else:
+                logger.info("No new classes found to add")
+                
+        except Exception as e:
+            logger.error(f"Web scraping failed: {e}")
+            return 1
         
         logger.info("Scraping workflow completed successfully")
         return 0
