@@ -85,37 +85,51 @@ class GenericDirectoryValidator:
         self.logger.info(f"Starting directory validation and repair: {self.media_dir}")
         
         # Step 1: Scan for all episode files and detect structural issues
-        all_episodes = self._scan_all_episodes()
+        all_episodes = self._scan_all_episodes(log_context="initial")
         
         # Step 2: Detect and fix corrupted directory structures
         corrupted_episodes = [ep for ep in all_episodes if ep.is_corrupted_location]
+        repaired_corrupted_count = 0
         if corrupted_episodes:
             self.logger.warning(f"Found {len(corrupted_episodes)} episodes in corrupted locations")
             if not self._repair_corrupted_locations(corrupted_episodes):
                 return False
+            repaired_corrupted_count = len(corrupted_episodes)
             # Re-scan after repairs
-            all_episodes = self._scan_all_episodes()
+            all_episodes = self._scan_all_episodes(log_context="after corruption repair")
         
         # Step 3: Detect episode number conflicts
         conflicts = self._detect_episode_conflicts(all_episodes)
+        repaired_conflicts_count = 0
         if conflicts:
             self.logger.warning(f"Found {len(conflicts)} episode number conflicts")
             if not self._resolve_episode_conflicts(conflicts, all_episodes):
                 return False
+            repaired_conflicts_count = len(conflicts)
         
         # Step 4: Final validation
-        final_episodes = self._scan_all_episodes()
+        final_episodes = self._scan_all_episodes(log_context="final validation")
         final_conflicts = self._detect_episode_conflicts(final_episodes)
         
         if final_conflicts:
             self.logger.error(f"Still have {len(final_conflicts)} conflicts after repair!")
             return False
         
+        # Log repair summary
+        total_repairs = repaired_corrupted_count + repaired_conflicts_count
+        if total_repairs > 0:
+            self.logger.info(f"Repaired {total_repairs} directories ({repaired_corrupted_count} corrupted locations, {repaired_conflicts_count} episode conflicts)")
+        else:
+            self.logger.info("Repaired 0 directories")
+        
         self.logger.info("Directory validation and repair completed successfully")
         return True
     
-    def _scan_all_episodes(self) -> List[EpisodeInfo]:
+    def _scan_all_episodes(self, log_context: str = "") -> List[EpisodeInfo]:
         """Scan all episode directories and extract episode information.
+        
+        Args:
+            log_context: Optional context for logging (e.g., "initial", "after repair")
         
         Returns:
             List of EpisodeInfo objects for all found episodes
@@ -132,7 +146,10 @@ class GenericDirectoryValidator:
             if episode_info:
                 episodes.append(episode_info)
         
-        self.logger.info(f"Found {len(episodes)} total episodes during scan")
+        # Only log if context is provided (to avoid duplicate logs)
+        if log_context:
+            self.logger.info(f"Found {len(episodes)} total episodes during {log_context} scan")
+        
         return episodes
     
     def _parse_episode_info(self, path: Path) -> Optional[EpisodeInfo]:
@@ -365,6 +382,9 @@ class GenericDirectoryValidator:
                         self.logger.error("Move action requires target_path")
                         return False
                     
+                    # Store source parent for cleanup
+                    source_parent = action.source_path.parent
+                    
                     # Create target parent directory if needed
                     action.target_path.parent.mkdir(parents=True, exist_ok=True)
                     
@@ -376,12 +396,22 @@ class GenericDirectoryValidator:
                     import shutil
                     shutil.move(str(action.source_path), str(action.target_path))
                     
+                    # Clean up empty parent directories
+                    self._cleanup_empty_directories(source_parent)
+                    
                 elif action.action_type == "rename":
                     if not action.target_path:
                         self.logger.error("Rename action requires target_path")
                         return False
                     
+                    # Store source parent for cleanup if moving to different directory
+                    source_parent = action.source_path.parent if action.source_path.parent != action.target_path.parent else None
+                    
                     action.source_path.rename(action.target_path)
+                    
+                    # Clean up empty parent directories if we moved to a different directory
+                    if source_parent:
+                        self._cleanup_empty_directories(source_parent)
                     
                 elif action.action_type == "delete":
                     if action.source_path.is_dir():
@@ -399,6 +429,33 @@ class GenericDirectoryValidator:
                 return False
         
         return True
+    
+    def _cleanup_empty_directories(self, directory: Path) -> None:
+        """Clean up empty parent directories after repair operations.
+        
+        Args:
+            directory: Directory to check and clean up if empty
+        """
+        try:
+            # Don't clean up the media directory itself
+            if directory == self.media_dir or not directory.is_relative_to(self.media_dir):
+                return
+            
+            # Check if directory exists and is empty
+            if directory.exists() and directory.is_dir():
+                try:
+                    # Check if directory is empty (no files or subdirectories)
+                    if not any(directory.iterdir()):
+                        self.logger.info(f"Cleaning up empty directory: {directory}")
+                        directory.rmdir()
+                        
+                        # Recursively clean up parent directories
+                        self._cleanup_empty_directories(directory.parent)
+                except OSError:
+                    # Directory not empty or other OS error, skip
+                    pass
+        except Exception as e:
+            self.logger.debug(f"Failed to cleanup directory {directory}: {e}")
     
     def _detect_episode_conflicts(self, episodes: List[EpisodeInfo]) -> List[ConflictInfo]:
         """Detect episode number conflicts within activity/season combinations.
@@ -499,10 +556,10 @@ class GenericDirectoryValidator:
         
         season = int(season_match.group(1))
         
-        # Create new folder name with updated episode number
+        # Create new folder name with updated episode number (no leading zeros)
         new_folder_name = re.sub(
             r'S(\d+)E\d+', 
-            f'S{season}E{new_episode_number:03d}', 
+            f'S{season}E{new_episode_number}', 
             folder_name
         )
         
