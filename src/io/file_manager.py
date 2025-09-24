@@ -110,21 +110,21 @@ class FileManager:
         """
         return self.episode_manager.cleanup_subscriptions()
     
-    def add_new_classes(self, classes: Dict[str, Dict[str, dict]]) -> bool:
-        """Add new classes to the subscriptions file.
+    def add_new_subscriptions(self, subscriptions: Dict[str, Dict[str, dict]]) -> bool:
+        """Add new subscriptions to the subscriptions file.
         
         Args:
-            classes: Nested dictionary structure for merging into subscriptions.yaml
+            subscriptions: Nested dictionary structure for merging into subscriptions.yaml
                     Format: {duration_key: {episode_title: episode_data}}
                     
         Returns:
             True if successful, False otherwise
         """
-        if not classes:
-            self.logger.info("No new classes to add")
+        if not subscriptions:
+            self.logger.info("No new subscriptions to add")
             return True
         
-        self.logger.info(f"Adding {sum(len(episodes) for episodes in classes.values())} new classes")
+        self.logger.info(f"Adding {sum(len(episodes) for episodes in subscriptions.values())} new subscriptions")
         
         try:
             import yaml
@@ -132,7 +132,7 @@ class FileManager:
             # Load existing subscriptions
             subs_file_path = Path(self.subs_file)
             if subs_file_path.exists():
-                with open(subs_file_path, 'r') as f:
+                with open(subs_file_path, 'r', encoding='utf-8') as f:
                     subs_data = yaml.safe_load(f)
             else:
                 # Create basic structure if file doesn't exist
@@ -142,8 +142,8 @@ class FileManager:
             if "Plex TV Show by Date" not in subs_data:
                 subs_data["Plex TV Show by Date"] = {}
             
-            # Merge in new classes
-            for header, episodes in classes.items():
+            # Merge in new subscriptions
+            for header, episodes in subscriptions.items():
                 if header not in subs_data["Plex TV Show by Date"]:
                     subs_data["Plex TV Show by Date"][header] = {}
                 
@@ -153,7 +153,7 @@ class FileManager:
                     self.logger.debug(f"Added episode: {header} -> {ep_title}")
             
             # Write back to file
-            with open(subs_file_path, 'w') as f:
+            with open(subs_file_path, 'w', encoding='utf-8') as f:
                 yaml.dump(subs_data, f, sort_keys=False, allow_unicode=True, 
                          default_flow_style=False, indent=2, width=4096)
             
@@ -161,7 +161,7 @@ class FileManager:
             return True
             
         except Exception as e:
-            self.logger.error(f"Error adding new classes to subscriptions: {e}")
+            self.logger.error(f"Error adding new subscriptions to subscriptions: {e}")
             return False
     
     def validate_directories(self) -> bool:

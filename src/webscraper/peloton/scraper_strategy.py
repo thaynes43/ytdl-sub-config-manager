@@ -2,6 +2,7 @@
 
 import re
 import time
+import unicodedata
 from typing import List
 from urllib.parse import urlparse, parse_qs
 from selenium import webdriver
@@ -9,11 +10,12 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
 from ..scraper_strategy import ScraperStrategy
-from ..models import ScrapedClass, ScrapingConfig, ScrapingResult, ScrapingStatus
+from ..models import ScrapedClass, ScrapingConfig, ScrapingResult, ScrapingStatus, normalize_text, sanitize_for_filesystem
 
 
 class PelotonScraperStrategy(ScraperStrategy):
     """Peloton-specific web scraping strategy."""
+    
     
     def get_activity_url(self, activity: str) -> str:
         """Get the URL for a Peloton activity's class listing."""
@@ -136,17 +138,17 @@ class PelotonScraperStrategy(ScraperStrategy):
         try:
             # Extract title
             title_element = link_element.find_element(By.CSS_SELECTOR, '[data-test-id="videoCellTitle"]')
-            title = title_element.text.strip()
+            title = normalize_text(title_element.text)
             
             # Extract instructor and activity
             subtitle_element = link_element.find_element(By.CSS_SELECTOR, '[data-test-id="videoCellSubtitle"]')
-            subtitle_text = subtitle_element.text.strip()
+            subtitle_text = normalize_text(subtitle_element.text)
             
             # Parse "Instructor · Activity" format
             parts = subtitle_text.split('·')
             if len(parts) >= 2:
-                instructor = parts[0].strip().title()
-                activity = parts[1].strip().title()
+                instructor = normalize_text(parts[0].strip().title())
+                activity = normalize_text(parts[1].strip().title())
             else:
                 self.logger.warning(f"Unexpected subtitle format: {subtitle_text}")
                 instructor = "Unknown"

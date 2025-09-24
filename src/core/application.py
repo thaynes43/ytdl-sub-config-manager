@@ -171,18 +171,18 @@ class Application:
                     subscription_data = result.get_subscription_data()
                     if subscription_data:
                         # Add to subscriptions file
-                        file_manager.add_new_classes(subscription_data)
+                        file_manager.add_new_subscriptions(subscription_data)
                         total_new_classes += len(result.classes)
                         logger.info(f"Added {len(result.classes)} new {activity_name} classes")
                     else:
-                        logger.info(f"No new {activity_name} classes to add")
+                        logger.info(f"No new {activity_name} subscriptions to add")
                 else:
                     logger.error(f"Failed to scrape {activity_name}: {result.error_message}")
             
             if total_new_classes > 0:
-                logger.info(f"Successfully added {total_new_classes} new classes to subscriptions")
+                logger.info(f"Successfully added {total_new_classes} new subscriptions to subscriptions")
             else:
-                logger.info("No new classes found to add")
+                logger.info("No new subscriptions found to add")
                 
         except Exception as e:
             logger.error(f"Web scraping failed: {e}")

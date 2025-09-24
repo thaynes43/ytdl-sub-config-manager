@@ -477,12 +477,19 @@ class TestFileManager:
 
 
 def test_integration_with_real_example():
-    """Integration test using the real subscriptions.example.yaml file."""
-    # This test uses the actual example file in the project
-    subs_file = "subscriptions.example.yaml"
+    """Integration test using the real subscriptions file."""
+    # This test uses the actual subscriptions file in the project
+    # Try multiple possible subscription files
+    possible_files = ["subscriptions.example.yaml", "subscriptions.yaml", "subscriptions.test.yaml"]
+    subs_file = None
     
-    if not Path(subs_file).exists():
-        pytest.skip("subscriptions.example.yaml not found")
+    for file_path in possible_files:
+        if Path(file_path).exists():
+            subs_file = file_path
+            break
+    
+    if subs_file is None:
+        pytest.skip("No subscriptions file found (tried: {})".format(", ".join(possible_files)))
     
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create minimal media structure

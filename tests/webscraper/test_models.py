@@ -348,3 +348,330 @@ class TestScrapingConfig:
         assert config.scroll_pause_time == 5.0
         assert config.login_wait_time == 30.0
         assert config.page_load_wait_time == 15.0
+
+
+class TestNormalizeText:
+    """Test cases for the normalize_text utility function."""
+    
+    def test_normalize_text_with_valid_unicode(self):
+        """Test normalize_text with valid Unicode characters."""
+        from src.webscraper.models import normalize_text
+        
+        # Test with proper accented characters
+        result = normalize_text("Mariana Fernández")
+        assert result == "Mariana Fernández"
+        
+        # Test with other accented characters
+        result = normalize_text("José María")
+        assert result == "José María"
+        
+        result = normalize_text("Café Niño")
+        assert result == "Café Niño"
+    
+    def test_normalize_text_with_corrupted_characters(self):
+        """Test normalize_text with corrupted Unicode replacement characters."""
+        from src.webscraper.models import normalize_text
+        
+        # Test with Unicode replacement character (�)
+        corrupted_text = "Mariana Fern\ufffdndez"
+        result = normalize_text(corrupted_text)
+        assert result == "Mariana Fernndez"  # Should remove the replacement char
+        
+        # Test with multiple replacement characters
+        corrupted_text = "Test\ufffd with\ufffd multiple"
+        result = normalize_text(corrupted_text)
+        assert result == "Test with multiple"
+    
+    def test_normalize_text_with_whitespace(self):
+        """Test normalize_text handles whitespace correctly."""
+        from src.webscraper.models import normalize_text
+        
+        # Test with leading/trailing whitespace
+        result = normalize_text("  Mariana Fernández  ")
+        assert result == "Mariana Fernández"
+        
+        # Test with internal whitespace preservation
+        result = normalize_text("Mariana   Fernández")
+        assert result == "Mariana   Fernández"
+    
+    def test_normalize_text_edge_cases(self):
+        """Test normalize_text with edge cases."""
+        from src.webscraper.models import normalize_text
+        
+        # Test with empty string
+        result = normalize_text("")
+        assert result == ""
+        
+        # Test with None (should not crash)
+        result = normalize_text(None)
+        assert result is None
+        
+        # Test with normal ASCII text
+        result = normalize_text("Normal English Text")
+        assert result == "Normal English Text"
+    
+    def test_normalize_text_yaml_safety(self):
+        """Test that normalized text produces valid YAML."""
+        import yaml
+        from src.webscraper.models import normalize_text
+        
+        # Test various problematic characters
+        test_strings = [
+            "Mariana Fernández",
+            "José María Café",
+            "Test with émojis and ñ",
+            "Múltiple áccénts éverywhere"
+        ]
+        
+        for test_string in test_strings:
+            normalized = normalize_text(test_string)
+            
+            # Create a simple YAML structure
+            yaml_data = {
+                "test_entry": {
+                    "title": normalized,
+                    "path": f"/media/test/{normalized}"
+                }
+            }
+            
+            # Should not raise an exception when dumping to YAML
+            try:
+                yaml_output = yaml.dump(yaml_data, allow_unicode=True, default_flow_style=False)
+                # Should be able to parse it back
+                parsed_data = yaml.safe_load(yaml_output)
+                assert parsed_data["test_entry"]["title"] == normalized
+            except Exception as e:
+                pytest.fail(f"YAML serialization failed for '{normalized}': {e}")
+    
+    def test_scraped_class_with_unicode_characters(self):
+        """Test ScrapedClass handles Unicode characters in to_subscription_entry."""
+        from src.webscraper.models import ScrapedClass, ScrapingStatus
+        
+        # Create a class with Unicode characters
+        scraped_class = ScrapedClass(
+            class_id="test123",
+            title="Focus Flow: For Runners",
+            instructor="Mariana Fernández",
+            activity="Yoga",
+            duration_minutes=10,
+            player_url="https://example.com/class",
+            season_number=10,
+            episode_number=31,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Convert to subscription entry
+        entry = scraped_class.to_subscription_entry()
+        
+        # Verify Unicode characters are preserved
+        assert "Mariana Fernández" in entry["overrides"]["tv_show_directory"]
+        assert entry["overrides"]["tv_show_directory"] == "/media/peloton/Yoga/Mariana Fernández"
+        
+        # Verify the entry can be serialized to YAML
+        import yaml
+        yaml_output = yaml.dump(entry, allow_unicode=True, default_flow_style=False)
+        parsed_entry = yaml.safe_load(yaml_output)
+        assert parsed_entry == entry
+
+
+class TestFilesystemSanitization:
+    """Test cases for the sanitize_for_filesystem utility function."""
+    
+    def test_sanitize_for_filesystem_basic_cases(self):
+        """Test sanitize_for_filesystem with basic problematic characters."""
+        from src.webscraper.models import sanitize_for_filesystem
+        
+        # Test forward slash (the main issue)
+        result = sanitize_for_filesystem("50/50 Workout")
+        assert result == "50-50 Workout"
+        
+        # Test multiple slashes
+        result = sanitize_for_filesystem("Test/Path/With/Slashes")
+        assert result == "Test-Path-With-Slashes"
+        
+        # Test backslashes (Windows)
+        result = sanitize_for_filesystem("Test\\Path\\Windows")
+        assert result == "Test-Path-Windows"
+    
+    def test_sanitize_for_filesystem_colons_and_semicolons(self):
+        """Test sanitize_for_filesystem with colons and semicolons."""
+        from src.webscraper.models import sanitize_for_filesystem
+        
+        # Test colons
+        result = sanitize_for_filesystem("Morning: Flow")
+        assert result == "Morning- Flow"
+        
+        # Test semicolons
+        result = sanitize_for_filesystem("Flow; Core; Stretch")
+        assert result == "Flow- Core- Stretch"
+        
+        # Test combination
+        result = sanitize_for_filesystem("Morning: Flow; Evening: Stretch")
+        assert result == "Morning- Flow- Evening- Stretch"
+    
+    def test_sanitize_for_filesystem_special_characters(self):
+        """Test sanitize_for_filesystem with various special characters."""
+        from src.webscraper.models import sanitize_for_filesystem
+        
+        # Test wildcards and redirections
+        result = sanitize_for_filesystem("Test*?<>|")
+        assert result == "Test-----"
+        
+        # Test quotes
+        result = sanitize_for_filesystem('Flow "Advanced" Session')
+        assert result == "Flow 'Advanced' Session"
+        
+        # Test control characters
+        result = sanitize_for_filesystem("Test\t\n\r Flow")
+        assert result == "Test Flow"  # Multiple spaces are collapsed
+    
+    def test_sanitize_for_filesystem_whitespace_handling(self):
+        """Test sanitize_for_filesystem handles whitespace correctly."""
+        from src.webscraper.models import sanitize_for_filesystem
+        
+        # Test multiple spaces collapse
+        result = sanitize_for_filesystem("Test    Multiple    Spaces")
+        assert result == "Test Multiple Spaces"
+        
+        # Test leading/trailing spaces and dots
+        result = sanitize_for_filesystem("  . Test Flow .  ")
+        assert result == "Test Flow"
+    
+    def test_sanitize_for_filesystem_edge_cases(self):
+        """Test sanitize_for_filesystem with edge cases."""
+        from src.webscraper.models import sanitize_for_filesystem
+        
+        # Test empty string
+        result = sanitize_for_filesystem("")
+        assert result == ""
+        
+        # Test None
+        result = sanitize_for_filesystem(None)
+        assert result is None
+        
+        # Test normal text (should be unchanged)
+        result = sanitize_for_filesystem("Normal Flow Session")
+        assert result == "Normal Flow Session"
+    
+    def test_scraped_class_with_filesystem_unsafe_characters(self):
+        """Test ScrapedClass handles filesystem-unsafe characters correctly."""
+        from src.webscraper.models import ScrapedClass, ScrapingStatus
+        
+        # Create a class with the specific "50/50" case mentioned
+        scraped_class = ScrapedClass(
+            class_id="test123",
+            title="15 min 50/50 Workout",
+            instructor="Kirra Michel",
+            activity="Strength",
+            duration_minutes=15,
+            player_url="https://example.com/class",
+            season_number=15,
+            episode_number=1,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Convert to subscription entry
+        entry = scraped_class.to_subscription_entry()
+        
+        # Verify slashes are removed from directory path
+        expected_dir = "/media/peloton/Strength/Kirra Michel"
+        assert entry["overrides"]["tv_show_directory"] == expected_dir
+        
+        # Verify the entry can be serialized to YAML
+        import yaml
+        yaml_output = yaml.dump(entry, allow_unicode=True, default_flow_style=False)
+        parsed_entry = yaml.safe_load(yaml_output)
+        assert parsed_entry == entry
+    
+    def test_scraping_result_with_filesystem_unsafe_characters(self):
+        """Test ScrapingResult handles filesystem-unsafe characters in get_subscription_data."""
+        from src.webscraper.models import ScrapedClass, ScrapingResult, ScrapingStatus
+        
+        # Create classes with various problematic characters
+        classes = [
+            ScrapedClass(
+                class_id="test1",
+                title="15 min 50/50 Workout",
+                instructor="Kirra Michel",
+                activity="Strength",
+                duration_minutes=15,
+                player_url="https://example.com/class1",
+                season_number=15,
+                episode_number=1,
+                status=ScrapingStatus.COMPLETED
+            ),
+            ScrapedClass(
+                class_id="test2",
+                title="Morning: Flow Session",
+                instructor="Test/Instructor",
+                activity="Yoga",
+                duration_minutes=30,
+                player_url="https://example.com/class2",
+                season_number=30,
+                episode_number=1,
+                status=ScrapingStatus.COMPLETED
+            )
+        ]
+        
+        result = ScrapingResult(
+            activity="strength",
+            classes=classes,
+            total_found=2,
+            total_skipped=0,
+            total_errors=0,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Get subscription data
+        subscription_data = result.get_subscription_data()
+        
+        # Verify duration keys are filesystem-safe
+        assert "= Strength (15 min)" in subscription_data
+        assert "= Yoga (30 min)" in subscription_data
+        
+        # Verify episode titles are filesystem-safe
+        strength_section = subscription_data["= Strength (15 min)"]
+        yoga_section = subscription_data["= Yoga (30 min)"]
+        
+        # Check that slashes are removed from episode titles
+        assert "15 min 50-50 Workout with Kirra Michel" in strength_section
+        assert "Morning- Flow Session with Test-Instructor" in yoga_section
+        
+        # Verify the subscription data can be serialized to YAML
+        import yaml
+        yaml_output = yaml.dump(subscription_data, allow_unicode=True, default_flow_style=False)
+        parsed_data = yaml.safe_load(yaml_output)
+        assert parsed_data == subscription_data
+    
+    def test_filesystem_sanitization_comprehensive(self):
+        """Comprehensive test with all types of problematic characters."""
+        from src.webscraper.models import ScrapedClass, ScrapingStatus
+        
+        # Create a class with many problematic characters
+        scraped_class = ScrapedClass(
+            class_id="test123",
+            title='Complex: "50/50" Workout*?',
+            instructor="Test\\Instructor|Name",
+            activity="Strength<>Training",
+            duration_minutes=20,
+            player_url="https://example.com/class",
+            season_number=20,
+            episode_number=1,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Convert to subscription entry
+        entry = scraped_class.to_subscription_entry()
+        
+        # Verify all problematic characters are sanitized
+        expected_dir = "/media/peloton/Strength--Training/Test-Instructor-Name"
+        assert entry["overrides"]["tv_show_directory"] == expected_dir
+        
+        # Verify the entry is valid YAML
+        import yaml
+        try:
+            yaml_output = yaml.dump(entry, allow_unicode=True, default_flow_style=False)
+            parsed_entry = yaml.safe_load(yaml_output)
+            assert parsed_entry == entry
+        except Exception as e:
+            pytest.fail(f"YAML serialization failed: {e}")

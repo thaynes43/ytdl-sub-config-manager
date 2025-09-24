@@ -96,7 +96,7 @@ class TestApplication:
         
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2', 'id3'}
         mock_file_manager.cleanup_subscriptions.return_value = True
-        mock_file_manager.add_new_classes.return_value = None
+        mock_file_manager.add_new_subscriptions.return_value = None
         
         mock_file_manager_class.return_value = mock_file_manager
 
@@ -259,7 +259,7 @@ class TestApplication:
         mock_file_manager.get_merged_episode_data.return_value = merged_data
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2'}
         mock_file_manager.cleanup_subscriptions.return_value = True
-        mock_file_manager.add_new_classes.return_value = None
+        mock_file_manager.add_new_subscriptions.return_value = None
         
         mock_file_manager_class.return_value = mock_file_manager
         

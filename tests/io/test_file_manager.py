@@ -206,8 +206,8 @@ class TestFileManager:
     @patch('yaml.safe_load')
     @patch('yaml.dump')
     @patch('src.io.file_manager.Path')
-    def test_add_new_classes_success(self, mock_path_class, mock_yaml_dump, mock_yaml_safe_load, mock_open):
-        """Test add_new_classes method with successful addition."""
+    def test_add_new_subscriptions_success(self, mock_path_class, mock_yaml_dump, mock_yaml_safe_load, mock_open):
+        """Test add_new_subscriptions method with successful addition."""
         # Setup mocks
         mock_path = MagicMock()
         mock_path.exists.return_value = True
@@ -227,14 +227,14 @@ class TestFileManager:
                 episode_parsers=["parser1"]
             )
             
-            classes = {
+            subscriptions = {
                 "20min": {
                     "Episode 1": {"download": "url1", "overrides": {"season_number": 1}},
                     "Episode 2": {"download": "url2", "overrides": {"season_number": 1}}
                 }
             }
             
-            result = file_manager.add_new_classes(classes)
+            result = file_manager.add_new_subscriptions(subscriptions)
             assert result is True
             
             # Verify YAML operations
@@ -246,8 +246,8 @@ class TestFileManager:
     @patch('builtins.open')
     @patch('yaml.dump')
     @patch('src.io.file_manager.Path')
-    def test_add_new_classes_file_not_exists(self, mock_path_class, mock_yaml_dump, mock_open):
-        """Test add_new_classes method when file doesn't exist."""
+    def test_add_new_subscriptions_file_not_exists(self, mock_path_class, mock_yaml_dump, mock_open):
+        """Test add_new_subscriptions method when file doesn't exist."""
         # Setup mocks
         mock_path = MagicMock()
         mock_path.exists.return_value = False
@@ -266,9 +266,9 @@ class TestFileManager:
                 episode_parsers=["parser1"]
             )
             
-            classes = {"20min": {"Episode 1": {"download": "url1"}}}
+            subscriptions = {"20min": {"Episode 1": {"download": "url1"}}}
             
-            result = file_manager.add_new_classes(classes)
+            result = file_manager.add_new_subscriptions(subscriptions)
             assert result is True
             
             # Should still dump the new structure
@@ -276,8 +276,8 @@ class TestFileManager:
             # Should only write (no read since file doesn't exist)
             mock_open.assert_called_once()
 
-    def test_add_new_classes_empty_classes(self):
-        """Test add_new_classes method with empty classes."""
+    def test_add_new_subscriptions_empty_subscriptions(self):
+        """Test add_new_subscriptions method with empty subscriptions."""
         with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
             mock_manager = MagicMock()
             mock_manager_class.return_value = mock_manager
@@ -289,12 +289,12 @@ class TestFileManager:
                 episode_parsers=["parser1"]
             )
             
-            result = file_manager.add_new_classes({})
+            result = file_manager.add_new_subscriptions({})
             assert result is True  # Empty is considered success
 
     @patch('yaml.safe_load')
-    def test_add_new_classes_exception_handling(self, mock_yaml_safe_load):
-        """Test add_new_classes method exception handling."""
+    def test_add_new_subscriptions_exception_handling(self, mock_yaml_safe_load):
+        """Test add_new_subscriptions method exception handling."""
         mock_yaml_safe_load.side_effect = Exception("YAML error")
         
         with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
@@ -308,10 +308,86 @@ class TestFileManager:
                 episode_parsers=["parser1"]
             )
             
-            classes = {"20min": {"Episode 1": {"download": "url1"}}}
+            subscriptions = {"20min": {"Episode 1": {"download": "url1"}}}
             
-            result = file_manager.add_new_classes(classes)
+            result = file_manager.add_new_subscriptions(subscriptions)
             assert result is False
+
+    @patch('builtins.open')
+    @patch('yaml.dump')
+    @patch('yaml.safe_load')
+    @patch('src.io.file_manager.Path')
+    def test_add_new_subscriptions_unicode_handling(self, mock_path_class, mock_yaml_safe_load, mock_yaml_dump, mock_open):
+        """Test add_new_subscriptions method handles Unicode characters correctly."""
+        # Setup mocks
+        mock_path = MagicMock()
+        mock_path.exists.return_value = True
+        mock_path_class.return_value = mock_path
+        
+        mock_yaml_safe_load.return_value = {"Plex TV Show by Date": {}}
+        mock_file_handle = MagicMock()
+        mock_open.return_value.__enter__.return_value = mock_file_handle
+        
+        with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+            mock_manager = MagicMock()
+            mock_manager_class.return_value = mock_manager
+            
+            file_manager = FileManager(
+                media_dir="/test/media",
+                subs_file="/test/subs.yaml",
+                validate_and_repair=False,
+                episode_parsers=["parser1"]
+            )
+            
+            # Test with Unicode characters including accented characters
+            subscriptions_with_unicode = {
+                "30min": {
+                    "10 min Focus Flow: For Runners with Mariana Fernández": {
+                        "download": "https://example.com/class1", 
+                        "overrides": {
+                            "tv_show_directory": "/media/peloton/Yoga/Mariana Fernández",
+                            "season_number": 10,
+                            "episode_number": 31
+                        }
+                    },
+                    "Café Morning Flow with José María": {
+                        "download": "https://example.com/class2",
+                        "overrides": {
+                            "tv_show_directory": "/media/peloton/Yoga/José María",
+                            "season_number": 10,
+                            "episode_number": 32
+                        }
+                    }
+                }
+            }
+            
+            # Call method
+            result = file_manager.add_new_subscriptions(subscriptions_with_unicode)
+            assert result is True
+            
+            # Verify that files were opened with UTF-8 encoding
+            mock_open.assert_any_call(mock_path, 'r', encoding='utf-8')
+            mock_open.assert_any_call(mock_path, 'w', encoding='utf-8')
+            
+            # Verify YAML dump was called with allow_unicode=True
+            mock_yaml_dump.assert_called_once()
+            call_args = mock_yaml_dump.call_args
+            assert call_args[1]['allow_unicode'] is True
+            
+            # Verify the data structure passed to yaml.dump contains Unicode correctly
+            dumped_data = call_args[0][0]  # First positional argument to yaml.dump
+            
+            # Check that Unicode characters are preserved in the data structure
+            plex_section = dumped_data["Plex TV Show by Date"]["30min"]
+            assert "10 min Focus Flow: For Runners with Mariana Fernández" in plex_section
+            assert "Café Morning Flow with José María" in plex_section
+            
+            # Verify directory paths contain Unicode characters
+            fernandez_entry = plex_section["10 min Focus Flow: For Runners with Mariana Fernández"]
+            assert fernandez_entry["overrides"]["tv_show_directory"] == "/media/peloton/Yoga/Mariana Fernández"
+            
+            jose_entry = plex_section["Café Morning Flow with José María"]
+            assert jose_entry["overrides"]["tv_show_directory"] == "/media/peloton/Yoga/José María"
 
     @patch('src.io.file_manager.Path')
     def test_validate_directories_success(self, mock_path_class):
