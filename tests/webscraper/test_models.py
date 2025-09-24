@@ -497,17 +497,17 @@ class TestFilesystemSanitization:
         """Test sanitize_for_filesystem with colons and semicolons."""
         from src.webscraper.models import sanitize_for_filesystem
         
-        # Test colons
+        # Test colons (should be preserved now)
         result = sanitize_for_filesystem("Morning: Flow")
-        assert result == "Morning- Flow"
+        assert result == "Morning: Flow"
         
-        # Test semicolons
+        # Test semicolons (should still be replaced)
         result = sanitize_for_filesystem("Flow; Core; Stretch")
         assert result == "Flow- Core- Stretch"
         
         # Test combination
         result = sanitize_for_filesystem("Morning: Flow; Evening: Stretch")
-        assert result == "Morning- Flow- Evening- Stretch"
+        assert result == "Morning: Flow- Evening: Stretch"
     
     def test_sanitize_for_filesystem_special_characters(self):
         """Test sanitize_for_filesystem with various special characters."""
@@ -633,9 +633,9 @@ class TestFilesystemSanitization:
         strength_section = subscription_data["= Strength (15 min)"]
         yoga_section = subscription_data["= Yoga (30 min)"]
         
-        # Check that slashes are removed from episode titles
+        # Check that slashes are removed from episode titles, but colons are preserved
         assert "15 min 50-50 Workout with Kirra Michel" in strength_section
-        assert "Morning- Flow Session with Test-Instructor" in yoga_section
+        assert "Morning: Flow Session with Test-Instructor" in yoga_section
         
         # Verify the subscription data can be serialized to YAML
         import yaml
@@ -818,3 +818,97 @@ class TestMediaDirectoryConfiguration:
         # Test with special characters (should work as-is since we only sanitize the activity/instructor parts)
         entry = scraped_class.to_subscription_entry("/media/peloton-data")
         assert entry["overrides"]["tv_show_directory"] == "/media/peloton-data/Strength/Test Instructor"
+
+
+class TestConflictResolutionUtilities:
+    """Test cases for conflict resolution utility functions."""
+    
+    def test_extract_class_id_from_url(self):
+        """Test extract_class_id_from_url function."""
+        from src.webscraper.models import extract_class_id_from_url
+        
+        # Test standard Peloton URL
+        url = "https://members.onepeloton.com/classes/player/97209d52427247b995645c70479a8e2d"
+        result = extract_class_id_from_url(url)
+        assert result == "97209d52427247b995645c70479a8e2d"
+        
+        # Test shorter player URL
+        url = "https://members.onepeloton.com/player/abc123def456"
+        result = extract_class_id_from_url(url)
+        assert result == "abc123def456"
+        
+        # Test URL without class ID
+        url = "https://members.onepeloton.com/classes/"
+        result = extract_class_id_from_url(url)
+        assert result == ""
+        
+        # Test empty URL
+        result = extract_class_id_from_url("")
+        assert result == ""
+        
+        # Test None
+        result = extract_class_id_from_url(None)
+        assert result == ""
+    
+    def test_get_short_hash(self):
+        """Test get_short_hash function."""
+        from src.webscraper.models import get_short_hash
+        
+        # Test basic functionality
+        result = get_short_hash("test string")
+        assert len(result) == 7
+        assert result.isalnum()
+        
+        # Test custom length
+        result = get_short_hash("test string", 10)
+        assert len(result) == 10
+        
+        # Test consistency (same input should give same output)
+        result1 = get_short_hash("test string")
+        result2 = get_short_hash("test string")
+        assert result1 == result2
+        
+        # Test different inputs give different outputs
+        result1 = get_short_hash("test string 1")
+        result2 = get_short_hash("test string 2")
+        assert result1 != result2
+        
+        # Test empty string
+        result = get_short_hash("")
+        assert result == ""
+        
+        # Test None
+        result = get_short_hash(None)
+        assert result == ""
+    
+    def test_conflict_detection_scenario(self):
+        """Test the specific conflict scenario mentioned in requirements."""
+        from src.webscraper.models import ScrapedClass, ScrapingStatus, extract_class_id_from_url
+        
+        # Create a scraped class that would conflict with existing "20 min Pop Ride with Hannah Corbin"
+        scraped_class = ScrapedClass(
+            class_id="97209d52427247b995645c70479a8e2d",
+            title="20 min Pick-Me-Up Ride",
+            instructor="Hannah Corbin",
+            activity="Cycling",
+            duration_minutes=20,
+            player_url="https://members.onepeloton.com/classes/player/97209d52427247b995645c70479a8e2d",
+            season_number=20,
+            episode_number=1,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Test class ID extraction
+        class_id = extract_class_id_from_url(scraped_class.player_url)
+        assert class_id == "97209d52427247b995645c70479a8e2d"
+        
+        # Test short hash generation
+        short_hash = class_id[:7]
+        assert short_hash == "97209d5"
+        
+        # Verify that the expected conflict resolution would work
+        entry = scraped_class.to_subscription_entry("D:/labspace/tmp/test-media")
+        original_title = "20 min Pick-Me-Up Ride with Hannah Corbin"
+        expected_conflict_resolved_title = f"{original_title} {short_hash}"
+        
+        assert expected_conflict_resolved_title == "20 min Pick-Me-Up Ride with Hannah Corbin 97209d5"

@@ -45,6 +45,9 @@ class Config:
     # Logging configuration
     log_level: str = "INFO"
     log_format: str = "standard"
+    log_file: Optional[str] = None
+    log_max_file_size_mb: int = 100
+    log_backup_count: int = 10
     
     # Internal paths
     temp_repo_dir: str = "/tmp/peloton-scrape-repo"
@@ -196,7 +199,10 @@ class ConfigLoader:
             'RUN_IN_CONTAINER': 'run_in_container',
             'PELOTON_PAGE_SCROLLS': 'peloton_page_scrolls',
             'LOG_LEVEL': 'log_level',
-            'LOG_FORMAT': 'log_format'
+            'LOG_FORMAT': 'log_format',
+            'LOG_FILE': 'log_file',
+            'LOG_MAX_FILE_SIZE_MB': 'log_max_file_size_mb',
+            'LOG_BACKUP_COUNT': 'log_backup_count'
         }
         
         config = {}
@@ -264,6 +270,12 @@ class ConfigLoader:
                 normalized['log_level'] = log_config['level']
             if 'format' in log_config:
                 normalized['log_format'] = log_config['format']
+            if 'file' in log_config:
+                normalized['log_file'] = log_config['file']
+            if 'max_file_size_mb' in log_config:
+                normalized['log_max_file_size_mb'] = log_config['max_file_size_mb']
+            if 'backup_count' in log_config:
+                normalized['log_backup_count'] = log_config['backup_count']
         
         # Handle github section
         if 'github' in data:

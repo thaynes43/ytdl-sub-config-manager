@@ -14,7 +14,8 @@ def main() -> int:
         cli_manager = CLIConfigManager()
         args = cli_manager.parse_args()
         
-        # Set up logging early
+        # Set up logging early (basic console logging)
+        # File logging will be configured later once full config is loaded
         setup_logging(level=args.log_level, format_type=args.log_format)
         logger = get_logger(__name__)
         

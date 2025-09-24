@@ -60,7 +60,6 @@ def sanitize_for_filesystem(text: str) -> str:
     replacements = {
         '/': '-',      # Forward slash (directory separator)
         '\\': '-',     # Backslash (Windows directory separator)
-        ':': '-',      # Colon (Windows drive separator, general issues)
         ';': '-',      # Semicolon (command separator)
         '*': '-',      # Asterisk (wildcard)
         '?': '-',      # Question mark (wildcard)
@@ -88,6 +87,42 @@ def sanitize_for_filesystem(text: str) -> str:
     text = text.strip('. ')
     
     return text
+
+
+def extract_class_id_from_url(url: str) -> str:
+    """Extract class ID from Peloton URL.
+    
+    Args:
+        url: Peloton URL (e.g., https://members.onepeloton.com/classes/player/abc123)
+        
+    Returns:
+        Class ID string or empty string if not found
+    """
+    if not url:
+        return ""
+    
+    import re
+    # Match URLs like /classes/player/{class_id} or /player/{class_id}
+    match = re.search(r'/(?:classes/)?player/([a-zA-Z0-9]+)', url)
+    return match.group(1) if match else ""
+
+
+def get_short_hash(text: str, length: int = 7) -> str:
+    """Generate a short hash from text.
+    
+    Args:
+        text: Text to hash
+        length: Length of the hash to return (default 7)
+        
+    Returns:
+        Short hash string
+    """
+    if not text:
+        return ""
+    
+    import hashlib
+    hash_obj = hashlib.sha256(text.encode('utf-8'))
+    return hash_obj.hexdigest()[:length]
 
 
 class ScrapingStatus(Enum):

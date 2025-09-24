@@ -145,6 +145,7 @@ Thumbs.db
 debug-config.yaml.user
 test-config.yaml
 *.log
+logs/
 temp/
 tmp/
 

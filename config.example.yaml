@@ -15,6 +15,10 @@ application:
 logging:
   level: "INFO"
   format: "standard"  # or "json" for structured logging
+  # Optional file logging with rotation
+  file: "logs/ytdl-sub-config-manager.log"  # Set to enable file logging
+  max_file_size_mb: 100  # Maximum size per log file in MB
+  backup_count: 10       # Number of backup files to keep
 
 # GitHub integration (optional)
 github:
@@ -35,6 +39,7 @@ peloton:
   
   directory_repair_strategies:
     - "src.io.peloton.repair_5050_strategy:Repair5050Strategy"
+    - "src.io.peloton.missing_instructor_repair_strategy:MissingInstructorRepairStrategy"
   
   episode_parsers:
     - "src.io.peloton.episodes_from_disk:EpisodesFromDisk"

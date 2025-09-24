@@ -4,7 +4,7 @@ import logging
 import pytest
 from unittest.mock import patch
 
-from src.core.logging import setup_logging, get_logger
+from src.core.logging import setup_logging, get_logger, _generate_timestamped_filename
 
 
 class TestLogging:
@@ -94,6 +94,76 @@ class TestLogging:
         # Empty string is falsy, so should return base logger
         assert logger.name == "ytdl_sub_config_manager"
 
+    def test_setup_logging_with_file_logging(self):
+        """Test setup_logging with file logging configuration."""
+        import tempfile
+        from pathlib import Path
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            log_file = Path(temp_dir) / "logs" / "test.log"
+            
+            # Test file logging setup
+            logger = setup_logging(
+                level="DEBUG",
+                format_type="standard",
+                log_file=str(log_file),
+                max_file_size_mb=50,
+                backup_count=5
+            )
+            
+            assert logger.name == "ytdl_sub_config_manager"
+            
+            # Check that both console and file handlers were set up
+            root_logger = logging.getLogger()
+            assert len(root_logger.handlers) == 2  # Console + File
+            
+            # Check that log directory was created
+            assert log_file.parent.exists()
+            
+            # Test that logging actually works
+            logger.info("Test log message")
+            
+            # Check that a timestamped log file was created (not the original path)
+            # The actual filename will have timestamp, so find it
+            log_files = list(log_file.parent.glob("test_*.log"))
+            assert len(log_files) == 1
+            
+            timestamped_log_file = log_files[0]
+            assert timestamped_log_file.exists()
+            
+            # Verify filename format (test_YYYYMMDD_HHMMSS.log)
+            import re
+            pattern = r"test_\d{8}_\d{6}\.log"
+            assert re.match(pattern, timestamped_log_file.name), f"Filename {timestamped_log_file.name} doesn't match expected pattern"
+            
+            # Close all handlers to release file locks before reading
+            for handler in root_logger.handlers[:]:
+                handler.close()
+                root_logger.removeHandler(handler)
+            
+            with open(timestamped_log_file, 'r', encoding='utf-8') as f:
+                log_content = f.read()
+                assert "Test log message" in log_content
+
+    def test_setup_logging_file_logging_failure(self):
+        """Test setup_logging handles file logging failures gracefully."""
+        # Use a path that will definitely fail (null device on Windows)
+        import os
+        invalid_path = "NUL:/invalid.log" if os.name == 'nt' else "/dev/null/invalid.log"
+        
+        logger = setup_logging(
+            level="INFO",
+            format_type="standard",
+            log_file=invalid_path
+        )
+        
+        # Should still work with console logging
+        assert logger.name == "ytdl_sub_config_manager"
+        
+        # Should have at least console handler (may or may not have file handler depending on OS)
+        root_logger = logging.getLogger()
+        assert len(root_logger.handlers) >= 1
+
     def test_setup_logging_console_handler_configuration(self):
         """Test that console handler is properly configured."""
         setup_logging(level="WARNING", format_type="standard")
@@ -130,3 +200,46 @@ class TestLogging:
         assert logger1 != logger2
         assert logger1 != logger3
         assert logger2 != logger3
+    
+    def test_generate_timestamped_filename(self):
+        """Test timestamped filename generation."""
+        import re
+        
+        # Test with various file paths
+        test_cases = [
+            "logs/app.log",
+            "/var/log/application.log", 
+            "C:/logs/debug.log",
+            "simple.log"
+        ]
+        
+        for original_path in test_cases:
+            timestamped = _generate_timestamped_filename(original_path)
+            
+            # Should contain timestamp in format YYYYMMDD_HHMMSS
+            pattern = r".*_\d{8}_\d{6}\.log"
+            assert re.search(pattern, timestamped), f"Timestamped filename {timestamped} doesn't match expected pattern"
+            
+            # Should preserve directory structure
+            from pathlib import Path
+            original = Path(original_path)
+            timestamped_path = Path(timestamped)
+            assert original.parent == timestamped_path.parent
+            
+            # Should preserve extension
+            assert original.suffix == timestamped_path.suffix
+    
+    def test_generate_timestamped_filename_different_extensions(self):
+        """Test timestamped filename generation with different extensions."""
+        import re
+        from pathlib import Path
+        
+        test_cases = [
+            ("app.txt", r"app_\d{8}_\d{6}\.txt"),
+            ("debug.json", r"debug_\d{8}_\d{6}\.json"),
+            ("trace", r"trace_\d{8}_\d{6}$"),  # No extension
+        ]
+        
+        for original_path, expected_pattern in test_cases:
+            timestamped = _generate_timestamped_filename(original_path)
+            assert re.match(expected_pattern, Path(timestamped).name), f"Filename {timestamped} doesn't match pattern {expected_pattern}"

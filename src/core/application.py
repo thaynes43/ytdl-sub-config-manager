@@ -16,6 +16,24 @@ class Application:
     def __init__(self):
         pass
     
+    def _setup_file_logging(self, config) -> None:
+        """Set up file logging if configured.
+        
+        Args:
+            config: Configuration object with logging settings
+        """
+        if hasattr(config, 'log_file') and config.log_file:
+            from ..core.logging import setup_logging
+            
+            # Reconfigure logging with file options
+            setup_logging(
+                level=config.log_level,
+                format_type=config.log_format,
+                log_file=config.log_file,
+                max_file_size_mb=config.log_max_file_size_mb,
+                backup_count=config.log_backup_count
+            )
+    
     def run(self, args: argparse.Namespace) -> int:
         """Run the application with parsed arguments.
         
@@ -39,6 +57,9 @@ class Application:
                     config_file=args.config,
                     cli_args=cli_config
                 )
+                
+                # Reconfigure logging with file options if specified
+                self._setup_file_logging(config)
                 
                 return self.run_scrape_command(config)
                 
@@ -187,6 +208,10 @@ class Application:
                 logger.info(f"Successfully added {total_new_classes} new subscriptions to subscriptions")
             else:
                 logger.info("No new subscriptions found to add")
+            
+            # Final validation: Check for path conflicts and resolve them
+            logger.info("Validating subscription file against filesystem for conflicts...")
+            file_manager.validate_and_resolve_subscription_conflicts()
                 
         except Exception as e:
             logger.error(f"Web scraping failed: {e}")

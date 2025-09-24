@@ -12,6 +12,10 @@ application:
 logging:
   level: "DEBUG"
   format: "standard"  # Use "json" for structured logging
+  # File logging for debugging
+  file: "logs/debug.log"
+  max_file_size_mb: 50   # Smaller files for debug
+  backup_count: 5        # Fewer backups for debug
 
 # GitHub integration (leave empty for local testing)
 github:
@@ -32,6 +36,7 @@ peloton:
   
   directory_repair_strategies:
     - "src.io.peloton.repair_5050_strategy:Repair5050Strategy"
+    - "src.io.peloton.missing_instructor_repair_strategy:MissingInstructorRepairStrategy"
   
   episode_parsers:
     - "src.io.peloton.episodes_from_disk:EpisodesFromDisk"

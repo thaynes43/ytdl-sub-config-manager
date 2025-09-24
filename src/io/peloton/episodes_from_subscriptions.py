@@ -218,29 +218,72 @@ class EpisodesFromSubscriptions(EpisodeParser):
             self.logger.warning(f"Subscriptions file does not exist: {self.subs_file}")
             return False
         
+        if not existing_class_ids:
+            self.logger.info("No existing class IDs to remove")
+            return False
+        
         self.logger.info(f"Removing {len(existing_class_ids)} existing classes from subscriptions")
         
         try:
-            # Read the file
+            # Read and parse the YAML file
             with open(self.subs_file, 'r', encoding='utf-8') as f:
-                content = f.read()
+                subs_data = yaml.safe_load(f)
             
-            original_content = content
+            if not subs_data:
+                self.logger.warning("Subscriptions file is empty or invalid")
+                return False
             
-            # Remove each existing class ID
-            for class_id in existing_class_ids:
-                # Simple string replacement - could be made more sophisticated
-                content = content.replace(class_id, "")
+            changes_made = False
+            removed_episodes = []
             
-            # Check if changes were made
-            if content != original_content:
-                # Write back the modified content
+            # Look for the main TV show section
+            tv_shows = subs_data.get("Plex TV Show by Date", {})
+            if not tv_shows:
+                self.logger.warning("No 'Plex TV Show by Date' section found in subscriptions")
+                return False
+            
+            # Process each duration group (e.g., "= Cycling (20 min)")
+            for duration_key, duration_episodes in tv_shows.items():
+                if not isinstance(duration_episodes, dict):
+                    continue
+                
+                # Find episodes to remove (iterate over a copy since we'll modify the dict)
+                episodes_to_remove = []
+                for episode_title, episode_data in duration_episodes.items():
+                    if not isinstance(episode_data, dict):
+                        continue
+                    
+                    # Check if this episode's URL contains any of the existing class IDs
+                    download_url = episode_data.get('download', '')
+                    for class_id in existing_class_ids:
+                        if class_id in download_url:
+                            episodes_to_remove.append(episode_title)
+                            removed_episodes.append(f"{episode_title} (class ID: {class_id}) from {duration_key}")
+                            break
+                
+                # Remove the episodes
+                for episode_title in episodes_to_remove:
+                    del duration_episodes[episode_title]
+                    changes_made = True
+                
+                # If the duration group is now empty, remove it too
+                if not duration_episodes:
+                    del tv_shows[duration_key]
+                    self.logger.info(f"Removed empty duration group: {duration_key}")
+            
+            # Write back the modified YAML if changes were made
+            if changes_made:
                 with open(self.subs_file, 'w', encoding='utf-8') as f:
-                    f.write(content)
-                self.logger.info("Subscriptions file updated")
+                    yaml.dump(subs_data, f, sort_keys=False, allow_unicode=True,
+                             default_flow_style=False, indent=2, width=4096)
+                
+                self.logger.info(f"Removed {len(removed_episodes)} episodes from subscriptions:")
+                for episode in removed_episodes:
+                    self.logger.info(f"  - {episode}")
+                
                 return True
             else:
-                self.logger.info("No changes made to subscriptions")
+                self.logger.info("No matching episodes found to remove")
                 return False
                 
         except Exception as e:
