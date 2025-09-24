@@ -26,6 +26,7 @@ class Config:
     subs_file: str
     github_repo_url: str = ""
     github_token: str = ""
+    github_auto_merge: bool = False
     
     # Optional configuration with defaults
     peloton_class_limit_per_activity: int = 25
@@ -50,7 +51,7 @@ class Config:
     log_backup_count: int = 10
     
     # Internal paths
-    temp_repo_dir: str = "/tmp/peloton-scrape-repo"
+    temp_repo_dir: str = "/tmp/ytdl-sub-repo"
     
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -91,6 +92,8 @@ class Config:
         logger.info(f"  SUBS_FILE: {self.subs_file}")
         logger.info(f"  GITHUB_REPO_URL: {self.github_repo_url}")
         logger.info(f"  GITHUB_TOKEN: {'*' * len(self.github_token)} ({len(self.github_token)} chars)")
+        logger.info(f"  GITHUB_AUTO_MERGE: {self.github_auto_merge}")
+        logger.info(f"  TEMP_REPO_DIR: {self.temp_repo_dir}")
         logger.info(f"  PELOTON_CLASS_LIMIT_PER_ACTIVITY: {self.peloton_class_limit_per_activity}")
         logger.info(f"  PELOTON_ACTIVITIES: {[a.value for a in self.peloton_activities]}")
         logger.info(f"  RUN_IN_CONTAINER: {self.run_in_container}")
@@ -160,13 +163,14 @@ class ConfigLoader:
             'subs_file': '/tmp/peloton-scrape-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml',
             'github_repo_url': '',
             'github_token': '',
+            'github_auto_merge': False,
             'peloton_class_limit_per_activity': 25,
             'peloton_activities': [],
             'run_in_container': True,
             'peloton_page_scrolls': 10,
             'log_level': 'INFO',
             'log_format': 'standard',
-            'temp_repo_dir': '/tmp/peloton-scrape-repo'
+            'temp_repo_dir': '/tmp/ytdl-sub-repo'
         }
     
     def _load_yaml_config(self, config_file: str) -> Dict[str, Any]:
@@ -194,6 +198,8 @@ class ConfigLoader:
             'SUBS_FILE': 'subs_file',
             'GITHUB_REPO_URL': 'github_repo_url',
             'GITHUB_TOKEN': 'github_token',
+            'GITHUB_AUTO_MERGE': 'github_auto_merge',
+            'TEMP_REPO_DIR': 'temp_repo_dir',
             'PELOTON_CLASS_LIMIT_PER_ACTIVITY': 'peloton_class_limit_per_activity',
             'PELOTON_ACTIVITY': 'peloton_activities',
             'RUN_IN_CONTAINER': 'run_in_container',
@@ -232,6 +238,7 @@ class ConfigLoader:
             'subs_file': 'subs_file',
             'github_repo': 'github_repo_url',
             'github_token': 'github_token',
+            'github_auto_merge': 'github_auto_merge',
             'limit': 'peloton_class_limit_per_activity',
             'activities': 'peloton_activities',
             'container': 'run_in_container',
@@ -284,6 +291,10 @@ class ConfigLoader:
                 normalized['github_repo_url'] = github_config['repo-url']
             if 'token' in github_config:
                 normalized['github_token'] = github_config['token']
+            if 'auto-merge' in github_config:
+                normalized['github_auto_merge'] = github_config['auto-merge']
+            if 'temp-repo-dir' in github_config:
+                normalized['temp_repo_dir'] = github_config['temp-repo-dir']
         
         # Handle peloton section
         if 'peloton' in data:

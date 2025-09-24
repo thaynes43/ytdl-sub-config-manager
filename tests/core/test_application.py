@@ -84,6 +84,10 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        
+        # Mock GitHub configuration to disable GitHub integration
+        mock_config.github_repo_url = ""
+        mock_config.github_token = ""
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
@@ -154,6 +158,10 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        
+        # Mock GitHub configuration to disable GitHub integration
+        mock_config.github_repo_url = ""
+        mock_config.github_token = ""
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
@@ -203,6 +211,10 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        
+        # Mock GitHub configuration to disable GitHub integration
+        mock_config.github_repo_url = ""
+        mock_config.github_token = ""
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
@@ -242,6 +254,10 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        
+        # Mock GitHub configuration to disable GitHub integration
+        mock_config.github_repo_url = ""
+        mock_config.github_token = ""
 
         # Setup mock file manager with multiple activities
         mock_file_manager = MagicMock()
@@ -374,6 +390,10 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        
+        # Mock GitHub configuration to disable GitHub integration
+        mock_config.github_repo_url = ""
+        mock_config.github_token = ""
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
@@ -423,6 +443,10 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        
+        # Mock GitHub configuration to disable GitHub integration
+        mock_config.github_repo_url = ""
+        mock_config.github_token = ""
 
         # Setup mock file manager with empty data
         mock_file_manager = MagicMock()

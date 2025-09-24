@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 from ..io.file_manager import FileManager
 from ..io.generic_directory_validator import GenericDirectoryValidator
+from ..git_integration.subscription_manager import SubscriptionManager
 from .logging import get_logger
 
 logger = get_logger(__name__)
@@ -88,6 +89,40 @@ class Application:
         
         # Log the configuration
         config.log_config()
+        
+        # Initialize GitHub integration if configured
+        github_manager = None
+        if config.github_repo_url and config.github_token:
+            logger.info("GitHub integration enabled - setting up repository")
+            github_manager = SubscriptionManager.create_from_config(
+                repo_url=config.github_repo_url,
+                token=config.github_token,
+                subs_file_path=config.subs_file,
+                auto_merge=config.github_auto_merge,
+                temp_repo_dir=config.temp_repo_dir
+            )
+            
+            # Bootstrap the repository
+            setup_result = github_manager.setup_repository()
+            if not setup_result.success:
+                logger.error(f"Failed to setup GitHub repository: {setup_result.message}")
+                return 1
+            
+            # Note: subs_file path is already absolute and points directly to the file
+            
+            # Validate that the subscriptions file exists
+            if not github_manager.validate_subscriptions_file():
+                logger.error("Subscriptions file validation failed")
+                github_manager.cleanup()
+                return 1
+        else:
+            # Log why GitHub integration is disabled
+            if not config.github_repo_url and not config.github_token:
+                logger.info("GitHub integration disabled - no repository URL or token configured")
+            elif not config.github_repo_url:
+                logger.info("GitHub integration disabled - no repository URL configured")
+            elif not config.github_token:
+                logger.info("GitHub integration disabled - no GitHub token configured")
         
         # Initialize file manager (with validation unless skipped)
         skip_validation = getattr(config, 'skip_validation', False)
@@ -215,10 +250,31 @@ class Application:
                 
         except Exception as e:
             logger.error(f"Web scraping failed: {e}")
+            if github_manager:
+                github_manager.cleanup()
             return 1
+        
+        # Finalize GitHub integration if enabled
+        if github_manager:
+            logger.info("Finalizing GitHub integration...")
+            finalize_result = github_manager.finalize_subscription_updates()
+            
+            if finalize_result.success:
+                if finalize_result.pr_url:
+                    logger.info(f"GitHub workflow completed successfully: {finalize_result.pr_url}")
+                else:
+                    logger.info(f"GitHub workflow completed: {finalize_result.message}")
+            else:
+                logger.error(f"GitHub workflow failed: {finalize_result.message}")
+                github_manager.cleanup()
+                return 1
+            
+            # Cleanup resources
+            github_manager.cleanup()
         
         logger.info("Scraping workflow completed successfully")
         return 0
+    
     
     def run_validate_command(self, args: argparse.Namespace) -> int:
         """Run the validate command with the given arguments.

@@ -23,11 +23,13 @@ globs:
 
 rules: |
   - Architecture
-    - **IMPLEMENTED**: Flattened package structure under `src/` with subpackages: `config`, `core`, `io`.
+    - **IMPLEMENTED**: Flattened package structure under `src/` with subpackages: `config`, `core`, `io`, `webscraper`.
     - **IMPLEMENTED**: `main.py` as clean entry point delegating to `core/application.py` for business logic.
     - **IMPLEMENTED**: `config/` handles CLI parsing and configuration loading separately from business logic.
     - **IMPLEMENTED**: `core` (application, logging, models), `io` (episode parsing, file management, directory validation) modules complete.
+    - **IMPLEMENTED**: `webscraper/` package with dependency injection architecture (ScraperFactory, ScraperManager, SessionManager).
     - **IMPLEMENTED**: Directory structure validation and repair system for handling corrupted 50/50 patterns.
+    - **IMPLEMENTED**: Strategy pattern with dependency injection for extensible scraper, login, and parsing strategies.
     - Keep business logic out of the main entry point; compose dependencies explicitly.
     - Use pure functions and immutable dataclasses where feasible.
     - No module should import from `tests`.
@@ -67,39 +69,59 @@ rules: |
     - **YAML Path Formatting**: Use forward slashes for file paths in YAML (works on both Windows and Unix). Avoid backslashes in double quotes due to YAML escape character conflicts. Example: `"D:/path/to/file"` or `'D:\path\to\file'`.
     - Preserve YAML structure and key stability expected by ytdl-sub.
 
-  - Scrapers
-    - Define a scraper protocol in `sources/base.py` (interfaces for session lifecycle and scrape output model).
-    - Selenium session management belongs in `sources/peloton/session.py` with container-friendly flags.
-    - Parsing and page traversal belong in `sources/peloton/scraper.py`. External calls are isolated for mocking.
+  - Web Scrapers
+    - **IMPLEMENTED**: `webscraper/` package with abstract `ScraperStrategy` and `SessionManager` interfaces.
+    - **IMPLEMENTED**: `webscraper/scraper_factory.py` creates scrapers from configuration with dependency injection.
+    - **IMPLEMENTED**: `webscraper/scraper_manager.py` coordinates session and scraping strategies.
+    - **IMPLEMENTED**: `webscraper/session_manager.py` handles browser session lifecycle with login strategies.
+    - **IMPLEMENTED**: `webscraper/peloton/` contains Peloton-specific implementations (login, scraping).
+    - **IMPLEMENTED**: Container-friendly Selenium configuration with headless mode and chromium drivers.
+    - **IMPLEMENTED**: Modular design allows easy addition of new sources through strategy pattern.
 
-  - Services
-    - `services/subscriptions.py` handles merge/dedupe, duplicate-title suffixing, and activity mapping.
-    - `services/git_sync.py` wraps repo clone/pull/commit/push/PR with tokens read from config.
+  - Git Integration Services (GENERIC DESIGN)
+    - **IMPLEMENTED**: `git_integration/` package with GitHub repository management.
+    - **IMPLEMENTED**: `git_integration/repository_manager.py` handles Git operations (clone, pull, commit, push).
+    - **IMPLEMENTED**: `git_integration/repository_manager.py` includes PullRequestManager for automated PR creation.
+    - **IMPLEMENTED**: `git_integration/subscription_manager.py` for generic subscription file management.
+    - **DESIGN PRINCIPLE**: Git integration is completely media-type agnostic - no Peloton-specific logic.
+    - **DESIGN PRINCIPLE**: Works with any subscription file format (Peloton, YouTube, Spotify, etc.) via absolute file paths.
+    - **DESIGN PRINCIPLE**: Same pull-edit-push workflow for all media types - only `application.subs-file` differs.
+    - **IMPLEMENTED**: Auto-merge capability for PRs (configurable, defaults to manual merge).
+    - **IMPLEMENTED**: Secure token-based authentication with masked logging.
+    - **IMPLEMENTED**: Complete GitHub workflow integration in main application with disabled state logging.
 
   - Testing (CRITICAL - PROJECT IS TEST-GATED)
     - **ALL CODE CHANGES MUST PASS TESTS** - The CI/CD pipeline will fail if tests don't pass.
     - **NEW FUNCTIONALITY REQUIRES NEW TESTS** - Any new feature, class, or function must include corresponding test coverage.
-    - **COVERAGE TARGET: 84%** - **ACHIEVED 84% COVERAGE** - Maintain at least 84% test coverage across the codebase. **DO NOT REGRESS BELOW 80%**.
+    - **COVERAGE TARGET: 87%** - **ACHIEVED 87% COVERAGE** - Maintain at least 87% test coverage across the codebase. **DO NOT REGRESS BELOW 80%**.
     - **COVERAGE REGRESSION PREVENTION** - Before merging any PR:
       - Run `python -m pytest tests/ --cov=src --cov-report=term-missing` to check coverage
-      - If coverage drops below 84%, add tests to maintain current level
+      - If coverage drops below 87%, add tests to maintain current level
       - If coverage drops below 80%, **BLOCK THE MERGE** until tests are added
       - Use `python -m pytest tests/ --cov=src --cov-fail-under=80` to enforce minimum coverage
     - **UPDATE EXISTING TESTS** - When modifying existing code, update the corresponding tests to reflect changes.
     - **RUN TESTS LOCALLY** - Always run `pytest tests/` before committing changes.
-    - **IMPLEMENTED**: Comprehensive test suite with **153 passing tests** covering:
-      - `tests/core/` - Application logic, configuration, logging, models (98%+ coverage)
+    - **IMPLEMENTED**: Comprehensive test suite with **316 passing tests** covering:
+      - `tests/core/` - Application logic, configuration, logging, models (95%+ coverage)
       - `tests/config/` - CLI parsing and configuration loading (98%+ coverage)  
-      - `tests/io/` - File operations, episode parsing, strategy loading (90%+ coverage)
+      - `tests/io/` - File operations, episode parsing, strategy loading (85%+ coverage)
+      - `tests/webscraper/` - Web scraping, session management, factory patterns (95%+ coverage)
+      - `tests/git_integration/` - Git operations, PR management, GitHub workflows (96%+ coverage)
       - Complete test isolation with proper mocking and fixtures
     - **IMPLEMENTED**: Helper scripts `scripts/run-tests.sh` and `scripts/run-tests.ps1`.
     - **HIGH-COVERAGE MODULES** - These modules have excellent coverage and should be maintained:
       - `src/config/config.py`: 98% coverage
       - `src/config/cli_config.py`: 99% coverage
-      - `src/core/application.py`: 96% coverage
+      - `src/core/application.py`: 86% coverage
       - `src/main.py`: 97% coverage
       - `src/io/strategy_loader.py`: 100% coverage
-      - `src/io/file_manager.py`: 93% coverage
+      - `src/io/file_manager.py`: 88% coverage
+      - `src/webscraper/models.py`: 100% coverage
+      - `src/webscraper/scraper_factory.py`: 100% coverage
+      - `src/webscraper/scraper_manager.py`: 100% coverage
+      - `src/git_integration/models.py`: 100% coverage (generic GitHub models)
+      - `src/git_integration/subscription_manager.py`: 98% coverage (generic subscription management)
+      - `src/git_integration/repository_manager.py`: 93% coverage (generic Git operations)
     - Use `pytest`; keep Selenium and network calls mocked.
     - Mirror package structure in `tests/` and cover core/services thoroughly.
     - Include fixtures for sample media trees and YAML snippets.

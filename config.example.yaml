@@ -24,6 +24,8 @@ logging:
 github:
   repo-url: "github.com/username/repo"
   token: "your-github-token"
+  auto-merge: false  # Set to true to automatically merge PRs (default: false)
+  temp-repo-dir: "/tmp/ytdl-sub-repo"  # Directory for temporary repository clones
 
 # Peloton source configuration
 peloton:

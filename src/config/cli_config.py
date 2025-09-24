@@ -134,6 +134,16 @@ Examples:
             type=str,
             help="GitHub token for repository access"
         )
+        github_group.add_argument(
+            "--github-auto-merge",
+            action="store_true",
+            help="Automatically merge pull requests (default: False)"
+        )
+        github_group.add_argument(
+            "--temp-repo-dir",
+            type=str,
+            help="Directory for temporary repository clones"
+        )
         
         # Runtime options
         runtime_group = scrape_parser.add_argument_group("Runtime Options")
@@ -211,6 +221,10 @@ Examples:
             config_dict['github_repo'] = args.github_repo
         if hasattr(args, 'github_token') and args.github_token:
             config_dict['github_token'] = args.github_token
+        if hasattr(args, 'github_auto_merge') and args.github_auto_merge:
+            config_dict['github_auto_merge'] = args.github_auto_merge
+        if hasattr(args, 'temp_repo_dir') and args.temp_repo_dir:
+            config_dict['temp_repo_dir'] = args.temp_repo_dir
         
         # Handle container flag
         if hasattr(args, 'container') and args.container:
