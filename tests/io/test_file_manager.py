@@ -389,6 +389,149 @@ class TestFileManager:
             jose_entry = plex_section["Café Morning Flow with José María"]
             assert jose_entry["overrides"]["tv_show_directory"] == "/media/peloton/Yoga/José María"
 
+    @patch('builtins.open')
+    @patch('yaml.dump')
+    @patch('yaml.safe_load')
+    @patch('src.io.file_manager.Path')
+    def test_update_subscription_directories_success(self, mock_path_class, mock_yaml_safe_load, mock_yaml_dump, mock_open):
+        """Test update_subscription_directories method with successful updates."""
+        # Setup mocks
+        mock_path = MagicMock()
+        mock_path.exists.return_value = True
+        mock_path_class.return_value = mock_path
+        
+        # Mock existing subscription data with old media directory
+        mock_yaml_safe_load.return_value = {
+            "Plex TV Show by Date": {
+                "= Cycling (30 min)": {
+                    "Test Ride with Instructor One": {
+                        "download": "https://example.com/class1",
+                        "overrides": {
+                            "tv_show_directory": "/media/peloton/Cycling/Instructor One",
+                            "season_number": 30,
+                            "episode_number": 1
+                        }
+                    }
+                },
+                "= Strength (20 min)": {
+                    "Test Workout with Instructor Two": {
+                        "download": "https://example.com/class2",
+                        "overrides": {
+                            "tv_show_directory": "/old/media/path/Strength/Instructor Two",
+                            "season_number": 20,
+                            "episode_number": 1
+                        }
+                    }
+                }
+            }
+        }
+        
+        mock_file_handle = MagicMock()
+        mock_open.return_value.__enter__.return_value = mock_file_handle
+        
+        with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+            mock_manager = MagicMock()
+            mock_manager_class.return_value = mock_manager
+            
+            file_manager = FileManager(
+                media_dir="/test/media",
+                subs_file="/test/subs.yaml",
+                validate_and_repair=False,
+                episode_parsers=["parser1"]
+            )
+            
+            # Call method with new media directory
+            result = file_manager.update_subscription_directories("D:/labspace/tmp/test-media")
+            assert result is True
+            
+            # Verify YAML dump was called
+            mock_yaml_dump.assert_called_once()
+            
+            # Verify the updated data structure
+            dumped_data = mock_yaml_dump.call_args[0][0]
+            cycling_entry = dumped_data["Plex TV Show by Date"]["= Cycling (30 min)"]["Test Ride with Instructor One"]
+            strength_entry = dumped_data["Plex TV Show by Date"]["= Strength (20 min)"]["Test Workout with Instructor Two"]
+            
+            # Check that directories were updated
+            assert cycling_entry["overrides"]["tv_show_directory"] == "D:/labspace/tmp/test-media/Cycling/Instructor One"
+            assert strength_entry["overrides"]["tv_show_directory"] == "D:/labspace/tmp/test-media/Strength/Instructor Two"
+
+    @patch('builtins.open')
+    @patch('yaml.safe_load')
+    @patch('src.io.file_manager.Path')
+    def test_update_subscription_directories_no_file(self, mock_path_class, mock_yaml_safe_load, mock_open):
+        """Test update_subscription_directories method when file doesn't exist."""
+        # Setup mocks
+        mock_path = MagicMock()
+        mock_path.exists.return_value = False
+        mock_path_class.return_value = mock_path
+        
+        with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+            mock_manager = MagicMock()
+            mock_manager_class.return_value = mock_manager
+            
+            file_manager = FileManager(
+                media_dir="/test/media",
+                subs_file="/test/subs.yaml",
+                validate_and_repair=False,
+                episode_parsers=["parser1"]
+            )
+            
+            # Call method
+            result = file_manager.update_subscription_directories("D:/labspace/tmp/test-media")
+            assert result is True
+            
+            # Should not try to read or write files
+            mock_open.assert_not_called()
+
+    @patch('builtins.open')
+    @patch('yaml.dump')
+    @patch('yaml.safe_load')
+    @patch('src.io.file_manager.Path')
+    def test_update_subscription_directories_no_changes_needed(self, mock_path_class, mock_yaml_safe_load, mock_yaml_dump, mock_open):
+        """Test update_subscription_directories method when no changes are needed."""
+        # Setup mocks
+        mock_path = MagicMock()
+        mock_path.exists.return_value = True
+        mock_path_class.return_value = mock_path
+        
+        # Mock existing subscription data that already matches target directory
+        mock_yaml_safe_load.return_value = {
+            "Plex TV Show by Date": {
+                "= Cycling (30 min)": {
+                    "Test Ride with Instructor One": {
+                        "download": "https://example.com/class1",
+                        "overrides": {
+                            "tv_show_directory": "D:/labspace/tmp/test-media/Cycling/Instructor One",
+                            "season_number": 30,
+                            "episode_number": 1
+                        }
+                    }
+                }
+            }
+        }
+        
+        mock_file_handle = MagicMock()
+        mock_open.return_value.__enter__.return_value = mock_file_handle
+        
+        with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+            mock_manager = MagicMock()
+            mock_manager_class.return_value = mock_manager
+            
+            file_manager = FileManager(
+                media_dir="/test/media",
+                subs_file="/test/subs.yaml",
+                validate_and_repair=False,
+                episode_parsers=["parser1"]
+            )
+            
+            # Call method with same media directory
+            result = file_manager.update_subscription_directories("D:/labspace/tmp/test-media")
+            assert result is True
+            
+            # Should not write back to file since no changes were needed
+            mock_yaml_dump.assert_not_called()
+
     @patch('src.io.file_manager.Path')
     def test_validate_directories_success(self, mock_path_class):
         """Test validate_directories method with successful validation."""

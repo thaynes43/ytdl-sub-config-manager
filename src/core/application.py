@@ -95,6 +95,10 @@ class Application:
             
             logger.info(f"{activity.name} episodes ({total_episodes} total): {'; '.join(seasons_info)}")
         
+        # Update existing subscription directories to match configuration
+        logger.info("Updating subscription directories to match configuration...")
+        file_manager.update_subscription_directories(config.media_dir)
+        
         # Find existing class IDs to avoid duplicates
         logger.info("Finding existing class IDs...")
         existing_ids = file_manager.find_all_existing_class_ids()
@@ -168,7 +172,7 @@ class Application:
             total_new_classes = 0
             for activity_name, result in scraping_results.items():
                 if result.status.value == "completed":
-                    subscription_data = result.get_subscription_data()
+                    subscription_data = result.get_subscription_data(config.media_dir)
                     if subscription_data:
                         # Add to subscriptions file
                         file_manager.add_new_subscriptions(subscription_data)

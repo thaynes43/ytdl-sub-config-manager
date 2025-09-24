@@ -110,6 +110,89 @@ class FileManager:
         """
         return self.episode_manager.cleanup_subscriptions()
     
+    def update_subscription_directories(self, target_media_dir: str) -> bool:
+        """Update existing subscription directories to match the configured media directory.
+        
+        Args:
+            target_media_dir: The target media directory from configuration
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            import yaml
+            
+            # Load existing subscriptions
+            subs_file_path = Path(self.subs_file)
+            if not subs_file_path.exists():
+                self.logger.info("No subscriptions file found to update")
+                return True
+            
+            with open(subs_file_path, 'r', encoding='utf-8') as f:
+                subs_data = yaml.safe_load(f)
+            
+            if not subs_data or "Plex TV Show by Date" not in subs_data:
+                self.logger.info("No subscription data found to update")
+                return True
+            
+            # Track changes
+            updated_count = 0
+            target_media_path = target_media_dir.rstrip('/\\')  # Remove trailing separators
+            
+            # Process each duration section
+            for duration_key, episodes in subs_data["Plex TV Show by Date"].items():
+                if not isinstance(episodes, dict):
+                    continue
+                    
+                # Process each episode
+                for episode_title, episode_data in episodes.items():
+                    if not isinstance(episode_data, dict) or "overrides" not in episode_data:
+                        continue
+                    
+                    overrides = episode_data["overrides"]
+                    if "tv_show_directory" not in overrides:
+                        continue
+                    
+                    current_dir = overrides["tv_show_directory"]
+                    
+                    # Extract the relative path (activity/instructor) from current directory
+                    # Always use the last two path components (activity/instructor)
+                    path_parts = current_dir.replace('\\', '/').split('/')
+                    
+                    # Filter out empty parts
+                    path_parts = [part for part in path_parts if part]
+                    
+                    if len(path_parts) >= 2:
+                        # Use the last two components: activity and instructor
+                        relative_path = f"{path_parts[-2]}/{path_parts[-1]}"
+                    else:
+                        relative_path = None
+                    
+                    if relative_path:
+                        # Construct new directory path
+                        new_dir = f"{target_media_path}/{relative_path}"
+                        
+                        if new_dir != current_dir:
+                            overrides["tv_show_directory"] = new_dir
+                            updated_count += 1
+                            self.logger.debug(f"Updated directory: {current_dir} -> {new_dir}")
+            
+            if updated_count > 0:
+                # Write back to file
+                with open(subs_file_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(subs_data, f, sort_keys=False, allow_unicode=True, 
+                             default_flow_style=False, indent=2, width=4096)
+                
+                self.logger.info(f"Updated {updated_count} subscription directories to use {target_media_dir}")
+            else:
+                self.logger.info("All subscription directories already match the configured media directory")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error updating subscription directories: {e}")
+            return False
+
     def add_new_subscriptions(self, subscriptions: Dict[str, Dict[str, dict]]) -> bool:
         """Add new subscriptions to the subscriptions file.
         

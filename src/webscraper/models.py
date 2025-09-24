@@ -112,7 +112,7 @@ class ScrapedClass:
     episode_number: int
     status: ScrapingStatus = ScrapingStatus.PENDING
     
-    def to_subscription_entry(self) -> Dict[str, Any]:
+    def to_subscription_entry(self, media_dir: str = "/media/peloton") -> Dict[str, Any]:
         """Convert to ytdl-sub subscription format."""
         # Normalize all text fields to ensure proper encoding
         normalized_title = normalize_text(self.title)
@@ -126,10 +126,14 @@ class ScrapedClass:
         
         episode_title = f"{safe_title} with {safe_instructor}"
         
+        # Use configured media directory, ensuring proper path format
+        media_path = media_dir.rstrip('/\\')  # Remove trailing separators
+        tv_show_directory = f"{media_path}/{safe_activity.title()}/{safe_instructor}"
+        
         return {
             "download": self.player_url,
             "overrides": {
-                "tv_show_directory": f"/media/peloton/{safe_activity.title()}/{safe_instructor}",
+                "tv_show_directory": tv_show_directory,
                 "season_number": self.season_number,
                 "episode_number": self.episode_number
             }
@@ -147,7 +151,7 @@ class ScrapingResult:
     status: ScrapingStatus
     error_message: Optional[str] = None
     
-    def get_subscription_data(self) -> Dict[str, Dict[str, Any]]:
+    def get_subscription_data(self, media_dir: str = "/media/peloton") -> Dict[str, Dict[str, Any]]:
         """Convert scraped classes to subscription YAML format."""
         result_dict = {}
         dupe_dict = {}
@@ -180,7 +184,7 @@ class ScrapingResult:
                 episode_title = updated_title
             
             # Add to result
-            result_dict[duration_key][episode_title] = scraped_class.to_subscription_entry()
+            result_dict[duration_key][episode_title] = scraped_class.to_subscription_entry(media_dir)
         
         return result_dict
 

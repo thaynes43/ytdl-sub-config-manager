@@ -570,7 +570,7 @@ class TestFilesystemSanitization:
             status=ScrapingStatus.COMPLETED
         )
         
-        # Convert to subscription entry
+        # Convert to subscription entry (default media dir)
         entry = scraped_class.to_subscription_entry()
         
         # Verify slashes are removed from directory path
@@ -675,3 +675,146 @@ class TestFilesystemSanitization:
             assert parsed_entry == entry
         except Exception as e:
             pytest.fail(f"YAML serialization failed: {e}")
+
+
+class TestMediaDirectoryConfiguration:
+    """Test cases for configurable media directory functionality."""
+    
+    def test_scraped_class_uses_default_media_dir(self):
+        """Test ScrapedClass uses default media directory when none specified."""
+        from src.webscraper.models import ScrapedClass, ScrapingStatus
+        
+        scraped_class = ScrapedClass(
+            class_id="test123",
+            title="Test Workout",
+            instructor="Test Instructor",
+            activity="Strength",
+            duration_minutes=20,
+            player_url="https://example.com/class",
+            season_number=20,
+            episode_number=1,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Test default behavior
+        entry = scraped_class.to_subscription_entry()
+        assert entry["overrides"]["tv_show_directory"] == "/media/peloton/Strength/Test Instructor"
+    
+    def test_scraped_class_uses_configured_media_dir(self):
+        """Test ScrapedClass uses configured media directory."""
+        from src.webscraper.models import ScrapedClass, ScrapingStatus
+        
+        scraped_class = ScrapedClass(
+            class_id="test123",
+            title="Test Workout",
+            instructor="Test Instructor",
+            activity="Strength",
+            duration_minutes=20,
+            player_url="https://example.com/class",
+            season_number=20,
+            episode_number=1,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Test with Windows-style path
+        entry = scraped_class.to_subscription_entry("D:/labspace/tmp/test-media")
+        assert entry["overrides"]["tv_show_directory"] == "D:/labspace/tmp/test-media/Strength/Test Instructor"
+        
+        # Test with Unix-style path
+        entry = scraped_class.to_subscription_entry("/home/user/media")
+        assert entry["overrides"]["tv_show_directory"] == "/home/user/media/Strength/Test Instructor"
+        
+        # Test with trailing slash removal
+        entry = scraped_class.to_subscription_entry("/media/peloton/")
+        assert entry["overrides"]["tv_show_directory"] == "/media/peloton/Strength/Test Instructor"
+        
+        # Test with trailing backslash removal (Windows)
+        entry = scraped_class.to_subscription_entry("D:\\media\\peloton\\")
+        assert entry["overrides"]["tv_show_directory"] == "D:\\media\\peloton/Strength/Test Instructor"
+    
+    def test_scraping_result_uses_configured_media_dir(self):
+        """Test ScrapingResult passes media directory to scraped classes."""
+        from src.webscraper.models import ScrapedClass, ScrapingResult, ScrapingStatus
+        
+        scraped_class = ScrapedClass(
+            class_id="test123",
+            title="Test Workout",
+            instructor="Test Instructor",
+            activity="Strength",
+            duration_minutes=20,
+            player_url="https://example.com/class",
+            season_number=20,
+            episode_number=1,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        result = ScrapingResult(
+            activity="strength",
+            classes=[scraped_class],
+            total_found=1,
+            total_skipped=0,
+            total_errors=0,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Test with configured media directory
+        subscription_data = result.get_subscription_data("D:/labspace/tmp/test-media")
+        
+        # Check that the directory is correctly set
+        strength_section = subscription_data["= Strength (20 min)"]
+        episode_data = list(strength_section.values())[0]
+        assert episode_data["overrides"]["tv_show_directory"] == "D:/labspace/tmp/test-media/Strength/Test Instructor"
+    
+    def test_path_style_consistency(self):
+        """Test that path styles are handled consistently."""
+        from src.webscraper.models import ScrapedClass, ScrapingStatus
+        
+        scraped_class = ScrapedClass(
+            class_id="test123",
+            title="Test Workout",
+            instructor="Test Instructor",
+            activity="Strength",
+            duration_minutes=20,
+            player_url="https://example.com/class",
+            season_number=20,
+            episode_number=1,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Test various input formats
+        test_cases = [
+            ("D:/labspace/tmp/test-media", "D:/labspace/tmp/test-media/Strength/Test Instructor"),
+            ("D:\\labspace\\tmp\\test-media", "D:\\labspace\\tmp\\test-media/Strength/Test Instructor"),
+            ("/home/user/media", "/home/user/media/Strength/Test Instructor"),
+            ("C:/Program Files/Media", "C:/Program Files/Media/Strength/Test Instructor"),
+            ("/media/peloton", "/media/peloton/Strength/Test Instructor"),
+        ]
+        
+        for input_dir, expected_output in test_cases:
+            entry = scraped_class.to_subscription_entry(input_dir)
+            actual_output = entry["overrides"]["tv_show_directory"]
+            assert actual_output == expected_output, f"Input: {input_dir}, Expected: {expected_output}, Got: {actual_output}"
+    
+    def test_special_characters_in_media_dir(self):
+        """Test media directories with special characters."""
+        from src.webscraper.models import ScrapedClass, ScrapingStatus
+        
+        scraped_class = ScrapedClass(
+            class_id="test123",
+            title="Test Workout",
+            instructor="Test Instructor",
+            activity="Strength",
+            duration_minutes=20,
+            player_url="https://example.com/class",
+            season_number=20,
+            episode_number=1,
+            status=ScrapingStatus.COMPLETED
+        )
+        
+        # Test with spaces in path
+        entry = scraped_class.to_subscription_entry("D:/My Media/Peloton Content")
+        assert entry["overrides"]["tv_show_directory"] == "D:/My Media/Peloton Content/Strength/Test Instructor"
+        
+        # Test with special characters (should work as-is since we only sanitize the activity/instructor parts)
+        entry = scraped_class.to_subscription_entry("/media/peloton-data")
+        assert entry["overrides"]["tv_show_directory"] == "/media/peloton-data/Strength/Test Instructor"
