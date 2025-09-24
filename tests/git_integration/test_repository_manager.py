@@ -133,15 +133,15 @@ class TestRepositoryManager:
         # Verify
         assert result.status == GitHubOperationStatus.SUCCESS
         assert "Successfully created and pushed branch" in result.message
-        assert result.branch_name == "peloton-update-20231225120000"
+        assert result.branch_name == "ytdl-sub-update-20231225120000"
         
         # Verify git operations
-        mock_repo.git.checkout.assert_called_once_with('-b', 'peloton-update-20231225120000')
+        mock_repo.git.checkout.assert_called_once_with('-b', 'ytdl-sub-update-20231225120000')
         mock_repo.git.add.assert_called_once_with('--all')
         mock_repo.git.config.assert_any_call('--local', 'user.email', 'noreply@haynesnetwork.com')
-        mock_repo.git.config.assert_any_call('--local', 'user.name', 'Peloton Scraper Bot')
+        mock_repo.git.config.assert_any_call('--local', 'user.name', 'ytdl-sub Config Manager')
         mock_repo.git.commit.assert_called_once_with('-m', 'Custom commit message')
-        mock_repo.remotes.origin.push.assert_called_once_with('peloton-update-20231225120000')
+        mock_repo.remotes.origin.push.assert_called_once_with('ytdl-sub-update-20231225120000')
     
     @patch('src.git_integration.repository_manager.time.strftime')
     def test_commit_and_push_failure(self, mock_strftime, repo_manager):

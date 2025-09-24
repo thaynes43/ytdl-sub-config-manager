@@ -19,10 +19,10 @@ class GitHubConfig:
     repo_url: str
     token: str
     temp_repo_dir: str = "/tmp/peloton-scrape-repo"
-    branch_prefix: str = "peloton-update"
+    branch_prefix: str = "ytdl-sub-update"
     base_branch: str = "main"
     auto_merge: bool = False
-    commit_user_name: str = "Peloton Scraper Bot"
+    commit_user_name: str = "ytdl-sub Config Manager"
     commit_user_email: str = "noreply@haynesnetwork.com"
     keep_repo_after_cleanup: bool = False
     

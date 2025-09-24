@@ -21,10 +21,10 @@ class TestGitHubConfig:
         assert config.repo_url == "github.com/user/repo"
         assert config.token == "test-token"
         assert config.temp_repo_dir == "/tmp/peloton-scrape-repo"
-        assert config.branch_prefix == "peloton-update"
+        assert config.branch_prefix == "ytdl-sub-update"
         assert config.base_branch == "main"
         assert config.auto_merge is False
-        assert config.commit_user_name == "Peloton Scraper Bot"
+        assert config.commit_user_name == "ytdl-sub Config Manager"
         assert config.commit_user_email == "noreply@haynesnetwork.com"
     
     def test_github_config_with_custom_values(self):
