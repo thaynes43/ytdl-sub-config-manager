@@ -7,7 +7,7 @@ application:
   # Use forward slashes for paths (works on both Windows and Unix)
   # On Windows: "D:/path/to/media" or use single quotes: 'D:\path\to\media'
   media-dir: "/media/peloton"
-  subs-file: "/tmp/ytdl-sub-host-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml"
+  subs-file: "/tmp/ytdl-sub-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml"
   run-in-container: true
   # Media source strategy to use (peloton, etc.)
   media-source: "peloton"
@@ -25,7 +25,7 @@ logging:
 github:
   repo-url: ""
   token: ""
-  temp-repo-dir: "/tmp/ytdl-sub-host-repo"
+  temp-repo-dir: "/tmp/ytdl-sub-repo"
   auto-merge: false
 
 # Peloton source configuration

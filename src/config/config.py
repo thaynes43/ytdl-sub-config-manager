@@ -53,6 +53,9 @@ class Config:
     # Internal paths
     temp_repo_dir: str = "/tmp/ytdl-sub-repo"
     
+    # Internal tracking
+    _loaded_config_file: Optional[str] = None
+    
     def __post_init__(self):
         """Validate configuration after initialization."""
         # Validate required fields
@@ -85,7 +88,10 @@ class Config:
     
     def log_config(self) -> None:
         """Log the current configuration (without secrets)."""
-        logger.info("Configuration loaded:")
+        if self._loaded_config_file:
+            logger.info(f"Configuration loaded from: {self._loaded_config_file}")
+        else:
+            logger.warning("Configuration loaded from: hardcoded defaults (no config file found)")
         logger.info(f"  PELOTON_USERNAME: {self.peloton_username}")
         logger.info(f"  PELOTON_PASSWORD: {'*' * len(self.peloton_password)} ({len(self.peloton_password)} chars)")
         logger.info(f"  MEDIA_DIR: {self.media_dir}")
@@ -132,16 +138,21 @@ class ConfigLoader:
         # Start with defaults
         config_data = self._get_defaults()
         
+        # Track which config file was loaded
+        loaded_config_file = None
+        
         # Override with YAML config file
         if config_file:
             yaml_config = self._load_yaml_config(config_file)
             config_data.update(yaml_config)
+            loaded_config_file = config_file
         else:
             # Try to load default config.yaml if no config file specified
             default_config_path = Path("config.yaml")
             if default_config_path.exists():
                 yaml_config = self._load_yaml_config(str(default_config_path))
                 config_data.update(yaml_config)
+                loaded_config_file = str(default_config_path)
         
         # Override with environment variables
         env_config = self._load_env_config()
@@ -158,6 +169,13 @@ class ConfigLoader:
                 config_data['peloton_activities']
             )
         
+        # Add config file name for logging
+        config_data['_loaded_config_file'] = loaded_config_file
+        
+        # Warn if using hardcoded defaults instead of YAML config
+        if not loaded_config_file:
+            self.logger.warning("No configuration file found - using hardcoded defaults. Consider creating a config.yaml file.")
+        
         return Config(**config_data)
     
     def _get_defaults(self) -> Dict[str, Any]:
@@ -165,13 +183,13 @@ class ConfigLoader:
         return {
             'peloton_username': '',
             'peloton_password': '',
-            'media_dir': '',
-            'subs_file': '/tmp/peloton-scrape-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml',
+            'media_dir': '/media/peloton',
+            'subs_file': '/tmp/ytdl-sub-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml',
             'github_repo_url': '',
             'github_token': '',
             'github_auto_merge': False,
             'peloton_class_limit_per_activity': 25,
-            'peloton_activities': [],
+            'peloton_activities': 'cycling,yoga,strength,meditation,cardio,stretching,running,walking,bootcamp,bike_bootcamp,rowing,row_bootcamp',
             'run_in_container': True,
             'peloton_page_scrolls': 10,
             'log_level': 'INFO',
@@ -189,7 +207,6 @@ class ConfigLoader:
         try:
             with open(config_path, 'r') as f:
                 yaml_data = yaml.safe_load(f) or {}
-            self.logger.info(f"Loaded configuration from: {config_file}")
             return self._normalize_keys(yaml_data)
         except Exception as e:
             self.logger.error(f"Error loading config file {config_file}: {e}")
