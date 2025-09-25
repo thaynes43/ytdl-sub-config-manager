@@ -209,7 +209,7 @@ class Application:
                     existing_class_ids=existing_class_ids,
                     episode_numbering_data=episode_numbering,
                     headless=peloton_scraper_config.get('headless', True),
-                    container_mode=peloton_scraper_config.get('container_mode', True),
+                    container_mode=config.run_in_container,  # Use the run_in_container config
                     scroll_pause_time=peloton_scraper_config.get('scroll_pause_time', 3.0),
                     login_wait_time=peloton_scraper_config.get('login_wait_time', 15.0),
                     page_load_wait_time=peloton_scraper_config.get('page_load_wait_time', 10.0)

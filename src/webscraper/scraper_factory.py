@@ -39,7 +39,7 @@ class ScraperFactory:
             
             # Extract session configuration
             headless = scraper_config.get('headless', True)
-            container_mode = scraper_config.get('container_mode', True)
+            container_mode = scraper_config.get('container_mode', True)  # This will be overridden by ScrapingConfig
             
             # Create session manager (assuming GenericSessionManager for now)
             session_manager = GenericSessionManager(

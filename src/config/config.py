@@ -136,6 +136,12 @@ class ConfigLoader:
         if config_file:
             yaml_config = self._load_yaml_config(config_file)
             config_data.update(yaml_config)
+        else:
+            # Try to load default config.yaml if no config file specified
+            default_config_path = Path("config.yaml")
+            if default_config_path.exists():
+                yaml_config = self._load_yaml_config(str(default_config_path))
+                config_data.update(yaml_config)
         
         # Override with environment variables
         env_config = self._load_env_config()

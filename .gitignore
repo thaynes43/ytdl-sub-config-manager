@@ -156,4 +156,3 @@ docker-compose.override.yml
 # Local development files
 media/
 subscriptions.yaml
-config.yaml

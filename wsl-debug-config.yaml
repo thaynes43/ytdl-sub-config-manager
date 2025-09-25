@@ -3,9 +3,9 @@
 
 # Application-wide settings
 application:
-  media-dir: "/mnt/cephfs-hdd/data/media/peloton"
+  media-dir: "D:/labspace/tmp/test-media"
   #subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.yaml"
-  subs-file: "/tmp/peloton-scrape-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml"
+  subs-file: "D:/labspace/tmp/peloton-scrape-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml"
   run-in-container: false  # Set to false for local debugging
   media-source: "peloton"  # Media source strategy to use
 
@@ -22,7 +22,7 @@ logging:
 github:
   repo-url: ""
   token: ""
-  temp-repo-dir: "/tmp/peloton-scrape-repo"
+  temp-repo-dir: "D:/labspace/tmp/peloton-scrape-repo"
 
 # Peloton source configuration (will be overridden by environment variables in debug)
 peloton:

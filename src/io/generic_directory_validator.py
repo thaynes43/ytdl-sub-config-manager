@@ -420,6 +420,38 @@ class GenericDirectoryValidator:
                     else:
                         action.source_path.unlink()
                         
+                elif action.action_type == "move_contents":
+                    if not action.target_path:
+                        self.logger.error("Move contents action requires target_path")
+                        return False
+                    
+                    # Move contents from source to target directory
+                    if not action.source_path.is_dir():
+                        self.logger.error(f"Source path is not a directory: {action.source_path}")
+                        return False
+                    
+                    if not action.target_path.is_dir():
+                        self.logger.error(f"Target path is not a directory: {action.target_path}")
+                        return False
+                    
+                    # Store source parent for cleanup
+                    source_parent = action.source_path.parent
+                    
+                    # Move all contents from source to target
+                    import shutil
+                    for item in action.source_path.iterdir():
+                        target_item = action.target_path / item.name
+                        if target_item.exists():
+                            self.logger.warning(f"Target item already exists, skipping: {target_item}")
+                            continue
+                        shutil.move(str(item), str(target_item))
+                    
+                    # Remove the now-empty source directory
+                    action.source_path.rmdir()
+                    
+                    # Clean up empty parent directories
+                    self._cleanup_empty_directories(source_parent)
+                    
                 else:
                     self.logger.error(f"Unknown repair action type: {action.action_type}")
                     return False

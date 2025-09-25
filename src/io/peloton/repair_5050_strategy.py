@@ -13,7 +13,7 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         self.logger = get_logger(__name__)
     
     def can_repair(self, path: Path, expected_pattern: DirectoryPattern) -> bool:
-        """Check if this is a 50/50 corruption issue that can be repaired.
+        """Check if this is a corruption issue that can be repaired.
         
         Args:
             path: Path to check
@@ -24,16 +24,24 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         """
         path_str = str(path).lower()
         
-        # Look for 50/50 patterns that create extra directory levels
+        # Look for various corruption patterns that create extra directory levels
         corruption_patterns = [
             "50/50", "/50/", "\\50\\", "50-50", 
             "bootcamp 50", "bootcamp: 50"
         ]
         
-        return any(pattern in path_str for pattern in corruption_patterns)
+        # Check for 50/50 corruption
+        if any(pattern in path_str for pattern in corruption_patterns):
+            return True
+            
+        # Check for duplicated episode name corruption
+        if self._has_duplicated_episode_name(path):
+            return True
+            
+        return False
     
     def generate_repair_actions(self, path: Path, expected_pattern: DirectoryPattern) -> List[RepairAction]:
-        """Generate repair actions for 50/50 corruption.
+        """Generate repair actions for various corruption patterns.
         
         Args:
             path: Path that needs repair
@@ -54,32 +62,174 @@ class Repair5050Strategy(DirectoryRepairStrategy):
                 self.logger.debug(f"Skipping problematic part: {part}")
                 continue
                 
-            # Fix bootcamp names with 50/50 corruption
+            # Fix bootcamp names with 50/50 corruption - preserve episode name but clean corruption
             if "bootcamp" in part.lower() and "50" in part:
-                if "bike" in part.lower():
-                    corrected_part = "Bike Bootcamp"
-                elif "row" in part.lower():
-                    corrected_part = "Row Bootcamp"
-                elif "tread" in part.lower():
-                    corrected_part = "Bootcamp"
-                else:
-                    corrected_part = "Bootcamp"
-                
+                # Extract the episode name and clean it up
+                corrected_part = self._clean_episode_name(part)
                 self.logger.debug(f"Correcting bootcamp name: {part} -> {corrected_part}")
                 corrected_parts.append(corrected_part)
             else:
                 corrected_parts.append(part)
         
+        # Handle duplicated episode name corruption
+        corrected_parts = self._fix_duplicated_episode_names(corrected_parts)
+        
         # Generate repair action if we made corrections
         if corrected_parts != list(path.parts):
             target_path = Path(*corrected_parts)
-            actions.append(RepairAction(
-                action_type="move",
-                source_path=path,
-                target_path=target_path,
-                reason="Fix 50/50 directory corruption"
-            ))
             
-            self.logger.info(f"Generated repair action: {path} -> {target_path}")
+            # Check if target already exists and handle accordingly
+            if target_path.exists():
+                # If target exists, we need to merge the contents
+                # Move the corrupted directory contents to the existing target
+                self.logger.info(f"Target exists, will merge contents: {path} -> {target_path}")
+                
+                # Create a special action that the validator can handle
+                actions.append(RepairAction(
+                    action_type="move_contents",
+                    source_path=path,
+                    target_path=target_path,
+                    reason="Fix directory corruption - move contents to existing directory"
+                ))
+            else:
+                # Normal move operation
+                actions.append(RepairAction(
+                    action_type="move",
+                    source_path=path,
+                    target_path=target_path,
+                    reason="Fix directory corruption"
+                ))
+                self.logger.info(f"Generated move action: {path} -> {target_path}")
         
         return actions
+    
+    def _clean_episode_name(self, episode_name: str) -> str:
+        """Clean up episode name by removing 50/50 corruption while preserving the episode info.
+        
+        Args:
+            episode_name: Original episode name with corruption
+            
+        Returns:
+            Cleaned episode name
+        """
+        # Remove ": 50" suffix that appears in corrupted names
+        cleaned = episode_name.replace(": 50", "")
+        
+        # Remove any standalone "50" that might be at the end
+        cleaned = cleaned.rstrip(" 50")
+        
+        # Clean up any double spaces that might have been created
+        cleaned = cleaned.replace("  ", " ")
+        
+        return cleaned.strip()
+    
+    def _has_duplicated_episode_name(self, path: Path) -> bool:
+        """Check if the path has duplicated episode names creating extra directory levels.
+        
+        Args:
+            path: Path to check
+            
+        Returns:
+            True if duplicated episode names are detected
+        """
+        path_parts = list(path.parts)
+        
+        # Look for consecutive parts that look like episode names
+        for i in range(len(path_parts) - 1):
+            current_part = path_parts[i]
+            next_part = path_parts[i + 1]
+            
+            # Check if both parts look like episode names (contain episode patterns)
+            if (self._looks_like_episode_name(current_part) and 
+                self._looks_like_episode_name(next_part)):
+                # Check for exact duplicates or similar episode names (same date/activity)
+                if (current_part == next_part or 
+                    self._are_similar_episodes(current_part, next_part)):
+                    return True
+                
+        return False
+    
+    def _looks_like_episode_name(self, part: str) -> bool:
+        """Check if a path part looks like an episode name.
+        
+        Args:
+            part: Path part to check
+            
+        Returns:
+            True if it looks like an episode name
+        """
+        # Episode names typically contain patterns like S30E109, dates, and activity info
+        episode_patterns = [
+            r"S\d+E\d+",  # Season/Episode pattern
+            r"\d{8}",      # Date pattern (YYYYMMDD)
+            r"\d+\s+min",  # Duration pattern
+            "bootcamp", "cycling", "yoga", "strength"  # Activity keywords
+        ]
+        
+        import re
+        part_lower = part.lower()
+        
+        # Check if it contains multiple episode indicators
+        pattern_count = 0
+        for pattern in episode_patterns:
+            if re.search(pattern, part_lower):
+                pattern_count += 1
+                
+        return pattern_count >= 2  # Episode names typically have multiple indicators
+    
+    def _are_similar_episodes(self, part1: str, part2: str) -> bool:
+        """Check if two episode names are similar (same date/activity but different episode numbers).
+        
+        Args:
+            part1: First episode name
+            part2: Second episode name
+            
+        Returns:
+            True if episodes are similar
+        """
+        import re
+        
+        # Extract date and activity from both parts
+        date_pattern = r'(\d{8})'  # YYYYMMDD
+        activity_pattern = r'(\d+\s+min\s+\w+)'  # duration and activity
+        
+        date1 = re.search(date_pattern, part1)
+        date2 = re.search(date_pattern, part2)
+        activity1 = re.search(activity_pattern, part1.lower())
+        activity2 = re.search(activity_pattern, part2.lower())
+        
+        # Episodes are similar if they have the same date and activity
+        return bool(date1 and date2 and date1.group(1) == date2.group(1) and
+                   activity1 and activity2 and activity1.group(1) == activity2.group(1))
+    
+    def _fix_duplicated_episode_names(self, path_parts: List[str]) -> List[str]:
+        """Fix duplicated episode names in path parts.
+        
+        Args:
+            path_parts: List of path parts
+            
+        Returns:
+            Corrected path parts with duplicates removed
+        """
+        corrected_parts = []
+        i = 0
+        
+        while i < len(path_parts):
+            current_part = path_parts[i]
+            
+            # Check if this part is duplicated with the next part
+            if (i < len(path_parts) - 1 and 
+                self._looks_like_episode_name(current_part) and 
+                self._looks_like_episode_name(path_parts[i + 1]) and
+                (current_part == path_parts[i + 1] or 
+                 self._are_similar_episodes(current_part, path_parts[i + 1]))):
+                
+                self.logger.debug(f"Removing duplicate/similar episode name: {current_part} / {path_parts[i + 1]}")
+                # Skip the duplicate, only add the first occurrence
+                corrected_parts.append(current_part)
+                i += 2  # Skip both the current and next part
+            else:
+                corrected_parts.append(current_part)
+                i += 1
+                
+        return corrected_parts

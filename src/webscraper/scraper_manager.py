@@ -39,6 +39,12 @@ class ScraperManager:
         results = {}
         
         try:
+            # Update session manager settings based on first config (assuming all configs have same settings)
+            if configs:
+                first_config = next(iter(configs.values()))
+                self.session_manager.headless = first_config.headless
+                self.session_manager.container_mode = first_config.container_mode
+            
             # Create session and login
             self.logger.info("Creating browser session")
             driver = self.session_manager.create_session()

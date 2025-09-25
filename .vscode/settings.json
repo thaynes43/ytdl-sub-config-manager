@@ -35,5 +35,6 @@
     "[json]": {
         "editor.tabSize": 2,
         "editor.insertSpaces": true
-    }
+    },
+    "cursorpyright.analysis.typeCheckingMode": "basic"
 }

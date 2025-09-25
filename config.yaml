@@ -1,0 +1,66 @@
+# Default configuration file for ytdl-sub config manager
+# This file is used when no command line config is specified
+# Based on the old implementation defaults
+
+# Application-wide settings
+application:
+  # Use forward slashes for paths (works on both Windows and Unix)
+  # On Windows: "D:/path/to/media" or use single quotes: 'D:\path\to\media'
+  media-dir: "/media/peloton"
+  subs-file: "/tmp/ytdl-sub-host-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml"
+  run-in-container: true
+  # Media source strategy to use (peloton, etc.)
+  media-source: "peloton"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "standard"  # or "json" for structured logging
+  # Optional file logging with rotation
+  file: "logs/ytdl-sub-config-manager.log"  # Set to enable file logging
+  max_file_size_mb: 100
+  backup_count: 10
+
+# GitHub integration (optional)
+github:
+  repo-url: ""
+  token: ""
+  temp-repo-dir: "/tmp/ytdl-sub-host-repo"
+  auto-merge: false
+
+# Peloton source configuration
+peloton:
+  username: ""
+  password: ""
+  class-limit-per-activity: 25
+  activities: "cycling,yoga,strength,meditation,cardio,stretching,running,walking,bootcamp,bike_bootcamp,rowing,row_bootcamp"  # All activities
+  page-scrolls: 10
+  
+  # Dependency injection configuration for strategies
+  directory_validation_strategies:
+    - "src.io.peloton.activity_based_path_strategy:ActivityBasedPathStrategy"
+  
+  directory_repair_strategies:
+    - "src.io.peloton.repair_5050_strategy:Repair5050Strategy"
+    - "src.io.peloton.missing_instructor_repair_strategy:MissingInstructorRepairStrategy"
+  
+  episode_parsers:
+    - "src.io.peloton.episodes_from_disk:EpisodesFromDisk"
+    - "src.io.peloton.episodes_from_subscriptions:EpisodesFromSubscriptions"
+
+# Web scraper configuration
+scrapers:
+  peloton.com:
+    # Session management
+    session_manager: "src.webscraper.session_manager:GenericSessionManager"
+    login_strategy: "src.webscraper.peloton.login_strategy:PelotonLoginStrategy"
+    
+    # Scraping strategy
+    scraper_strategy: "src.webscraper.peloton.scraper_strategy:PelotonScraperStrategy"
+    
+    # Scraping configuration
+    headless: true
+    container_mode: true  # Set to true for container/production mode
+    scroll_pause_time: 3.0
+    login_wait_time: 15.0
+    page_load_wait_time: 10.0
