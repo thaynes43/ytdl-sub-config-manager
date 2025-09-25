@@ -194,7 +194,32 @@ class ConfigLoader:
             'peloton_page_scrolls': 10,
             'log_level': 'INFO',
             'log_format': 'standard',
-            'temp_repo_dir': '/tmp/ytdl-sub-repo'
+            'temp_repo_dir': '/tmp/ytdl-sub-repo',
+            # Strategy injection configuration - required for validation and repair
+            'peloton_directory_validation_strategies': [
+                'src.io.peloton.activity_based_path_strategy:ActivityBasedPathStrategy'
+            ],
+            'peloton_directory_repair_strategies': [
+                'src.io.peloton.repair_5050_strategy:Repair5050Strategy',
+                'src.io.peloton.missing_instructor_repair_strategy:MissingInstructorRepairStrategy'
+            ],
+            'peloton_episode_parsers': [
+                'src.io.peloton.episodes_from_disk:EpisodesFromDisk',
+                'src.io.peloton.episodes_from_subscriptions:EpisodesFromSubscriptions'
+            ],
+            # Web scraper configuration
+            'scrapers': {
+                'peloton.com': {
+                    'session_manager': 'src.webscraper.session_manager:GenericSessionManager',
+                    'login_strategy': 'src.webscraper.peloton.login_strategy:PelotonLoginStrategy',
+                    'scraper_strategy': 'src.webscraper.peloton.scraper_strategy:PelotonScraperStrategy',
+                    'headless': True,
+                    'container_mode': True,
+                    'scroll_pause_time': 3.0,
+                    'login_wait_time': 15.0,
+                    'page_load_wait_time': 10.0
+                }
+            }
         }
     
     def _load_yaml_config(self, config_file: str) -> Dict[str, Any]:

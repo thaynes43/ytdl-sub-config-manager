@@ -23,8 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY src/ ./src/
-COPY config.example.yaml ./
-COPY env.example ./
+COPY config.yaml ./
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
