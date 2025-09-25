@@ -28,9 +28,9 @@ github:
 peloton:
   username: ""
   password: ""
-  class-limit-per-activity: 20
-  activities: "cycling,yoga,strength"  # comma-separated list
-  page-scrolls: 5
+  class-limit-per-activity: 2
+  activities: "cycling,yoga,strength,meditation,cardio,stretching,running,walking,bootcamp,bike_bootcamp,rowing,row_bootcamp"  # All activities
+  page-scrolls: 2
   
   # Dependency injection configuration for strategies
   directory_validation_strategies:

@@ -265,7 +265,7 @@ class TestPelotonScraperStrategy:
             assert scraped_class.class_id == f"class-{i}"
             assert scraped_class.title == f"30 min Class {i}"
             assert scraped_class.instructor == f"Instructor {i}"
-            assert scraped_class.activity == "Cycling"
+            assert scraped_class.activity == "cycling"  # Should use config.activity, not metadata
             assert scraped_class.duration_minutes == 30
             assert scraped_class.season_number == 30
             assert scraped_class.episode_number == i + 1

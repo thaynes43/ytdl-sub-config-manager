@@ -61,6 +61,10 @@ class PelotonScraperStrategy(ScraperStrategy):
                 try:
                     # Extract class ID from URL
                     href = link.get_attribute("href")
+                    if not href:
+                        self.logger.warning(f"No href attribute found on link")
+                        error_count += 1
+                        continue
                     class_id = self._extract_class_id(href)
                     
                     if not class_id:
@@ -91,7 +95,7 @@ class PelotonScraperStrategy(ScraperStrategy):
                         class_id=class_id,
                         title=metadata['title'],
                         instructor=metadata['instructor'],
-                        activity=metadata['activity'],
+                        activity=config.activity,  # Use the activity from config, not from metadata
                         duration_minutes=duration,
                         player_url=f"https://members.onepeloton.com/classes/player/{class_id}",
                         season_number=duration,
@@ -133,7 +137,7 @@ class PelotonScraperStrategy(ScraperStrategy):
                 error_message=str(e)
             )
     
-    def extract_class_metadata(self, link_element) -> dict:
+    def extract_class_metadata(self, link_element) -> dict | None:
         """Extract metadata from a Peloton class link element."""
         try:
             # Extract title
@@ -193,3 +197,4 @@ class PelotonScraperStrategy(ScraperStrategy):
         except Exception as e:
             self.logger.warning(f"Error extracting class ID from URL {url}: {e}")
             return ""
+    

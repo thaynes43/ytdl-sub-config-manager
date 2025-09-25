@@ -165,9 +165,15 @@ class EpisodesFromSubscriptions(EpisodeParser):
                 if len(path_parts) >= 2:
                     activity_name = path_parts[-2].lower()  # Second to last is activity
                     
-                    # Map to activity enum
+                    # Map to activity enum with special mappings for bootcamp variants
                     activity_map = {a.value.lower(): a for a in Activity}
-                    activity = activity_map.get(activity_name)
+                    special_mappings = {
+                        "tread bootcamp": Activity.BOOTCAMP,
+                        "row bootcamp": Activity.ROW_BOOTCAMP,
+                        "bike bootcamp": Activity.BIKE_BOOTCAMP
+                    }
+                    
+                    activity = activity_map.get(activity_name) or special_mappings.get(activity_name)
                     
                     if activity:
                         return activity, season, episode
@@ -181,10 +187,13 @@ class EpisodesFromSubscriptions(EpisodeParser):
         
         # Try to find activity in URL
         for i, part in enumerate(url_parts):
-            if part in ['cycling', 'strength', 'yoga', 'running', 'walking', 'rowing', 'meditation', 'stretching', 'cardio']:
+            if part in ['cycling', 'strength', 'yoga', 'running', 'walking', 'rowing', 'meditation', 'stretching', 'cardio', 'bootcamp']:
                 activity_name = part
                 activity_map = {a.value.lower(): a for a in Activity}
-                activity = activity_map.get(activity_name)
+                special_mappings = {
+                    "bootcamp": Activity.BOOTCAMP  # Default bootcamp maps to tread bootcamp
+                }
+                activity = activity_map.get(activity_name) or special_mappings.get(activity_name)
                 
                 # Try to find duration (season) in next parts
                 if i + 1 < len(url_parts):

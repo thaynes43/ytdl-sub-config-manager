@@ -14,7 +14,7 @@ permissions:
   packages: write
 
 env:
-  VERSION: "0.2.2"
+  VERSION: "0.2.3"
 
 jobs:
   test:

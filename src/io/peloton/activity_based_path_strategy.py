@@ -92,23 +92,24 @@ class ActivityBasedPathStrategy:
     
     def _map_activity_name(self, activity_name: str) -> Optional[Activity]:
         """Map activity name from filesystem to Activity enum."""
-        # Try direct mapping first
-        if activity_name in self.activity_map:
-            return self.activity_map[activity_name]
+        # Try direct mapping first (case-insensitive)
+        activity_lower = activity_name.lower()
+        if activity_lower in self.activity_map:
+            return self.activity_map[activity_lower]
         
-        # Try special mappings for bootcamp variants
-        if activity_name in self.special_mappings:
-            return self.special_mappings[activity_name]
+        # Try special mappings for bootcamp variants (case-insensitive)
+        if activity_lower in self.special_mappings:
+            return self.special_mappings[activity_lower]
         
-        # Handle edge cases
-        if any(pattern in activity_name for pattern in ["50/50", "50-50", "bootcamp 50"]):
+        # Handle edge cases (case-insensitive)
+        if any(pattern in activity_lower for pattern in ["50/50", "50-50", "bootcamp 50"]):
             self.logger.warning(f"Problematic activity name with 50/50 pattern: {activity_name}")
             # Try to infer correct activity
-            if "bike" in activity_name:
+            if "bike" in activity_lower:
                 return Activity.BIKE_BOOTCAMP
-            elif "row" in activity_name:
+            elif "row" in activity_lower:
                 return Activity.ROW_BOOTCAMP
-            elif "bootcamp" in activity_name:
+            elif "bootcamp" in activity_lower:
                 return Activity.BOOTCAMP
         
         self.logger.warning(f"Unknown activity name: {activity_name}")

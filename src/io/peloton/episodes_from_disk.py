@@ -126,9 +126,14 @@ class EpisodesFromDisk(EpisodeParser):
         activity_name = parts[-3].lower()
         instructor = parts[-2]
         
-        # Simple activity mapping (could be enhanced)
+        # Activity mapping with special mappings for bootcamp variants
         activity_map = {a.value.lower(): a for a in Activity}
-        activity = activity_map.get(activity_name)
+        special_mappings = {
+            "tread bootcamp": Activity.BOOTCAMP,
+            "row bootcamp": Activity.ROW_BOOTCAMP,
+            "bike bootcamp": Activity.BIKE_BOOTCAMP
+        }
+        activity = activity_map.get(activity_name) or special_mappings.get(activity_name)
         
         if not activity:
             return None
