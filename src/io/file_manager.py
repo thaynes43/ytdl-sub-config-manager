@@ -75,6 +75,14 @@ class FileManager:
         """
         return self.episode_manager.get_merged_episode_data()
     
+    def get_subscriptions_episode_data(self) -> Dict[Activity, ActivityData]:
+        """Get episode data from subscriptions only (not disk).
+        
+        Returns:
+            Dictionary mapping Activity to ActivityData with subscriptions-only episode information
+        """
+        return self.episode_manager.get_subscriptions_episode_data()
+    
     def get_next_episode_number(self, activity: Activity, season: int) -> int:
         """Get the next available episode number for an activity and season.
         

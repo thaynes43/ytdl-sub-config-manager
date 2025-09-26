@@ -99,6 +99,6 @@ class MissingInstructorRepairStrategy(DirectoryRepairStrategy):
             reason=f"Add missing instructor directory: {instructor}"
         ))
         
-        self.logger.info(f"Generated repair action: {path} -> {target_path}")
+        self.logger.info(f"Repairing missing instructor directory: {path} -> {target_path}")
         
         return actions

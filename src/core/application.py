@@ -140,6 +140,10 @@ class Application:
         merged_data = file_manager.get_merged_episode_data()
         logger.info(f"Found {len(merged_data)} activities with existing episodes.")
         
+        # Get subscriptions-only data for counting classes in subscriptions.yaml
+        subscriptions_data = file_manager.get_subscriptions_episode_data()
+        logger.info(f"Found {len(subscriptions_data)} activities with classes in subscriptions.")
+        
         # Log summary in the requested format
         for activity, activity_data in merged_data.items():
             seasons_info = []
@@ -167,6 +171,15 @@ class Application:
             logger.info("Removed already-downloaded classes from subscriptions")
         else:
             logger.info("No cleanup needed in subscriptions file")
+        
+        # Get subscriptions data AFTER cleanup to get accurate counts
+        logger.info("Getting subscriptions data after cleanup...")
+        subscriptions_data_after_cleanup = file_manager.get_subscriptions_episode_data()
+        
+        # Log subscriptions-only summary (after cleanup)
+        for activity, activity_data in subscriptions_data_after_cleanup.items():
+            subscriptions_count = sum(activity_data.max_episode.values())
+            logger.info(f"{activity.name} subscriptions: {subscriptions_count} classes in subscriptions.yaml (after cleanup)")
         
         # Implement actual Peloton scraping
         logger.info("Starting web scraping workflow")
@@ -196,15 +209,32 @@ class Application:
             existing_class_ids = file_manager.find_all_existing_class_ids()
             
             for activity in config.peloton_activities:
-                # Get episode numbering data for this activity
+                # Get episode numbering data for this activity (from merged data - includes disk + subscriptions)
                 activity_data = merged_data.get(activity)
                 episode_numbering = {}
                 if activity_data:
                     episode_numbering = dict(activity_data.max_episode)
                 
-                # Calculate total existing classes for this activity
-                # This includes classes on disk + classes in subscriptions (in-flight)
-                total_existing_classes = sum(episode_numbering.values()) if episode_numbering else 0
+                # Get subscriptions-only count for this activity (for limit checking)
+                # Use the cleaned subscriptions data (after removing already-downloaded classes)
+                # Count actual class IDs in subscriptions for this activity, not max episode numbers
+                subscriptions_count = 0
+                for parser in file_manager.episode_manager.episode_parsers:
+                    if 'subscription' in parser.__class__.__name__.lower():
+                        try:
+                            if hasattr(parser, 'find_subscription_class_ids_for_activity'):
+                                activity_class_ids = parser.find_subscription_class_ids_for_activity(activity)
+                                subscriptions_count = len(activity_class_ids)
+                                break
+                        except Exception as e:
+                            logger.error(f"Failed to get subscription class count for {activity}: {e}")
+                
+                # Fallback to episode count if the specific method doesn't exist
+                if subscriptions_count == 0:
+                    subscriptions_activity_data = subscriptions_data_after_cleanup.get(activity)
+                    if subscriptions_activity_data:
+                        # This is a rough approximation - count total episodes, not max episode numbers
+                        subscriptions_count = sum(subscriptions_activity_data.max_episode.values())
                 
                 scraping_configs[activity.value] = ScrapingConfig(
                     activity=activity.value,
@@ -212,7 +242,7 @@ class Application:
                     page_scrolls=config.peloton_page_scrolls,
                     existing_class_ids=existing_class_ids,
                     episode_numbering_data=episode_numbering,
-                    total_existing_classes=total_existing_classes,
+                    subscriptions_existing_classes=subscriptions_count,  # Only count classes in subscriptions.yaml
                     headless=peloton_scraper_config.get('headless', True),
                     container_mode=config.run_in_container,  # Use the run_in_container config
                     scroll_pause_time=peloton_scraper_config.get('scroll_pause_time', 3.0),

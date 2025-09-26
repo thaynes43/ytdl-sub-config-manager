@@ -334,6 +334,8 @@ class GenericDirectoryValidator:
         Returns:
             True if repair was successful, False otherwise
         """
+        self.logger.info(f"Repairing corrupted directory: {episode.path}")
+        
         # Try each repair strategy until one succeeds
         for repair_strategy in self.repair_strategies:
             if hasattr(repair_strategy, 'can_repair') and hasattr(repair_strategy, 'generate_repair_actions'):
@@ -342,12 +344,12 @@ class GenericDirectoryValidator:
                         actions = repair_strategy.generate_repair_actions(episode.path, None)
                         
                         if self._execute_repair_actions(actions):
-                            self.logger.info(f"Successfully repaired episode using {repair_strategy.__class__.__name__}")
+                            self.logger.info(f"Successfully repaired {episode.path} using {repair_strategy.__class__.__name__}")
                             return True
                         else:
-                            self.logger.warning(f"Failed to execute repair actions from {repair_strategy.__class__.__name__}")
+                            self.logger.warning(f"Failed to execute repair actions from {repair_strategy.__class__.__name__} for {episode.path}")
                 except Exception as e:
-                    self.logger.error(f"Repair strategy {repair_strategy.__class__.__name__} failed: {e}")
+                    self.logger.error(f"Repair strategy {repair_strategy.__class__.__name__} failed for {episode.path}: {e}")
                     continue
         
         self.logger.error(f"No repair strategy could handle episode: {episode.path}")

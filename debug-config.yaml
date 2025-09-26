@@ -3,9 +3,12 @@
 
 # Application-wide settings
 application:
-  media-dir: "/home/thaynes/tmp"
-  #subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.yaml"
-  subs-file: "/home/thaynes/workspace/ytdl-sub-config-manager/subscriptions.test.yaml"
+  media-dir: "/mnt/cephfs-hdd/data/media/peloton" # Live Server
+  #media-dir: "/home/thaynes/tmp" # Empty Dir
+
+  subs-file: "/tmp/peloton-scrape-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml" # GitHub Repo
+  #subs-file: "/home/thaynes/workspace/ytdl-sub-config-manager/subscriptions.test.yaml" # Local - In this repo
+  
   run-in-container: false  # Set to false for local debugging
   media-source: "peloton"  # Media source strategy to use
 
@@ -28,9 +31,16 @@ github:
 peloton:
   username: ""
   password: ""
-  class-limit-per-activity: 2
-  activities: "walking,cycling"
-  page-scrolls: 2
+
+  # Full testing
+  class-limit-per-activity: 25
+  activities: "cycling,yoga,strength,meditation,cardio,stretching,running,walking,bootcamp,bike_bootcamp,rowing,row_bootcamp"  # All activities
+  page-scrolls: 10
+
+  # Isolated testing
+  #class-limit-per-activity: 2
+  #activities: "walking,cycling"
+  #page-scrolls: 2
   
   # Dependency injection configuration for strategies
   directory_validation_strategies:

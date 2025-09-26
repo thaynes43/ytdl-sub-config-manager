@@ -38,17 +38,16 @@ Plex TV Show by Date:
         tv_show_directory: /home/thaynes/tmp/Walking/Rebecca Kennedy
         season_number: 45
         episode_number: 1
-  = Cycling (45 min):
-    45 min Interval & Arms Ride with Robin Arzón:
-      download: https://members.onepeloton.com/classes/player/4969d305986c40498f815cc1b46acc34
-      overrides:
-        tv_show_directory: /home/thaynes/tmp/Cycling/Robin Arzón
-        season_number: 45
-        episode_number: 1
   = Cycling (30 min):
-    30 min 90s Ride with Jenn Sherman:
-      download: https://members.onepeloton.com/classes/player/e2f3487564d44840b74474bffe936de7
+    30 min Hip Hop Ride with Jess King:
+      download: https://members.onepeloton.com/classes/player/3c9bc43081d649558f62a70d342f1055
       overrides:
-        tv_show_directory: /home/thaynes/tmp/Cycling/Jenn Sherman
+        tv_show_directory: /home/thaynes/tmp/Cycling/Jess King
         season_number: 30
         episode_number: 1
+    30 min 2000s Ride with Cody Rigsby:
+      download: https://members.onepeloton.com/classes/player/c144ede448ed4e3299c26d8fde51f761
+      overrides:
+        tv_show_directory: /home/thaynes/tmp/Cycling/Cody Rigsby
+        season_number: 30
+        episode_number: 2

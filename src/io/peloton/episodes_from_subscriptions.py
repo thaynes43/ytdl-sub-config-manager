@@ -214,6 +214,55 @@ class EpisodesFromSubscriptions(EpisodeParser):
         
         return activity, season, episode
     
+    def find_subscription_class_ids_for_activity(self, activity) -> Set[str]:
+        """Find all class IDs in subscriptions for a specific activity.
+        
+        Args:
+            activity: The Activity enum to find class IDs for
+            
+        Returns:
+            Set of class IDs found in subscriptions for this activity
+        """
+        if not self.subs_file.exists():
+            self.logger.warning(f"Subscriptions file does not exist: {self.subs_file}")
+            return set()
+        
+        self.logger.debug(f"Finding subscription class IDs for activity: {activity.name}")
+        
+        try:
+            with open(self.subs_file, 'r', encoding='utf-8') as f:
+                subs_data = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            self.logger.error(f"Error parsing subscriptions YAML file {self.subs_file}: {e}")
+            return set()
+        
+        if not subs_data:
+            return set()
+        
+        class_ids = set()
+        tv_shows = subs_data.get("Plex TV Show by Date", {})
+        
+        # Process each duration group looking for this activity
+        for duration_key, duration_episodes in tv_shows.items():
+            if not isinstance(duration_episodes, dict):
+                continue
+            
+            # Check if this duration group matches our activity
+            # Duration keys look like "= Cycling (20 min)", "= Strength (30 min)", etc.
+            if activity.name.lower() in duration_key.lower():
+                # Extract class IDs from all episodes in this duration group
+                for episode_title, episode_data in duration_episodes.items():
+                    if isinstance(episode_data, dict):
+                        download_url = episode_data.get('download', '')
+                        # Extract class ID from URL like "https://members.onepeloton.com/classes?classId=abc123"
+                        if 'classId=' in download_url:
+                            class_id = download_url.split('classId=')[-1].split('&')[0]
+                            if class_id:
+                                class_ids.add(class_id)
+        
+        self.logger.debug(f"Found {len(class_ids)} subscription class IDs for {activity.name}")
+        return class_ids
+    
     def remove_existing_classes(self, existing_class_ids: Set[str]) -> bool:
         """Remove existing class IDs from the subscriptions file.
         

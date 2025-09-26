@@ -1,6 +1,5 @@
 """Test for the class limit bug - ensuring total classes don't exceed limit per activity."""
 
-import pytest
 from unittest.mock import Mock, MagicMock, patch
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -17,7 +16,8 @@ class TestClassLimitBug:
         self.scraper = PelotonScraperStrategy()
         
         # Mock logger
-        self.scraper.logger = Mock()
+        self.scraper.logger = MagicMock()
+        self.scraper.logger.info = MagicMock()  # type: ignore
         
         # Mock selenium methods
         self.scraper._wait_for_page_load = Mock()
@@ -61,20 +61,19 @@ class TestClassLimitBug:
         Total should not exceed the limit per activity.
         """
         # Setup: We have a limit of 5 classes per activity
-        # - 2 classes already on disk
-        # - 2 classes already in subscriptions (in-flight)
-        # - Total existing: 4 classes
-        # - Should only add 1 new class (5 total - 4 existing = 1 new)
+        # - 2 classes already on disk (not counted in limit)
+        # - 2 classes already in subscriptions (counted in limit)
+        # - Should add 3 new classes (5 limit - 2 in subscriptions = 3 new)
         
         existing_class_ids = {"existing1", "existing2"}  # 2 classes on disk
         
         config = ScrapingConfig(
             activity="cycling",
-            max_classes=5,  # Total limit per activity
+            max_classes=5,  # Total limit per activity in subscriptions.yaml
             page_scrolls=1,
             existing_class_ids=existing_class_ids,
-            episode_numbering_data={20: 2, 30: 2},  # 2 classes in 20min, 2 classes in 30min = 4 total
-            total_existing_classes=4,  # 2 + 2 = 4 existing classes (on disk + in subscriptions)
+            episode_numbering_data={20: 2, 30: 2},  # Episode numbering from merged data (disk + subscriptions)
+            subscriptions_existing_classes=2,  # Only 2 classes in subscriptions (not counting disk)
             headless=True,
             container_mode=False,
             scroll_pause_time=1.0,
@@ -100,15 +99,17 @@ class TestClassLimitBug:
         # This test will fail until we fix the bug
         result = self.scraper.scrape_activity(driver, config)
         
-        # Verify the result - FIXED: it now properly considers total limit
+        # Verify the result - FIXED: it now properly considers subscriptions limit only
         assert result.status == ScrapingStatus.COMPLETED
-        # With the fixed implementation, it should only add 1 class (5 total limit - 4 existing = 1 new)
-        assert len(result.classes) == 1, f"Expected 1 new class with fixed implementation, got {len(result.classes)}"
+        # With the fixed implementation, it should add 3 classes (5 limit - 2 in subscriptions = 3 new)
+        assert len(result.classes) == 3, f"Expected 3 new classes with fixed implementation, got {len(result.classes)}"
         assert result.classes[0].class_id == "new1"
+        assert result.classes[1].class_id == "new2"
+        assert result.classes[2].class_id == "new3"
         
-        # Verify that we stopped at the right point due to total limit
-        # Fixed behavior: stops when total would exceed limit (4 existing + 1 new = 5, which is at limit)
-        self.scraper.logger.info.assert_any_call("Reached max classes limit (5) - total would be 6 (existing: 4, new: 2)")
+        # Verify that we stopped at the right point due to subscriptions limit
+        # Fixed behavior: stops when subscriptions would exceed limit (2 in subscriptions + 3 new = 5, which is at limit)
+        self.scraper.logger.info.assert_any_call("Reached max classes limit (5) - total would be 6 (existing in subscriptions: 2, new: 4)")  # type: ignore
     
     def test_class_limit_with_no_existing_classes(self):
         """Test class limit when no classes exist yet."""
@@ -118,7 +119,7 @@ class TestClassLimitBug:
             page_scrolls=1,
             existing_class_ids=set(),  # No existing classes
             episode_numbering_data={},
-            total_existing_classes=0,  # No existing classes
+            subscriptions_existing_classes=0,  # No existing classes
             headless=True,
             container_mode=False,
             scroll_pause_time=1.0,
@@ -147,7 +148,7 @@ class TestClassLimitBug:
         assert result.classes[1].class_id == "new2"
         assert result.classes[2].class_id == "new3"
         
-        self.scraper.logger.info.assert_any_call("Reached max classes limit (3) - total would be 4 (existing: 0, new: 4)")
+        self.scraper.logger.info.assert_any_call("Reached max classes limit (3) - total would be 4 (existing in subscriptions: 0, new: 4)")  # type: ignore
     
     def test_class_limit_with_many_existing_classes(self):
         """Test that no new classes are added when already at limit."""
@@ -155,9 +156,9 @@ class TestClassLimitBug:
             activity="cycling",
             max_classes=2,  # Small limit
             page_scrolls=1,
-            existing_class_ids={"existing1"},  # 1 class on disk
-            episode_numbering_data={20: 1},
-            total_existing_classes=2,  # Already at the limit
+            existing_class_ids={"existing1"},  # 1 class on disk (not counted)
+            episode_numbering_data={20: 1},  # Episode numbering
+            subscriptions_existing_classes=2,  # Already at the subscriptions limit
             headless=True,
             container_mode=False,
             scroll_pause_time=1.0,
@@ -180,4 +181,4 @@ class TestClassLimitBug:
         assert len(result.classes) == 0, f"Expected 0 new classes, got {len(result.classes)}"
         
         # Should log that we're at limit
-        self.scraper.logger.info.assert_any_call("Reached max classes limit (2) - total would be 3 (existing: 2, new: 1)")
+        self.scraper.logger.info.assert_any_call("Reached max classes limit (2) - total would be 3 (existing in subscriptions: 2, new: 1)")  # type: ignore

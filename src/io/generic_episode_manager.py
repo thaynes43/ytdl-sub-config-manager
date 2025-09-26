@@ -81,6 +81,30 @@ class GenericEpisodeManager:
         
         return merged_data
     
+    def get_subscriptions_episode_data(self) -> Dict[Activity, ActivityData]:
+        """Get episode data from subscriptions only (not disk).
+        
+        Returns:
+            Dictionary mapping Activity to ActivityData with subscriptions-only episode information
+        """
+        self.logger.info("Gathering episode data from subscriptions only")
+        
+        subscriptions_data = {}
+        
+        for parser in self.episode_parsers:
+            try:
+                # Only get data from subscriptions parser
+                if 'subscription' in parser.__class__.__name__.lower() and hasattr(parser, 'parse_episodes'):
+                    data = parser.parse_episodes()
+                    subscriptions_data.update(data)
+                    self.logger.info(f"{parser.__class__.__name__}: {len(data)} activities from subscriptions")
+            except Exception as e:
+                self.logger.error(f"Subscriptions parser {parser.__class__.__name__} failed: {e}")
+                continue
+        
+        self.logger.info(f"Subscriptions only: {len(subscriptions_data)} activities")
+        return subscriptions_data
+    
     def find_all_existing_class_ids(self) -> Set[str]:
         """Find all existing class IDs from all configured parsers.
         
