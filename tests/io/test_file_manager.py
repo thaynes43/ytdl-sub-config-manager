@@ -1135,3 +1135,204 @@ class TestConflictResolution:
         # Episode number should be updated
         episode = cycling_section["20 min Pick-Me-Up Ride with Hannah Corbin"]
         assert episode["overrides"]["episode_number"] == 145
+
+    def test_file_manager_with_subscription_history_manager(self):
+        """Test FileManager initialization with subscription history manager."""
+        with patch('src.io.file_manager.GenericDirectoryValidator') as mock_validator_class:
+            with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+                with patch('src.io.file_manager.SubscriptionHistoryManager') as mock_history_class:
+                    mock_validator = MagicMock()
+                    mock_validator.validate_and_repair.return_value = True
+                    mock_validator_class.return_value = mock_validator
+                    
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+                    
+                    mock_history = MagicMock()
+                    mock_history_class.return_value = mock_history
+                    
+                    file_manager = FileManager(
+                        media_dir="/test/media",
+                        subs_file="/test/subs.yaml",
+                        validate_and_repair=True,
+                        validation_strategies=["strategy1"],
+                        repair_strategies=["repair1"],
+                        episode_parsers=["parser1"],
+                        subscription_timeout_days=20
+                    )
+                    
+                    # Should create subscription history manager
+                    mock_history_class.assert_called_once_with(
+                        subs_file_path="/test/subs.yaml",
+                        timeout_days=20
+                    )
+                    assert file_manager.subscription_history_manager == mock_history
+
+    def test_cleanup_subscriptions_with_stale_removal(self):
+        """Test cleanup_subscriptions method with stale subscription removal."""
+        with patch('src.io.file_manager.GenericDirectoryValidator') as mock_validator_class:
+            with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+                with patch('src.io.file_manager.SubscriptionHistoryManager') as mock_history_class:
+                    mock_validator = MagicMock()
+                    mock_validator.validate_and_repair.return_value = True
+                    mock_validator_class.return_value = mock_validator
+                    
+                    mock_manager = MagicMock()
+                    mock_manager.cleanup_subscriptions.return_value = True
+                    mock_manager.episode_parsers = []
+                    mock_manager_class.return_value = mock_manager
+                    
+                    mock_history = MagicMock()
+                    mock_history.get_stale_subscription_ids.return_value = {'stale_id1', 'stale_id2'}
+                    mock_history.remove_subscription_ids.return_value = True
+                    mock_history.timeout_days = 15
+                    mock_history_class.return_value = mock_history
+                    
+                    file_manager = FileManager(
+                        media_dir="/test/media",
+                        subs_file="/test/subs.yaml",
+                        validate_and_repair=True,
+                        validation_strategies=["strategy1"],
+                        repair_strategies=["repair1"],
+                        episode_parsers=["parser1"]
+                    )
+                    
+                    result = file_manager.cleanup_subscriptions()
+                    
+                    assert result is True
+                    mock_manager.cleanup_subscriptions.assert_called_once()
+                    mock_history.get_stale_subscription_ids.assert_called_once()
+                    mock_history.remove_subscription_ids.assert_called_once_with({'stale_id1', 'stale_id2'})
+
+    def test_cleanup_subscriptions_no_stale_subscriptions(self):
+        """Test cleanup_subscriptions method when no stale subscriptions exist."""
+        with patch('src.io.file_manager.GenericDirectoryValidator') as mock_validator_class:
+            with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+                with patch('src.io.file_manager.SubscriptionHistoryManager') as mock_history_class:
+                    mock_validator = MagicMock()
+                    mock_validator.validate_and_repair.return_value = True
+                    mock_validator_class.return_value = mock_validator
+                    
+                    mock_manager = MagicMock()
+                    mock_manager.cleanup_subscriptions.return_value = False
+                    mock_manager.episode_parsers = []
+                    mock_manager_class.return_value = mock_manager
+                    
+                    mock_history = MagicMock()
+                    mock_history.get_stale_subscription_ids.return_value = set()
+                    mock_history_class.return_value = mock_history
+                    
+                    file_manager = FileManager(
+                        media_dir="/test/media",
+                        subs_file="/test/subs.yaml",
+                        validate_and_repair=True,
+                        validation_strategies=["strategy1"],
+                        repair_strategies=["repair1"],
+                        episode_parsers=["parser1"]
+                    )
+                    
+                    result = file_manager.cleanup_subscriptions()
+                    
+                    assert result is False
+                    mock_manager.cleanup_subscriptions.assert_called_once()
+                    mock_history.get_stale_subscription_ids.assert_called_once()
+                    mock_history.remove_subscription_ids.assert_not_called()
+
+    def test_track_new_subscriptions(self):
+        """Test track_new_subscriptions method."""
+        with patch('src.io.file_manager.GenericDirectoryValidator') as mock_validator_class:
+            with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+                with patch('src.io.file_manager.SubscriptionHistoryManager') as mock_history_class:
+                    mock_validator = MagicMock()
+                    mock_validator.validate_and_repair.return_value = True
+                    mock_validator_class.return_value = mock_validator
+                    
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+                    
+                    mock_history = MagicMock()
+                    mock_history.extract_subscription_ids_from_urls.return_value = {'id1', 'id2'}
+                    mock_history.add_subscription_ids.return_value = True
+                    mock_history_class.return_value = mock_history
+                    
+                    file_manager = FileManager(
+                        media_dir="/test/media",
+                        subs_file="/test/subs.yaml",
+                        validate_and_repair=True,
+                        validation_strategies=["strategy1"],
+                        repair_strategies=["repair1"],
+                        episode_parsers=["parser1"]
+                    )
+                    
+                    urls = [
+                        "https://members.onepeloton.com/classes/player/id1",
+                        "https://members.onepeloton.com/classes/player/id2"
+                    ]
+                    
+                    result = file_manager.track_new_subscriptions(urls)
+                    
+                    assert result is True
+                    mock_history.extract_subscription_ids_from_urls.assert_called_once_with(urls)
+                    mock_history.add_subscription_ids.assert_called_once_with({'id1', 'id2'})
+
+    def test_track_new_subscriptions_empty_urls(self):
+        """Test track_new_subscriptions method with empty URL list."""
+        with patch('src.io.file_manager.GenericDirectoryValidator') as mock_validator_class:
+            with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+                with patch('src.io.file_manager.SubscriptionHistoryManager') as mock_history_class:
+                    mock_validator = MagicMock()
+                    mock_validator.validate_and_repair.return_value = True
+                    mock_validator_class.return_value = mock_validator
+                    
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+                    
+                    mock_history = MagicMock()
+                    mock_history_class.return_value = mock_history
+                    
+                    file_manager = FileManager(
+                        media_dir="/test/media",
+                        subs_file="/test/subs.yaml",
+                        validate_and_repair=True,
+                        validation_strategies=["strategy1"],
+                        repair_strategies=["repair1"],
+                        episode_parsers=["parser1"]
+                    )
+                    
+                    result = file_manager.track_new_subscriptions([])
+                    
+                    assert result is True
+                    mock_history.extract_subscription_ids_from_urls.assert_not_called()
+                    mock_history.add_subscription_ids.assert_not_called()
+
+    def test_track_new_subscriptions_no_ids_extracted(self):
+        """Test track_new_subscriptions method when no IDs are extracted."""
+        with patch('src.io.file_manager.GenericDirectoryValidator') as mock_validator_class:
+            with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+                with patch('src.io.file_manager.SubscriptionHistoryManager') as mock_history_class:
+                    mock_validator = MagicMock()
+                    mock_validator.validate_and_repair.return_value = True
+                    mock_validator_class.return_value = mock_validator
+                    
+                    mock_manager = MagicMock()
+                    mock_manager_class.return_value = mock_manager
+                    
+                    mock_history = MagicMock()
+                    mock_history.extract_subscription_ids_from_urls.return_value = set()
+                    mock_history_class.return_value = mock_history
+                    
+                    file_manager = FileManager(
+                        media_dir="/test/media",
+                        subs_file="/test/subs.yaml",
+                        validate_and_repair=True,
+                        validation_strategies=["strategy1"],
+                        repair_strategies=["repair1"],
+                        episode_parsers=["parser1"]
+                    )
+                    
+                    urls = ["invalid-url"]
+                    result = file_manager.track_new_subscriptions(urls)
+                    
+                    assert result is True
+                    mock_history.extract_subscription_ids_from_urls.assert_called_once_with(urls)
+                    mock_history.add_subscription_ids.assert_not_called()

@@ -132,7 +132,8 @@ class Application:
             validate_and_repair=not skip_validation,
             validation_strategies=config.peloton_directory_validation_strategies,
             repair_strategies=config.peloton_directory_repair_strategies,
-            episode_parsers=config.peloton_episode_parsers
+            episode_parsers=config.peloton_episode_parsers,
+            subscription_timeout_days=config.subscription_timeout_days
         )
         
         # Get merged episode data to understand current state
@@ -171,6 +172,11 @@ class Application:
             logger.info("Removed already-downloaded classes from subscriptions")
         else:
             logger.info("No cleanup needed in subscriptions file")
+        
+        # Sync existing subscriptions to history file
+        logger.info("Syncing existing subscriptions to history file...")
+        if not file_manager.subscription_history_manager.sync_existing_subscriptions():
+            logger.warning("Failed to sync existing subscriptions to history file")
         
         # Get subscriptions data AFTER cleanup to get accurate counts
         logger.info("Getting subscriptions data after cleanup...")
@@ -261,6 +267,7 @@ class Application:
             
             # Process results and update subscriptions
             total_new_classes = 0
+            new_subscription_urls = []
             for activity_name, result in scraping_results.items():
                 if result.status.value == "completed":
                     subscription_data = result.get_subscription_data(config.media_dir)
@@ -269,6 +276,11 @@ class Application:
                         file_manager.add_new_subscriptions(subscription_data)
                         total_new_classes += len(result.classes)
                         logger.info(f"Added {len(result.classes)} new {activity_name} classes")
+                        
+                        # Collect URLs for tracking
+                        for class_info in result.classes:
+                            if hasattr(class_info, 'player_url') and class_info.player_url:
+                                new_subscription_urls.append(class_info.player_url)
                     else:
                         logger.info(f"No new {activity_name} subscriptions to add")
                 else:
@@ -276,6 +288,12 @@ class Application:
             
             if total_new_classes > 0:
                 logger.info(f"Successfully added {total_new_classes} new subscriptions to subscriptions")
+                
+                # Track new subscriptions in history file
+                if new_subscription_urls:
+                    logger.info("Tracking new subscriptions in history file")
+                    if not file_manager.track_new_subscriptions(new_subscription_urls):
+                        logger.warning("Failed to track new subscriptions in history file")
             else:
                 logger.info("No new subscriptions found to add")
             

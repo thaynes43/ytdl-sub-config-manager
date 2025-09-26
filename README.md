@@ -15,6 +15,9 @@ A modular Peloton scraper for ytdl-sub subscriptions. This application periodica
    # Run the full scraping workflow
    python -m src scrape --source peloton --activities cycling,yoga --limit 25
    
+   # Run with custom subscription timeout (default: 15 days)
+   python -m src scrape --subscription-timeout-days 30
+   
    # Or validate/repair directory structure only
    python -m src validate --media-dir ./media --dry-run
    
@@ -54,6 +57,7 @@ A modular Peloton scraper for ytdl-sub subscriptions. This application periodica
 - **Secure credential management**: Uses `.env` files (git-ignored) with masked logging
 - **Episode numbering system**: Intelligent season/episode assignment based on duration and sequence
 - **Directory validation**: Automated detection and repair of corrupted directory structures
+- **Subscription history tracking**: Automatic cleanup of stale subscriptions with configurable timeout (default: 15 days)
 - **Web scraping architecture**: Dependency injection with factory pattern for extensible scrapers
 - **Strategy pattern**: Pluggable login, scraping, and parsing strategies via configuration
 - **GitHub integration**: Automated repository management with PR creation and optional auto-merge
@@ -107,6 +111,60 @@ The application determines the next episode number by checking two sources:
 3. **Merged Results**: Combines both sources to determine the next available episode number
    - Takes the maximum episode number from either source
    - Increments by 1 for new episodes
+
+## Subscription History Tracking
+
+The application automatically tracks subscription IDs and their creation dates to prevent stale subscriptions from accumulating indefinitely.
+
+### How It Works
+
+1. **History File**: A `subscription-history.json` file is created alongside your `subscriptions.yaml` file
+2. **ID Tracking**: When new subscriptions are added, their Peloton class IDs are extracted from URLs and stored with timestamps
+3. **Stale Cleanup**: During each run, subscriptions older than the configured timeout (default: 15 days) are automatically removed
+4. **Automatic Management**: The system handles both adding new IDs and removing stale ones without manual intervention
+
+### Configuration
+
+Set the subscription timeout using any of these methods:
+
+**Environment Variable:**
+```bash
+SUBSCRIPTION_TIMEOUT_DAYS=20
+```
+
+**CLI Argument:**
+```bash
+python -m src scrape --subscription-timeout-days 20
+```
+
+**YAML Configuration:**
+```yaml
+peloton:
+  subscription_timeout_days: 20
+```
+
+### History File Format
+
+The `subscription-history.json` file stores subscription data in this format:
+
+```json
+{
+  "subscriptions": [
+    {
+      "id": "0c3a783d638940d5826b3173729781df",
+      "date_added": "2024-01-15T10:30:00"
+    }
+  ],
+  "last_updated": "2024-01-16T12:00:00"
+}
+```
+
+### Benefits
+
+- **Prevents accumulation**: Automatically removes subscriptions that have been stuck for too long
+- **Configurable timeout**: Adjust the cleanup period based on your needs
+- **Transparent operation**: Works automatically without manual intervention
+- **Safe cleanup**: Only removes subscriptions that are genuinely stale, not active ones
 
 ## GitHub Integration
 
