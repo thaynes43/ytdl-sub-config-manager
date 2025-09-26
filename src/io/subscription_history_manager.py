@@ -287,9 +287,10 @@ class SubscriptionHistoryManager:
             # Find IDs to remove (in history but not in subscriptions)
             ids_to_remove = current_tracked_ids - current_subscription_ids
             
-            # Apply changes
+            # Apply changes - ADD FIRST, then REMOVE
             changes_made = False
             
+            # Step 1: Add missing subscription IDs to history first
             if ids_to_add:
                 self.logger.info(f"Adding {len(ids_to_add)} new subscription IDs to history")
                 if self.add_subscription_ids(ids_to_add):
@@ -298,6 +299,7 @@ class SubscriptionHistoryManager:
                     self.logger.error("Failed to add new subscription IDs to history")
                     return False
             
+            # Step 2: Remove subscription IDs that are no longer in subscriptions
             if ids_to_remove:
                 self.logger.info(f"Removing {len(ids_to_remove)} subscription IDs from history (no longer in subscriptions)")
                 if self.remove_subscription_ids(ids_to_remove):

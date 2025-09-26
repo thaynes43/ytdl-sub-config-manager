@@ -332,6 +332,210 @@ class TestEpisodesFromSubscriptions:
         
         assert results == {}
     
+    def test_remove_existing_classes_success(self, tmp_path):
+        """Test removing existing class IDs from subscriptions file."""
+        subs_file = tmp_path / "subscriptions.yaml"
+        
+        # Create a subscriptions file with multiple episodes
+        subs_data = {
+            "Plex TV Show by Date": {
+                "= Cycling (20 min)": {
+                    "20 min Ride with Hannah": {
+                        "download": "https://members.onepeloton.com/classes/player/abc123",
+                        "overrides": {"season_number": 20, "episode_number": 1}
+                    },
+                    "20 min Ride with Sam": {
+                        "download": "https://members.onepeloton.com/classes/player/def456",
+                        "overrides": {"season_number": 20, "episode_number": 2}
+                    }
+                },
+                "= Yoga (30 min)": {
+                    "30 min Flow with Aditi": {
+                        "download": "https://members.onepeloton.com/classes/player/ghi789",
+                        "overrides": {"season_number": 30, "episode_number": 1}
+                    }
+                }
+            }
+        }
+        
+        import yaml
+        with open(subs_file, 'w', encoding='utf-8') as f:
+            yaml.dump(subs_data, f, sort_keys=False, allow_unicode=True)
+        
+        parser = EpisodesFromSubscriptions(str(subs_file))
+        
+        # Remove one class ID
+        existing_class_ids = {"abc123"}
+        result = parser.remove_existing_classes(existing_class_ids)
+        
+        assert result is True
+        
+        # Verify the file was modified
+        with open(subs_file, 'r', encoding='utf-8') as f:
+            modified_data = yaml.safe_load(f)
+        
+        # Check that abc123 episode was removed
+        cycling_section = modified_data["Plex TV Show by Date"]["= Cycling (20 min)"]
+        assert "20 min Ride with Hannah" not in cycling_section
+        assert "20 min Ride with Sam" in cycling_section  # Should still be there
+        
+        # Check that other sections are unchanged
+        assert "= Yoga (30 min)" in modified_data["Plex TV Show by Date"]
+        yoga_section = modified_data["Plex TV Show by Date"]["= Yoga (30 min)"]
+        assert "30 min Flow with Aditi" in yoga_section
+    
+    def test_remove_existing_classes_removes_empty_duration_group(self, tmp_path):
+        """Test that removing all episodes from a duration group removes the group entirely."""
+        subs_file = tmp_path / "subscriptions.yaml"
+        
+        # Create a subscriptions file with one episode in a duration group
+        subs_data = {
+            "Plex TV Show by Date": {
+                "= Cycling (20 min)": {
+                    "20 min Ride with Hannah": {
+                        "download": "https://members.onepeloton.com/classes/player/abc123",
+                        "overrides": {"season_number": 20, "episode_number": 1}
+                    }
+                },
+                "= Yoga (30 min)": {
+                    "30 min Flow with Aditi": {
+                        "download": "https://members.onepeloton.com/classes/player/ghi789",
+                        "overrides": {"season_number": 30, "episode_number": 1}
+                    }
+                }
+            }
+        }
+        
+        import yaml
+        with open(subs_file, 'w', encoding='utf-8') as f:
+            yaml.dump(subs_data, f, sort_keys=False, allow_unicode=True)
+        
+        parser = EpisodesFromSubscriptions(str(subs_file))
+        
+        # Remove the only class ID from the cycling group
+        existing_class_ids = {"abc123"}
+        result = parser.remove_existing_classes(existing_class_ids)
+        
+        assert result is True
+        
+        # Verify the file was modified
+        with open(subs_file, 'r', encoding='utf-8') as f:
+            modified_data = yaml.safe_load(f)
+        
+        # Check that the entire cycling duration group was removed
+        assert "= Cycling (20 min)" not in modified_data["Plex TV Show by Date"]
+        
+        # Check that yoga section is still there
+        assert "= Yoga (30 min)" in modified_data["Plex TV Show by Date"]
+        yoga_section = modified_data["Plex TV Show by Date"]["= Yoga (30 min)"]
+        assert "30 min Flow with Aditi" in yoga_section
+    
+    def test_remove_existing_classes_no_matches(self, tmp_path):
+        """Test removing class IDs that don't exist in the subscriptions file."""
+        subs_file = tmp_path / "subscriptions.yaml"
+        
+        # Create a subscriptions file
+        subs_data = {
+            "Plex TV Show by Date": {
+                "= Cycling (20 min)": {
+                    "20 min Ride with Hannah": {
+                        "download": "https://members.onepeloton.com/classes/player/abc123",
+                        "overrides": {"season_number": 20, "episode_number": 1}
+                    }
+                }
+            }
+        }
+        
+        import yaml
+        with open(subs_file, 'w', encoding='utf-8') as f:
+            yaml.dump(subs_data, f, sort_keys=False, allow_unicode=True)
+        
+        parser = EpisodesFromSubscriptions(str(subs_file))
+        
+        # Try to remove a class ID that doesn't exist
+        existing_class_ids = {"nonexistent123"}
+        result = parser.remove_existing_classes(existing_class_ids)
+        
+        assert result is False  # No changes made
+        
+        # Verify the file was not modified
+        with open(subs_file, 'r', encoding='utf-8') as f:
+            modified_data = yaml.safe_load(f)
+        
+        # Should be identical to original
+        assert modified_data == subs_data
+    
+    def test_remove_existing_classes_empty_class_ids(self, tmp_path):
+        """Test removing with empty class IDs set."""
+        subs_file = tmp_path / "subscriptions.yaml"
+        
+        # Create a subscriptions file
+        subs_data = {
+            "Plex TV Show by Date": {
+                "= Cycling (20 min)": {
+                    "20 min Ride with Hannah": {
+                        "download": "https://members.onepeloton.com/classes/player/abc123",
+                        "overrides": {"season_number": 20, "episode_number": 1}
+                    }
+                }
+            }
+        }
+        
+        import yaml
+        with open(subs_file, 'w', encoding='utf-8') as f:
+            yaml.dump(subs_data, f, sort_keys=False, allow_unicode=True)
+        
+        parser = EpisodesFromSubscriptions(str(subs_file))
+        
+        # Try to remove with empty set
+        existing_class_ids = set()
+        result = parser.remove_existing_classes(existing_class_ids)
+        
+        assert result is False  # No changes made
+        
+        # Verify the file was not modified
+        with open(subs_file, 'r', encoding='utf-8') as f:
+            modified_data = yaml.safe_load(f)
+        
+        # Should be identical to original
+        assert modified_data == subs_data
+    
+    def test_remove_existing_classes_nonexistent_file(self):
+        """Test removing from nonexistent subscriptions file."""
+        parser = EpisodesFromSubscriptions("/nonexistent/file.yaml")
+        
+        existing_class_ids = {"abc123"}
+        result = parser.remove_existing_classes(existing_class_ids)
+        
+        assert result is False
+    
+    def test_remove_existing_classes_invalid_yaml(self, tmp_path):
+        """Test removing from invalid YAML file."""
+        subs_file = tmp_path / "subscriptions.yaml"
+        
+        # Create invalid YAML
+        with open(subs_file, 'w', encoding='utf-8') as f:
+            f.write("invalid: yaml: content: [")
+        
+        parser = EpisodesFromSubscriptions(str(subs_file))
+        
+        existing_class_ids = {"abc123"}
+        result = parser.remove_existing_classes(existing_class_ids)
+        
+        assert result is False
+    
+    def test_remove_existing_classes_empty_file(self, tmp_path):
+        """Test removing from empty subscriptions file."""
+        subs_file = tmp_path / "subscriptions.yaml"
+        subs_file.touch()  # Create empty file
+        
+        parser = EpisodesFromSubscriptions(str(subs_file))
+        
+        existing_class_ids = {"abc123"}
+        result = parser.remove_existing_classes(existing_class_ids)
+        
+        assert result is False
+    
     # test_extract_activity_from_directory removed - internal implementation moved to strategy
 
 

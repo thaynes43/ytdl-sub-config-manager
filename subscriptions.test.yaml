@@ -24,13 +24,6 @@ __preset__:
     format: bestvideo+bestaudio/bestaudio
     merge_output_format: mp4
 Plex TV Show by Date:
-  = Walking (20 min):
-    20 min Pop Walk with Hannah Frankson:
-      download: https://members.onepeloton.com/classes/player/fe30657f7b164c37ae56f0e0aa3324a9
-      overrides:
-        tv_show_directory: D:/labspace/tmp/test-media/Walking/Hannah Frankson
-        season_number: 20
-        episode_number: 1
   = Strength (15 min):
     '15 min Barre: Express with Hannah Corbin':
       download: https://members.onepeloton.com/classes/player/1304e613a9344263821409b13df80819
@@ -65,3 +58,10 @@ Plex TV Show by Date:
         tv_show_directory: D:/labspace/tmp/test-media/Strength/Robin Arzón
         season_number: 20
         episode_number: 152
+  = Walking (30 min):
+    30 min Walk + Run with Mariana Fernández:
+      download: https://members.onepeloton.com/classes/player/a4037efaab8b44ccb91d50b2469b6714
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Walking/Mariana Fernández
+        season_number: 30
+        episode_number: 1
