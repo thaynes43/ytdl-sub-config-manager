@@ -232,6 +232,7 @@ class ScrapingConfig:
     page_scrolls: int
     existing_class_ids: set
     episode_numbering_data: Dict[int, int]  # season -> max_episode
+    total_existing_classes: int = 0  # Total classes already on disk and in subscriptions
     headless: bool = True
     container_mode: bool = True
     scroll_pause_time: float = 3.0

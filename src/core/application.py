@@ -202,12 +202,17 @@ class Application:
                 if activity_data:
                     episode_numbering = dict(activity_data.max_episode)
                 
+                # Calculate total existing classes for this activity
+                # This includes classes on disk + classes in subscriptions (in-flight)
+                total_existing_classes = sum(episode_numbering.values()) if episode_numbering else 0
+                
                 scraping_configs[activity.value] = ScrapingConfig(
                     activity=activity.value,
                     max_classes=config.peloton_class_limit_per_activity,
                     page_scrolls=config.peloton_page_scrolls,
                     existing_class_ids=existing_class_ids,
                     episode_numbering_data=episode_numbering,
+                    total_existing_classes=total_existing_classes,
                     headless=peloton_scraper_config.get('headless', True),
                     container_mode=config.run_in_container,  # Use the run_in_container config
                     scroll_pause_time=peloton_scraper_config.get('scroll_pause_time', 3.0),

@@ -54,8 +54,11 @@ class PelotonScraperStrategy(ScraperStrategy):
             error_count = 0
             
             for i, link in enumerate(links):
-                if len(scraped_classes) >= config.max_classes:
-                    self.logger.info(f"Reached max classes limit ({config.max_classes})")
+                # Check if adding another class would exceed the total limit
+                # Total classes = existing classes (on disk + in subscriptions) + new classes being added
+                total_classes_if_added = config.total_existing_classes + len(scraped_classes) + 1
+                if total_classes_if_added > config.max_classes:
+                    self.logger.info(f"Reached max classes limit ({config.max_classes}) - total would be {total_classes_if_added} (existing: {config.total_existing_classes}, new: {len(scraped_classes) + 1})")
                     break
                 
                 try:
