@@ -317,7 +317,9 @@ class TestApplicationSubscriptionsCount:
         assert result == 0
 
         # Verify that find_subscription_class_ids_for_activity was called to get the actual count
-        mock_subscription_parser.find_subscription_class_ids_for_activity.assert_called_once_with(Activity.CYCLING)
+        # It should be called at least once (for logging and/or scraping config)
+        assert mock_subscription_parser.find_subscription_class_ids_for_activity.call_count >= 1
+        mock_subscription_parser.find_subscription_class_ids_for_activity.assert_called_with(Activity.CYCLING)
         
         # This test would have caught the bug: we should use actual class count (3)
         # NOT sum of max episodes (499 + 500 = 999)

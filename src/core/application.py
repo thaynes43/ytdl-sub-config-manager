@@ -182,10 +182,21 @@ class Application:
         logger.info("Getting subscriptions data after cleanup...")
         subscriptions_data_after_cleanup = file_manager.get_subscriptions_episode_data()
         
-        # Log subscriptions-only summary (after cleanup)
+        # Log subscriptions-only summary (after cleanup) using actual class counts
         for activity, activity_data in subscriptions_data_after_cleanup.items():
-            subscriptions_count = sum(activity_data.max_episode.values())
-            logger.info(f"{activity.name} subscriptions: {subscriptions_count} classes in subscriptions.yaml (after cleanup)")
+            # Get actual class count for this activity from subscriptions
+            actual_count = 0
+            for parser in file_manager.episode_manager.episode_parsers:
+                if 'subscription' in parser.__class__.__name__.lower():
+                    try:
+                        if hasattr(parser, 'find_subscription_class_ids_for_activity'):
+                            activity_class_ids = parser.find_subscription_class_ids_for_activity(activity)
+                            actual_count = len(activity_class_ids)
+                            break
+                    except Exception as e:
+                        logger.error(f"Failed to get subscription class count for logging {activity}: {e}")
+            
+            logger.info(f"{activity.name} subscriptions: {actual_count} classes in subscriptions.yaml (after cleanup)")
         
         # Implement actual Peloton scraping
         logger.info("Starting web scraping workflow")
@@ -223,7 +234,7 @@ class Application:
                 
                 # Get subscriptions-only count for this activity (for limit checking)
                 # Use the cleaned subscriptions data (after removing already-downloaded classes)
-                # Count actual class IDs in subscriptions for this activity, not max episode numbers
+                # Count actual class IDs in subscriptions for this activity
                 subscriptions_count = 0
                 for parser in file_manager.episode_manager.episode_parsers:
                     if 'subscription' in parser.__class__.__name__.lower():
@@ -231,16 +242,14 @@ class Application:
                             if hasattr(parser, 'find_subscription_class_ids_for_activity'):
                                 activity_class_ids = parser.find_subscription_class_ids_for_activity(activity)
                                 subscriptions_count = len(activity_class_ids)
+                                logger.debug(f"Found {subscriptions_count} actual class IDs for {activity.name} in subscriptions")
                                 break
                         except Exception as e:
                             logger.error(f"Failed to get subscription class count for {activity}: {e}")
                 
-                # Fallback to episode count if the specific method doesn't exist
+                # If we couldn't get the actual class count, log an error - don't use fallback
                 if subscriptions_count == 0:
-                    subscriptions_activity_data = subscriptions_data_after_cleanup.get(activity)
-                    if subscriptions_activity_data:
-                        # This is a rough approximation - count total episodes, not max episode numbers
-                        subscriptions_count = sum(subscriptions_activity_data.max_episode.values())
+                    logger.warning(f"Could not get actual class count for {activity.name} - using 0 to prevent incorrect limits")
                 
                 scraping_configs[activity.value] = ScrapingConfig(
                     activity=activity.value,
