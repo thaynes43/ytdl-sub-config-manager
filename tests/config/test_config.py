@@ -40,6 +40,7 @@ class TestConfig:
         assert config.log_level == "INFO"
         assert config.log_format == "standard"
         assert config.media_source == "peloton"
+        assert config.subscription_timeout_days == 15
 
     def test_config_creation_with_all_fields(self):
         """Test creating config with all fields specified."""
@@ -132,6 +133,15 @@ class TestConfig:
                 media_dir="/test/media",
                 subs_file="/test/subs.yaml",
                 peloton_page_scrolls=-1
+            )
+        
+        with pytest.raises(ValueError, match="SUBSCRIPTION_TIMEOUT_DAYS must be positive"):
+            Config(
+                peloton_username="testuser",
+                peloton_password="testpass",
+                media_dir="/test/media",
+                subs_file="/test/subs.yaml",
+                subscription_timeout_days=0
             )
 
     def test_config_validation_log_level(self):
@@ -532,6 +542,7 @@ invalid: yaml: content:
             'PELOTON_ACTIVITY': 'cycling,yoga,strength',
             'RUN_IN_CONTAINER': 'false',
             'PELOTON_PAGE_SCROLLS': '25',
+            'SUBSCRIPTION_TIMEOUT_DAYS': '20',
             'LOG_LEVEL': 'DEBUG',
             'LOG_FORMAT': 'json',
         }):
@@ -547,6 +558,7 @@ invalid: yaml: content:
             assert env_config['peloton_activities'] == 'cycling,yoga,strength'
             assert env_config['run_in_container'] is False
             assert env_config['peloton_page_scrolls'] == 25
+            assert env_config['subscription_timeout_days'] == 20
             assert env_config['log_level'] == 'DEBUG'
             assert env_config['log_format'] == 'json'
             # media_source is not in environment mapping, so it won't be present

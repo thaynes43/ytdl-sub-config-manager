@@ -34,6 +34,7 @@ class Config:
     run_in_container: bool = True
     peloton_page_scrolls: int = 10
     media_source: str = "peloton"
+    subscription_timeout_days: int = 15
     
     # Strategy injection configuration
     peloton_directory_validation_strategies: List[str] = field(default_factory=list)
@@ -75,6 +76,8 @@ class Config:
             raise ValueError("PELOTON_CLASS_LIMIT_PER_ACTIVITY must be positive")
         if self.peloton_page_scrolls <= 0:
             raise ValueError("PELOTON_PAGE_SCROLLS must be positive")
+        if self.subscription_timeout_days <= 0:
+            raise ValueError("SUBSCRIPTION_TIMEOUT_DAYS must be positive")
         
         # Set default activities if empty
         if not self.peloton_activities:
@@ -252,6 +255,7 @@ class ConfigLoader:
             'PELOTON_ACTIVITY': 'peloton_activities',
             'RUN_IN_CONTAINER': 'run_in_container',
             'PELOTON_PAGE_SCROLLS': 'peloton_page_scrolls',
+            'SUBSCRIPTION_TIMEOUT_DAYS': 'subscription_timeout_days',
             'LOG_LEVEL': 'log_level',
             'LOG_FORMAT': 'log_format',
             'LOG_FILE': 'log_file',
@@ -264,7 +268,7 @@ class ConfigLoader:
             value = os.getenv(env_var)
             if value is not None:
                 # Type conversion
-                if config_key in ['peloton_class_limit_per_activity', 'peloton_page_scrolls']:
+                if config_key in ['peloton_class_limit_per_activity', 'peloton_page_scrolls', 'subscription_timeout_days']:
                     try:
                         config[config_key] = int(value)
                     except ValueError:
@@ -291,6 +295,7 @@ class ConfigLoader:
             'activities': 'peloton_activities',
             'container': 'run_in_container',
             'scrolls': 'peloton_page_scrolls',
+            'subscription_timeout_days': 'subscription_timeout_days',
             'log_level': 'log_level',
             'log_format': 'log_format'
         }

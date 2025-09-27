@@ -1,10 +1,11 @@
 """File manager that combines filesystem and subscriptions parsing using dependency injection."""
 
-from typing import Dict, Set, List
+from typing import Dict, Set, List, Optional
 from pathlib import Path
 
 from .generic_directory_validator import GenericDirectoryValidator
 from .generic_episode_manager import GenericEpisodeManager
+from .subscription_history_manager import SubscriptionHistoryManager
 from ..core.models import Activity, ActivityData
 from ..core.logging import get_logger
 from ..webscraper.models import sanitize_for_filesystem
@@ -16,8 +17,8 @@ class FileManager:
     """Manages episode parsing from multiple sources and provides unified interface."""
     
     def __init__(self, media_dir: str, subs_file: str, validate_and_repair: bool = True, 
-                 validation_strategies: List[str] = None, repair_strategies: List[str] = None, 
-                 episode_parsers: List[str] = None):
+                 validation_strategies: Optional[List[str]] = None, repair_strategies: Optional[List[str]] = None, 
+                 episode_parsers: Optional[List[str]] = None, subscription_timeout_days: int = 15):
         """Initialize the file manager.
         
         Args:
@@ -27,6 +28,7 @@ class FileManager:
             validation_strategies: List of validation strategy module paths (required if validate_and_repair=True)
             repair_strategies: List of repair strategy module paths (required if validate_and_repair=True)
             episode_parsers: List of episode parser module paths (required)
+            subscription_timeout_days: Number of days after which subscriptions are considered stale
         """
         self.media_dir = media_dir
         self.subs_file = subs_file
@@ -56,6 +58,12 @@ class FileManager:
             episode_parser_strategies=self.episode_parsers,
             media_dir=media_dir,
             subs_file=subs_file
+        )
+        
+        # Initialize subscription history manager
+        self.subscription_history_manager = SubscriptionHistoryManager(
+            subs_file_path=subs_file,
+            timeout_days=subscription_timeout_days
         )
         
         self.logger = get_logger(__name__)
@@ -112,12 +120,58 @@ class FileManager:
         return self.episode_manager.find_all_existing_class_ids()
     
     def cleanup_subscriptions(self) -> bool:
-        """Remove already-downloaded classes from subscriptions.
+        """Remove already-downloaded classes and stale subscriptions from subscriptions.
         
         Returns:
             True if changes were made, False if no cleanup was needed
         """
-        return self.episode_manager.cleanup_subscriptions()
+        changes_made = False
+        
+        # First, clean up already-downloaded classes
+        if self.episode_manager.cleanup_subscriptions():
+            changes_made = True
+        
+        # Then, clean up stale subscriptions
+        stale_ids = self.subscription_history_manager.get_stale_subscription_ids()
+        if stale_ids:
+            self.logger.info(f"Removing {len(stale_ids)} stale subscriptions (older than {self.subscription_history_manager.timeout_days} days)")
+            
+            # Remove stale subscriptions from the subscriptions file
+            for parser in self.episode_manager.episode_parsers:
+                if 'subscription' in parser.__class__.__name__.lower():
+                    try:
+                        if hasattr(parser, 'remove_existing_classes'):
+                            if parser.remove_existing_classes(stale_ids):
+                                changes_made = True
+                    except Exception as e:
+                        self.logger.error(f"Failed to remove stale subscriptions: {e}")
+            
+            # Remove stale IDs from history file
+            if self.subscription_history_manager.remove_subscription_ids(stale_ids):
+                self.logger.info("Removed stale subscription IDs from history file")
+        
+        return changes_made
+    
+    def track_new_subscriptions(self, subscription_urls: List[str]) -> bool:
+        """Track new subscription URLs in the history file.
+        
+        Args:
+            subscription_urls: List of subscription URLs to track
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not subscription_urls:
+            return True
+        
+        # Extract subscription IDs from URLs
+        subscription_ids = self.subscription_history_manager.extract_subscription_ids_from_urls(subscription_urls)
+        
+        if subscription_ids:
+            self.logger.info(f"Tracking {len(subscription_ids)} new subscription IDs in history")
+            return self.subscription_history_manager.add_subscription_ids(subscription_ids)
+        
+        return True
     
     def update_subscription_directories(self, target_media_dir: str) -> bool:
         """Update existing subscription directories to match the configured media directory.

@@ -1,6 +1,6 @@
 __preset__:
   overrides:
-    tv_show_directory: /home/thaynes/tmp
+    tv_show_directory: D:/labspace/tmp/test-media
     only_recent_date_range: 24months
     only_recent_max_files: 300
   output_options:
@@ -24,30 +24,44 @@ __preset__:
     format: bestvideo+bestaudio/bestaudio
     merge_output_format: mp4
 Plex TV Show by Date:
-  = Walking (20 min):
-    20 min Pop Walk with Hannah Frankson:
-      download: https://members.onepeloton.com/classes/player/fe30657f7b164c37ae56f0e0aa3324a9
+  = Strength (15 min):
+    '15 min Barre: Express with Hannah Corbin':
+      download: https://members.onepeloton.com/classes/player/1304e613a9344263821409b13df80819
       overrides:
-        tv_show_directory: /home/thaynes/tmp/Walking/Hannah Frankson
-        season_number: 20
-        episode_number: 1
-  = Walking (45 min):
-    45 min Hike with Rebecca Kennedy:
-      download: https://members.onepeloton.com/classes/player/3848173801f64e87bdbbcaae7d9cd785
-      overrides:
-        tv_show_directory: /home/thaynes/tmp/Walking/Rebecca Kennedy
-        season_number: 45
+        tv_show_directory: D:/labspace/tmp/test-media/Strength/Hannah Corbin
+        season_number: 15
         episode_number: 1
   = Cycling (30 min):
     30 min Hip Hop Ride with Jess King:
       download: https://members.onepeloton.com/classes/player/3c9bc43081d649558f62a70d342f1055
       overrides:
-        tv_show_directory: /home/thaynes/tmp/Cycling/Jess King
+        tv_show_directory: D:/labspace/tmp/test-media/Cycling/Jess King
         season_number: 30
         episode_number: 1
     30 min 2000s Ride with Cody Rigsby:
       download: https://members.onepeloton.com/classes/player/c144ede448ed4e3299c26d8fde51f761
       overrides:
-        tv_show_directory: /home/thaynes/tmp/Cycling/Cody Rigsby
+        tv_show_directory: D:/labspace/tmp/test-media/Cycling/Cody Rigsby
         season_number: 30
         episode_number: 2
+  = Walking (45 min):
+    45 min Hike with Rebecca Kennedy:
+      download: https://members.onepeloton.com/classes/player/3848173801f64e87bdbbcaae7d9cd785
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Walking/Rebecca Kennedy
+        season_number: 45
+        episode_number: 1
+  = Strength (20 min):
+    20 min Lower Body Strength Benchmark with Robin Arzón:
+      download: https://members.onepeloton.com/classes/player/0c3a783d638940d5826b3173729781df
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Strength/Robin Arzón
+        season_number: 20
+        episode_number: 152
+  = Walking (30 min):
+    30 min Walk + Run with Mariana Fernández:
+      download: https://members.onepeloton.com/classes/player/a4037efaab8b44ccb91d50b2469b6714
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Walking/Mariana Fernández
+        season_number: 30
+        episode_number: 1

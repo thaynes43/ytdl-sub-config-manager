@@ -108,6 +108,11 @@ Examples:
             type=int,
             help="Number of page scrolls to perform (default: 10)"
         )
+        peloton_group.add_argument(
+            "--subscription-timeout-days",
+            type=int,
+            help="Days after which to remove stale subscriptions (default: 15)"
+        )
         
         # File paths
         file_group = scrape_parser.add_argument_group("File Configuration")
@@ -213,6 +218,8 @@ Examples:
             config_dict['limit'] = args.limit
         if hasattr(args, 'scrolls') and args.scrolls:
             config_dict['scrolls'] = args.scrolls
+        if hasattr(args, 'subscription_timeout_days') and args.subscription_timeout_days:
+            config_dict['subscription_timeout_days'] = args.subscription_timeout_days
         if hasattr(args, 'media_dir') and args.media_dir:
             config_dict['media_dir'] = args.media_dir
         if hasattr(args, 'subs_file') and args.subs_file:

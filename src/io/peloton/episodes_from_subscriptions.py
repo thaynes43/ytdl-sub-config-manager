@@ -301,7 +301,12 @@ class EpisodesFromSubscriptions(EpisodeParser):
                 return False
             
             # Process each duration group (e.g., "= Cycling (20 min)")
-            for duration_key, duration_episodes in tv_shows.items():
+            # Create a list of duration keys to avoid modifying dict during iteration
+            duration_keys_to_process = list(tv_shows.keys())
+            duration_groups_to_remove = []
+            
+            for duration_key in duration_keys_to_process:
+                duration_episodes = tv_shows[duration_key]
                 if not isinstance(duration_episodes, dict):
                     continue
                 
@@ -324,10 +329,14 @@ class EpisodesFromSubscriptions(EpisodeParser):
                     del duration_episodes[episode_title]
                     changes_made = True
                 
-                # If the duration group is now empty, remove it too
+                # If the duration group is now empty, mark it for removal
                 if not duration_episodes:
-                    del tv_shows[duration_key]
+                    duration_groups_to_remove.append(duration_key)
                     self.logger.info(f"Removed empty duration group: {duration_key}")
+            
+            # Remove empty duration groups after iteration is complete
+            for duration_key in duration_groups_to_remove:
+                del tv_shows[duration_key]
             
             # Write back the modified YAML if changes were made
             if changes_made:

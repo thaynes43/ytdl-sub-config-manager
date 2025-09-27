@@ -132,7 +132,8 @@ class Application:
             validate_and_repair=not skip_validation,
             validation_strategies=config.peloton_directory_validation_strategies,
             repair_strategies=config.peloton_directory_repair_strategies,
-            episode_parsers=config.peloton_episode_parsers
+            episode_parsers=config.peloton_episode_parsers,
+            subscription_timeout_days=config.subscription_timeout_days
         )
         
         # Get merged episode data to understand current state
@@ -172,14 +173,30 @@ class Application:
         else:
             logger.info("No cleanup needed in subscriptions file")
         
+        # Sync existing subscriptions to history file
+        logger.info("Syncing existing subscriptions to history file...")
+        if not file_manager.subscription_history_manager.sync_existing_subscriptions():
+            logger.warning("Failed to sync existing subscriptions to history file")
+        
         # Get subscriptions data AFTER cleanup to get accurate counts
         logger.info("Getting subscriptions data after cleanup...")
         subscriptions_data_after_cleanup = file_manager.get_subscriptions_episode_data()
         
-        # Log subscriptions-only summary (after cleanup)
+        # Log subscriptions-only summary (after cleanup) using actual class counts
         for activity, activity_data in subscriptions_data_after_cleanup.items():
-            subscriptions_count = sum(activity_data.max_episode.values())
-            logger.info(f"{activity.name} subscriptions: {subscriptions_count} classes in subscriptions.yaml (after cleanup)")
+            # Get actual class count for this activity from subscriptions
+            actual_count = 0
+            for parser in file_manager.episode_manager.episode_parsers:
+                if 'subscription' in parser.__class__.__name__.lower():
+                    try:
+                        if hasattr(parser, 'find_subscription_class_ids_for_activity'):
+                            activity_class_ids = parser.find_subscription_class_ids_for_activity(activity)
+                            actual_count = len(activity_class_ids)
+                            break
+                    except Exception as e:
+                        logger.error(f"Failed to get subscription class count for logging {activity}: {e}")
+            
+            logger.info(f"{activity.name} subscriptions: {actual_count} classes in subscriptions.yaml (after cleanup)")
         
         # Implement actual Peloton scraping
         logger.info("Starting web scraping workflow")
@@ -217,7 +234,7 @@ class Application:
                 
                 # Get subscriptions-only count for this activity (for limit checking)
                 # Use the cleaned subscriptions data (after removing already-downloaded classes)
-                # Count actual class IDs in subscriptions for this activity, not max episode numbers
+                # Count actual class IDs in subscriptions for this activity
                 subscriptions_count = 0
                 for parser in file_manager.episode_manager.episode_parsers:
                     if 'subscription' in parser.__class__.__name__.lower():
@@ -225,16 +242,14 @@ class Application:
                             if hasattr(parser, 'find_subscription_class_ids_for_activity'):
                                 activity_class_ids = parser.find_subscription_class_ids_for_activity(activity)
                                 subscriptions_count = len(activity_class_ids)
+                                logger.debug(f"Found {subscriptions_count} actual class IDs for {activity.name} in subscriptions")
                                 break
                         except Exception as e:
                             logger.error(f"Failed to get subscription class count for {activity}: {e}")
                 
-                # Fallback to episode count if the specific method doesn't exist
+                # If we couldn't get the actual class count, log an error - don't use fallback
                 if subscriptions_count == 0:
-                    subscriptions_activity_data = subscriptions_data_after_cleanup.get(activity)
-                    if subscriptions_activity_data:
-                        # This is a rough approximation - count total episodes, not max episode numbers
-                        subscriptions_count = sum(subscriptions_activity_data.max_episode.values())
+                    logger.warning(f"Could not get actual class count for {activity.name} - using 0 to prevent incorrect limits")
                 
                 scraping_configs[activity.value] = ScrapingConfig(
                     activity=activity.value,
@@ -261,6 +276,7 @@ class Application:
             
             # Process results and update subscriptions
             total_new_classes = 0
+            new_subscription_urls = []
             for activity_name, result in scraping_results.items():
                 if result.status.value == "completed":
                     subscription_data = result.get_subscription_data(config.media_dir)
@@ -269,6 +285,11 @@ class Application:
                         file_manager.add_new_subscriptions(subscription_data)
                         total_new_classes += len(result.classes)
                         logger.info(f"Added {len(result.classes)} new {activity_name} classes")
+                        
+                        # Collect URLs for tracking
+                        for class_info in result.classes:
+                            if hasattr(class_info, 'player_url') and class_info.player_url:
+                                new_subscription_urls.append(class_info.player_url)
                     else:
                         logger.info(f"No new {activity_name} subscriptions to add")
                 else:
@@ -276,6 +297,12 @@ class Application:
             
             if total_new_classes > 0:
                 logger.info(f"Successfully added {total_new_classes} new subscriptions to subscriptions")
+                
+                # Track new subscriptions in history file
+                if new_subscription_urls:
+                    logger.info("Tracking new subscriptions in history file")
+                    if not file_manager.track_new_subscriptions(new_subscription_urls):
+                        logger.warning("Failed to track new subscriptions in history file")
             else:
                 logger.info("No new subscriptions found to add")
             

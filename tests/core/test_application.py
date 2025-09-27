@@ -70,6 +70,7 @@ class TestApplication:
         mock_config.peloton_directory_repair_strategies = ['repair1']
         mock_config.peloton_episode_parsers = ['parser1']
         mock_config.skip_validation = False
+        mock_config.subscription_timeout_days = 15
         
         # Mock scraper configuration
         mock_config.scrapers = {
@@ -128,7 +129,8 @@ class TestApplication:
             validate_and_repair=True,  # not skip_validation
             validation_strategies=['strategy1'],
             repair_strategies=['repair1'],
-            episode_parsers=['parser1']
+            episode_parsers=['parser1'],
+            subscription_timeout_days=15  # default value
         )
         
         # Verify method calls
@@ -150,6 +152,7 @@ class TestApplication:
         mock_config.peloton_directory_repair_strategies = ['repair1']
         mock_config.peloton_episode_parsers = ['parser1']
         mock_config.skip_validation = True
+        mock_config.subscription_timeout_days = 15
         
         # Mock scraper configuration
         mock_config.scrapers = {'peloton.com': {'test': 'config'}}
@@ -188,7 +191,8 @@ class TestApplication:
             validate_and_repair=False,  # skip_validation=True
             validation_strategies=['strategy1'],
             repair_strategies=['repair1'],
-            episode_parsers=['parser1']
+            episode_parsers=['parser1'],
+            subscription_timeout_days=15  # default value
         )
 
     @patch('src.core.application.FileManager')
@@ -379,7 +383,8 @@ class TestApplication:
         mock_config.peloton_directory_validation_strategies = []
         mock_config.peloton_directory_repair_strategies = []
         mock_config.peloton_episode_parsers = []
-        
+        mock_config.subscription_timeout_days = 15
+
         # Remove skip_validation attribute to test getattr default
         del mock_config.skip_validation
         
@@ -420,7 +425,8 @@ class TestApplication:
             validate_and_repair=True,  # not getattr(config, 'skip_validation', False)
             validation_strategies=[],
             repair_strategies=[],
-            episode_parsers=[]
+            episode_parsers=[],
+            subscription_timeout_days=15  # default value
         )
 
     @patch('src.core.application.FileManager')

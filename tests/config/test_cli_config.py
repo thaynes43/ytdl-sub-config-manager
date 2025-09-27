@@ -80,7 +80,8 @@ class TestCLIConfigManager:
             '--limit', '50',
             '--activities', 'cycling,strength',
             '--no-container',
-            '--scrolls', '20'
+            '--scrolls', '20',
+            '--subscription-timeout-days', '30'
         ])
         
         assert args.github_repo == 'github.com/test/repo'
@@ -89,6 +90,7 @@ class TestCLIConfigManager:
         assert args.activities == 'cycling,strength'
         assert args.no_container is True
         assert args.scrolls == 20
+        assert args.subscription_timeout_days == 30
 
     def test_validate_command_arguments(self):
         """Test validate command specific arguments."""
@@ -141,7 +143,8 @@ class TestCLIConfigManager:
             '--limit', '50',
             '--activities', 'cycling,strength',
             '--no-container',
-            '--scrolls', '20'
+            '--scrolls', '20',
+            '--subscription-timeout-days', '30'
         ])
         
         config_dict = manager.args_to_config_dict(args)
@@ -156,6 +159,7 @@ class TestCLIConfigManager:
         assert config_dict['activities'] == 'cycling,strength'
         assert config_dict['container'] is False  # no-container flag
         assert config_dict['scrolls'] == 20
+        assert config_dict['subscription_timeout_days'] == 30
         assert config_dict['log_level'] == 'DEBUG'
         assert config_dict['log_format'] == 'json'
 
