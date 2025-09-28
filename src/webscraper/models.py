@@ -147,6 +147,29 @@ class ScrapedClass:
     episode_number: int
     status: ScrapingStatus = ScrapingStatus.PENDING
     
+    def _get_activity_folder_name(self, activity: str) -> str:
+        """Get the proper folder name for an activity, handling special cases like bootcamp variants.
+        
+        Args:
+            activity: The activity string (e.g., 'bootcamp', 'bike_bootcamp', 'row_bootcamp')
+            
+        Returns:
+            Proper folder name (e.g., 'Tread Bootcamp', 'Bike Bootcamp', 'Row Bootcamp')
+        """
+        # Special mappings for bootcamp variants to match old implementation
+        bootcamp_mappings = {
+            'bootcamp': 'Tread Bootcamp',
+            'bike_bootcamp': 'Bike Bootcamp', 
+            'row_bootcamp': 'Row Bootcamp'
+        }
+        
+        # Check for exact match first
+        if activity.lower() in bootcamp_mappings:
+            return bootcamp_mappings[activity.lower()]
+        
+        # For other activities, use title case (first letter of each word capitalized)
+        return activity.title()
+    
     def to_subscription_entry(self, media_dir: str = "/media/peloton") -> Dict[str, Any]:
         """Convert to ytdl-sub subscription format."""
         # Normalize all text fields to ensure proper encoding
@@ -163,7 +186,10 @@ class ScrapedClass:
         
         # Use configured media directory, ensuring proper path format
         media_path = media_dir.rstrip('/\\')  # Remove trailing separators
-        tv_show_directory = f"{media_path}/{safe_activity.title()}/{safe_instructor}"
+        
+        # Map activity names to proper folder names (especially for bootcamp variants)
+        activity_folder_name = self._get_activity_folder_name(safe_activity)
+        tv_show_directory = f"{media_path}/{activity_folder_name}/{safe_instructor}"
         
         return {
             "download": self.player_url,
@@ -198,7 +224,8 @@ class ScrapingResult:
             # Create duration key (e.g., "= Cycling (30 min)")
             normalized_activity = normalize_text(scraped_class.activity)
             safe_activity = sanitize_for_filesystem(normalized_activity)
-            duration_key = f"= {safe_activity.title()} ({scraped_class.duration_minutes} min)"
+            activity_folder_name = scraped_class._get_activity_folder_name(safe_activity)
+            duration_key = f"= {activity_folder_name} ({scraped_class.duration_minutes} min)"
             
             # Create episode title with filesystem-safe text
             normalized_title = normalize_text(scraped_class.title)

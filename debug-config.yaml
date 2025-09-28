@@ -47,8 +47,15 @@ peloton:
     - "src.io.peloton.activity_based_path_strategy:ActivityBasedPathStrategy"
   
   directory_repair_strategies:
+    - "src.io.generic_repair_strategies.corrupted_video_filename_repair_strategy:CorruptedVideoFilenameRepairStrategy"
+    - "src.io.generic_repair_strategies.corrupted_folder_deletion_strategy:CorruptedFolderDeletionStrategy"
     - "src.io.peloton.repair_5050_strategy:Repair5050Strategy"
     - "src.io.peloton.missing_instructor_repair_strategy:MissingInstructorRepairStrategy"
+    - "src.io.peloton.bootcamp_folder_repair_strategy:BootcampFolderRepairStrategy"
+    - "src.io.peloton.bootcamp_instructor_files_repair_strategy:BootcampInstructorFilesRepairStrategy"
+    - "src.io.generic_repair_strategies.folder_filename_mismatch_repair_strategy:FolderFilenameMismatchRepairStrategy"
+    - "src.io.generic_repair_strategies.empty_bootcamp_cleanup_strategy:EmptyBootcampCleanupStrategy"
+    - "src.io.generic_repair_strategies.incomplete_episode_cleanup_strategy:IncompleteEpisodeCleanupStrategy"
   
   episode_parsers:
     - "src.io.peloton.episodes_from_disk:EpisodesFromDisk"

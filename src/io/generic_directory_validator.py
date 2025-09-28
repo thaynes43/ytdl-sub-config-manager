@@ -95,6 +95,24 @@ class GenericDirectoryValidator:
             if not self._repair_corrupted_locations(corrupted_episodes):
                 return False
             repaired_corrupted_count = len(corrupted_episodes)
+            
+        # Step 2.5: Scan and repair parent directories (for cleanup strategies)
+        # Run multiple passes until no more repairs are needed (max 10 passes to prevent infinite loops)
+        total_parent_repairs = 0
+        max_passes = 10
+        for pass_num in range(max_passes):
+            parent_repairs = self._scan_and_repair_parent_directories()
+            total_parent_repairs += parent_repairs
+            if parent_repairs == 0:
+                break  # No more repairs needed
+            self.logger.debug(f"Parent directory repair pass {pass_num + 1}: {parent_repairs} repairs")
+        
+        if total_parent_repairs > 0:
+            self.logger.info(f"Completed parent directory repairs in {pass_num + 1} passes: {total_parent_repairs} total repairs")
+        
+        repaired_corrupted_count += total_parent_repairs
+        
+        if repaired_corrupted_count > 0:
             # Re-scan after repairs
             all_episodes = self._scan_all_episodes(log_context="after corruption repair")
         
@@ -113,6 +131,10 @@ class GenericDirectoryValidator:
         
         if final_conflicts:
             self.logger.error(f"Still have {len(final_conflicts)} conflicts after repair!")
+            for conflict in final_conflicts:
+                self.logger.error(f"  Conflict: {conflict.activity.name} S{conflict.season}E{conflict.episode}")
+                for path in conflict.conflicting_paths:
+                    self.logger.error(f"    - {path}")
             return False
         
         # Log repair summary
@@ -307,6 +329,41 @@ class GenericDirectoryValidator:
             pass
         
         return False
+    
+    def _scan_and_repair_parent_directories(self) -> int:
+        """Scan and repair parent directories (for cleanup strategies like empty directory removal).
+        
+        Returns:
+            Number of directories repaired
+        """
+        repaired_count = 0
+        
+        # Scan all directories (not just leaf directories)
+        for root, dirs, files in os.walk(self.media_dir):
+            root_path = Path(root)
+            
+            # Skip the root media directory itself
+            if root_path == self.media_dir:
+                continue
+            
+            # Check if any repair strategy can handle this directory
+            for repair_strategy in self.repair_strategies:
+                try:
+                    if hasattr(repair_strategy, 'can_repair') and repair_strategy.can_repair(root_path, None):
+                        # Generate and execute repair actions
+                        actions = repair_strategy.generate_repair_actions(root_path, None)
+                        if actions and self._execute_repair_actions(actions):
+                            self.logger.info(f"Successfully repaired {root_path} using {repair_strategy.__class__.__name__}")
+                            repaired_count += 1
+                        break  # Only use the first strategy that can handle it
+                except Exception as e:
+                    self.logger.debug(f"Strategy {repair_strategy.__class__.__name__} failed on {root_path}: {e}")
+                    continue
+        
+        if repaired_count > 0:
+            self.logger.info(f"Repaired {repaired_count} parent directories")
+        
+        return repaired_count
     
     def _repair_corrupted_locations(self, corrupted_episodes: List[EpisodeInfo]) -> bool:
         """Repair episodes in corrupted directory locations using strategies.
@@ -533,18 +590,22 @@ class GenericDirectoryValidator:
         """
         self.logger.info(f"Resolving {len(conflicts)} episode number conflicts")
         
+        # Keep track of all renumbered episodes to avoid conflicts between resolutions
+        global_episode_map = {}  # old_path -> new_episode_number
+        
         for conflict in conflicts:
-            if not self._resolve_single_conflict(conflict, all_episodes):
+            if not self._resolve_single_conflict(conflict, all_episodes, global_episode_map):
                 return False
         
         return True
     
-    def _resolve_single_conflict(self, conflict: ConflictInfo, all_episodes: List[EpisodeInfo]) -> bool:
+    def _resolve_single_conflict(self, conflict: ConflictInfo, all_episodes: List[EpisodeInfo], global_episode_map: dict) -> bool:
         """Resolve a single episode number conflict.
         
         Args:
             conflict: The conflict to resolve
             all_episodes: List of all episodes (for finding available numbers)
+            global_episode_map: Global map of renumbered episodes to avoid conflicts
             
         Returns:
             True if conflict was resolved, False otherwise
@@ -552,20 +613,42 @@ class GenericDirectoryValidator:
         self.logger.info(f"Resolving conflict: {conflict.activity.name} S{conflict.season}E{conflict.episode}")
         self.logger.info(f"Conflicting paths: {[str(p) for p in conflict.conflicting_paths]}")
         
-        # Find the maximum episode number for this activity/season
-        max_episode = 0
+        # Collect all existing episode numbers for this activity/season
+        existing_episodes = set()
         for ep in all_episodes:
             if ep.activity == conflict.activity and ep.season == conflict.season:
-                max_episode = max(max_episode, ep.episode)
+                # Use the new episode number if this episode was already renumbered
+                episode_num = global_episode_map.get(str(ep.path), ep.episode)
+                existing_episodes.add(episode_num)
+        
+        # Also add all globally assigned episode numbers for this activity/season
+        for path_str, new_episode in global_episode_map.items():
+            path = Path(path_str)
+            # Check if this renumbered episode is in the same activity/season
+            for ep in all_episodes:
+                if str(ep.path) == path_str and ep.activity == conflict.activity and ep.season == conflict.season:
+                    existing_episodes.add(new_episode)
+                    break
         
         # Keep the first episode at its current number, renumber the rest
         paths_to_renumber = conflict.conflicting_paths[1:]  # Skip first one
         
-        for i, path in enumerate(paths_to_renumber):
-            new_episode_number = max_episode + i + 1
-            if not self._renumber_episode(path, new_episode_number):
+        # Find available episode numbers starting from max + 1
+        max_episode = max(existing_episodes) if existing_episodes else 0
+        next_available = max_episode + 1
+        
+        for path in paths_to_renumber:
+            # Find the next available episode number
+            while next_available in existing_episodes:
+                next_available += 1
+            
+            if not self._renumber_episode(path, next_available):
                 return False
-            max_episode = new_episode_number  # Update for next iteration
+            
+            # Mark this episode number as used globally and locally
+            existing_episodes.add(next_available)
+            global_episode_map[str(path)] = next_available
+            next_available += 1
         
         return True
     

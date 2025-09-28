@@ -34,11 +34,12 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         # Note: "50-50" by itself is legitimate (e.g., "50-50 Bootcamp"), so we need to be more specific
         corruption_patterns = [
             "50/50", "/50/", "\\50\\", 
-            "bootcamp 50", "bootcamp: 50"
+            "bootcamp: 50"  # Only flag "bootcamp: 50", not "bootcamp 50" (legitimate class names)
         ]
         
         # Check for 50/50 corruption with slashes (creates extra directory levels)
         if any(pattern in path_str for pattern in corruption_patterns):
+            self.logger.debug(f"50/50 strategy detected corruption pattern in: {path}")
             return True
             
         # Check for "50-50" corruption only if it's creating extra directory levels
@@ -59,8 +60,10 @@ class Repair5050Strategy(DirectoryRepairStrategy):
             
         # Check for duplicated episode name corruption
         if self._has_duplicated_episode_name(path):
+            self.logger.debug(f"50/50 strategy detected duplicated episode name in: {path}")
             return True
-            
+        
+        # No corruption detected - no need to log every directory
         return False
     
     def generate_repair_actions(self, path: Path, expected_pattern: DirectoryPattern) -> List[RepairAction]:
@@ -79,10 +82,28 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         path_parts = list(path.parts)
         corrected_parts = []
         
-        for part in path_parts:
+        i = 0
+        while i < len(path_parts):
+            part = path_parts[i]
+            
             # Skip problematic parts that create extra directory levels
             if part in ["50"] or "50/50" in part:
                 self.logger.debug(f"Skipping problematic part: {part}")
+                i += 1
+                continue
+            
+            # Handle the case where "50/50" was split by pathlib into ": 50" and "50"
+            # Check if current part ends with ": 50" and next part is "50"
+            if (i < len(path_parts) - 1 and 
+                part.endswith(": 50") and 
+                path_parts[i + 1] == "50" and
+                "bootcamp" in part.lower()):
+                
+                # Combine them into ": 50-50"
+                corrected_part = part.replace(": 50", ": 50-50")
+                self.logger.debug(f"Combining split 50/50: {part} + {path_parts[i + 1]} -> {corrected_part}")
+                corrected_parts.append(corrected_part)
+                i += 2  # Skip both parts
                 continue
                 
             # Fix bootcamp names with 50/50 corruption - preserve episode name but clean corruption
@@ -93,6 +114,8 @@ class Repair5050Strategy(DirectoryRepairStrategy):
                 corrected_parts.append(corrected_part)
             else:
                 corrected_parts.append(part)
+            
+            i += 1
         
         # Handle duplicated episode name corruption
         corrected_parts = self._fix_duplicated_episode_names(corrected_parts)
@@ -127,7 +150,7 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         return actions
     
     def _clean_episode_name(self, episode_name: str) -> str:
-        """Clean up episode name by removing 50/50 corruption while preserving the episode info.
+        """Clean up episode name by fixing 50/50 corruption while preserving the episode info.
         
         Args:
             episode_name: Original episode name with corruption
@@ -135,11 +158,17 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         Returns:
             Cleaned episode name
         """
-        # Remove ": 50" suffix that appears in corrupted names
-        cleaned = episode_name.replace(": 50", "")
+        # Convert "50/50" to "50-50" (this is the correct format)
+        cleaned = episode_name.replace(": 50/50", ": 50-50")
         
-        # Remove any standalone "50" that might be at the end
-        cleaned = cleaned.rstrip(" 50")
+        # Remove ": 50" suffix that appears in corrupted names (standalone : 50, not : 50-50)
+        # But only if it's not part of ": 50-50"
+        if ": 50-50" not in cleaned:
+            cleaned = cleaned.replace(": 50", "")
+        
+        # Remove any standalone "50" that might be at the end (but not "50-50")
+        if not cleaned.endswith("50-50"):
+            cleaned = cleaned.rstrip(" 50")
         
         # Clean up any double spaces that might have been created
         cleaned = cleaned.replace("  ", " ")

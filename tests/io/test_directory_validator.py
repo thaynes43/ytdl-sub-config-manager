@@ -222,7 +222,7 @@ class TestDirectoryValidator:
                 repair_strategies=["src.io.peloton.repair_5050_strategy:Repair5050Strategy"],
                 dry_run=True
             )
-            result = validator._resolve_single_conflict(conflict, episodes)
+            result = validator._resolve_single_conflict(conflict, episodes, {})
             assert result is True
             
             # Original paths should still exist (dry run)
