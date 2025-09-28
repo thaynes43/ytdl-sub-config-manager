@@ -47,7 +47,10 @@ class FolderFilenameMismatchRepairStrategy(DirectoryRepairStrategy):
             
             # If folder name doesn't match video name, we can repair it
             if folder_name != video_name_without_ext:
-                self.logger.debug(f"FolderFilenameMismatchRepairStrategy detected mismatch: folder='{folder_name}', file='{video_name_without_ext}'")
+                self.logger.info(f"FolderFilenameMismatchRepairStrategy detected mismatch:")
+                self.logger.info(f"  Folder name: '{folder_name}'")
+                self.logger.info(f"  Video file name: '{video_name_without_ext}'")
+                self.logger.info(f"  Video file path: '{video_file}'")
                 return True
         
         # No mismatch detected - no need to log every directory
@@ -73,12 +76,21 @@ class FolderFilenameMismatchRepairStrategy(DirectoryRepairStrategy):
         
         # Find the first valid video file's name (without extension) as the target folder name
         target_folder_name = None
+        folder_name = path.name
+        
+        self.logger.info(f"Analyzing folder/filename mismatch for: {path}")
+        self.logger.info(f"  Current folder name: '{folder_name}'")
+        self.logger.info(f"  Found {len(video_files)} video files:")
+        
         for video_file in video_files:
             video_name_without_ext = video_file.stem
+            self.logger.info(f"    Video file: '{video_file.name}' (stem: '{video_name_without_ext}')")
+            
             # Skip corrupted video files (like "50" from 50/50 corruption)
             if len(video_name_without_ext) >= 5 and video_name_without_ext.startswith('S'):
-                target_folder_name = video_name_without_ext
-                break
+                if not target_folder_name:  # Use the first valid one
+                    target_folder_name = video_name_without_ext
+                    self.logger.info(f"  Selected video file name as target: '{target_folder_name}'")
         
         if not target_folder_name:
             self.logger.warning(f"No valid video files found in directory: {path}")
