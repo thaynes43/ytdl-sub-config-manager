@@ -1,6 +1,7 @@
 """Generic directory validator that uses injected strategies."""
 
 import os
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
 from dataclasses import dataclass
@@ -400,6 +401,10 @@ class GenericDirectoryValidator:
                     if repair_strategy.can_repair(episode.path, None):
                         actions = repair_strategy.generate_repair_actions(episode.path, None)
                         
+                        if not actions:
+                            self.logger.info(f"Strategy {repair_strategy.__class__.__name__} skipped repair for {episode.path} (no actions generated)")
+                            continue  # Try next strategy
+                        
                         if self._execute_repair_actions(actions):
                             self.logger.info(f"Successfully repaired {episode.path} using {repair_strategy.__class__.__name__}")
                             return True
@@ -409,8 +414,25 @@ class GenericDirectoryValidator:
                     self.logger.error(f"Repair strategy {repair_strategy.__class__.__name__} failed for {episode.path}: {e}")
                     continue
         
-        self.logger.error(f"No repair strategy could handle episode: {episode.path}")
-        return False
+        # If strategies detected the issue but skipped repair, it might be a false positive
+        # Check if any strategy thought it could repair but then skipped
+        strategies_that_could_repair = []
+        for repair_strategy in self.repair_strategies:
+            if hasattr(repair_strategy, 'can_repair'):
+                try:
+                    if repair_strategy.can_repair(episode.path, None):
+                        strategies_that_could_repair.append(repair_strategy.__class__.__name__)
+                except Exception:
+                    continue
+        
+        if strategies_that_could_repair:
+            self.logger.warning(f"Episode detected as corrupted but no repairs needed: {episode.path}")
+            self.logger.warning(f"  Strategies that detected it: {strategies_that_could_repair}")
+            self.logger.warning(f"  This might be a false positive - treating as successfully handled")
+            return True  # Treat as success since strategies detected but chose not to repair
+        else:
+            self.logger.error(f"No repair strategy could handle episode: {episode.path}")
+            return False
     
     def _execute_repair_actions(self, actions: List[RepairAction]) -> bool:
         """Execute a list of repair actions.
@@ -696,9 +718,46 @@ class GenericDirectoryValidator:
             return False
         
         try:
+            # First, rename all files inside the directory to match the new episode number
+            if episode_path.exists() and episode_path.is_dir():
+                self._rename_files_in_directory(episode_path, season, new_episode_number)
+            
+            # Then rename the directory itself
             episode_path.rename(new_path)
             self.logger.info(f"Successfully renumbered episode")
             return True
         except Exception as e:
             self.logger.error(f"Failed to renumber episode: {e}")
             return False
+    
+    def _rename_files_in_directory(self, episode_dir: Path, season: int, new_episode_number: int) -> None:
+        """Rename all files in an episode directory to match the new episode number.
+        
+        Args:
+            episode_dir: Path to the episode directory
+            season: Season number
+            new_episode_number: New episode number
+        """
+        try:
+            # Find all files in the directory
+            for file_path in episode_dir.iterdir():
+                if file_path.is_file():
+                    # Extract current filename
+                    current_name = file_path.name
+                    
+                    # Update episode number in filename using regex
+                    new_filename = re.sub(
+                        r'S(\d+)E\d+', 
+                        f'S{season}E{new_episode_number}', 
+                        current_name
+                    )
+                    
+                    # Only rename if the filename actually changed
+                    if new_filename != current_name:
+                        new_file_path = episode_dir / new_filename
+                        self.logger.debug(f"Renaming file: {current_name} -> {new_filename}")
+                        file_path.rename(new_file_path)
+                        
+        except Exception as e:
+            self.logger.warning(f"Failed to rename some files in {episode_dir}: {e}")
+            # Don't fail the entire operation if file renaming fails

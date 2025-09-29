@@ -22,48 +22,20 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         Returns:
             True if this strategy can repair the path
         """
-        # TODO: This method is overly complex and pattern-specific. The real issue is that
-        # folder structures don't conform to the expected_pattern nesting. The class name
-        # "50\50" (with backslash) splits folders incorrectly, creating extra directory levels.
-        # We should refactor this to use expected_pattern validation instead of hardcoded
-        # corruption patterns. This would be more robust and handle edge cases better.
+        path_str = str(path)
         
-        path_str = str(path).lower()
-        
-        # Look for various corruption patterns that create extra directory levels
-        # Note: "50-50" by itself is legitimate (e.g., "50-50 Bootcamp"), so we need to be more specific
-        corruption_patterns = [
-            "50/50", "/50/", "\\50\\", 
-            "bootcamp: 50"  # Only flag "bootcamp: 50", not "bootcamp 50" (legitimate class names)
-        ]
-        
-        # Check for 50/50 corruption with slashes (creates extra directory levels)
-        if any(pattern in path_str for pattern in corruption_patterns):
-            self.logger.debug(f"50/50 strategy detected corruption pattern in: {path}")
+        # SIMPLE: Check if "50/50" appears ANYWHERE in the entire file path
+        # This catches all corruption caused by slashes in "50/50" class names
+        if "50/50" in path_str:
+            self.logger.debug(f"50/50 strategy detected '50/50' corruption in path: {path}")
             return True
-            
-        # Check for "50-50" corruption only if it's creating extra directory levels
-        # "50-50 Bootcamp" is a legitimate class name, so we need to be careful
-        if "50-50" in path_str:
-            # Only flag if "50-50" appears in a way that suggests directory corruption
-            # Look for patterns like "Bootcamp 50-50" at the end or as a standalone directory
-            # But NOT "50-50 Bootcamp" which is legitimate
-            if any(pattern in path_str for pattern in ["bootcamp 50-50", "/50-50", "\\50-50"]):
-                # Make sure it's not the legitimate "50-50 Bootcamp" class name
-                if not ("50-50 bootcamp" in path_str and "min" in path_str):
-                    return True
-            
-            # Also flag if "50-50" appears in activity names that are not legitimate
-            # (e.g., "Activity 50-50" where Activity is not "Bootcamp")
-            if " 50-50" in path_str and not "50-50 bootcamp" in path_str:
-                return True
             
         # Check for duplicated episode name corruption
         if self._has_duplicated_episode_name(path):
             self.logger.debug(f"50/50 strategy detected duplicated episode name in: {path}")
             return True
         
-        # No corruption detected - no need to log every directory
+        # No corruption detected
         return False
     
     def generate_repair_actions(self, path: Path, expected_pattern: DirectoryPattern) -> List[RepairAction]:

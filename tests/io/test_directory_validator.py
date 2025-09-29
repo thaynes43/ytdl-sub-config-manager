@@ -322,15 +322,22 @@ class TestDirectoryValidator:
         normal_path = Path("/tmp/Cycling/Instructor/S20E001 - title")
         assert not validator._is_corrupted_location(normal_path)
         
-        # Test corrupted paths with 50/50
+        # Test corrupted paths with 50/50 (slashes only - hyphens are legitimate)
         corrupted_paths = [
-            Path("/tmp/Bootcamp 50/50/Instructor/S30E001 - title"),
-            Path("/tmp/Activity/50/Instructor/S20E001 - title"),
-            Path("/tmp/Activity 50-50/Instructor/S20E001 - title"),
+            Path("/tmp/Bootcamp 50/50/Instructor/S30E001 - title"),  # Real 50/50 corruption
+            Path("/tmp/Activity/50/Instructor/S20E001 - title"),     # Standalone 50 directory
         ]
         
         for path in corrupted_paths:
             assert validator._is_corrupted_location(path)
+        
+        # Test legitimate paths with 50-50 (hyphens are always valid)
+        legitimate_paths = [
+            Path("/tmp/Activity 50-50/Instructor/S20E001 - title"),  # 50-50 with hyphens is legitimate
+        ]
+        
+        for path in legitimate_paths:
+            assert not validator._is_corrupted_location(path)
         
         # Test path with wrong depth
         deep_path = Path("/tmp/Activity/Extra/Level/Instructor/S20E001 - title")

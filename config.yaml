@@ -43,6 +43,7 @@ peloton:
   directory_repair_strategies:
     - "src.io.generic_repair_strategies.corrupted_video_filename_repair_strategy:CorruptedVideoFilenameRepairStrategy"
     - "src.io.generic_repair_strategies.corrupted_folder_deletion_strategy:CorruptedFolderDeletionStrategy"
+    - "src.io.peloton.episode_as_activity_repair_strategy:EpisodeAsActivityRepairStrategy"
     - "src.io.peloton.repair_5050_strategy:Repair5050Strategy"
     - "src.io.peloton.missing_instructor_repair_strategy:MissingInstructorRepairStrategy"
     - "src.io.peloton.bootcamp_folder_repair_strategy:BootcampFolderRepairStrategy"

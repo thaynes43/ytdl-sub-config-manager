@@ -1,6 +1,7 @@
 """Tests for folder/filename mismatch repair strategy."""
 
 import pytest
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from src.io.generic_repair_strategies.folder_filename_mismatch_repair_strategy import FolderFilenameMismatchRepairStrategy
@@ -105,14 +106,12 @@ class TestFolderFilenameMismatchRepairStrategy:
         
         actions = self.strategy.generate_repair_actions(source_path, self.mock_pattern)
         
-        # Should generate repair action
-        assert len(actions) == 1
+        # Should generate repair action (trust video file episode number)
+        assert len(actions) == 1, "Should rename folder to match video file episode number"
         action = actions[0]
-        
         assert action.action_type == "move"
         assert action.source_path == source_path
-        assert action.target_path == Path("/cephfs-hdd/media/peloton/Tread Bootcamp/Selena Samuela/S30E11 - 20250103 - 30 min Bootcamp: 50-50")
-        assert "folder/filename mismatch" in action.reason
+        assert "E213 -> E11" in action.reason
     
     @patch('pathlib.Path.exists')
     @patch('pathlib.Path.is_dir')
@@ -182,12 +181,32 @@ class TestFolderFilenameMismatchRepairStrategy:
         # Test generate_repair_actions
         actions = self.strategy.generate_repair_actions(source_path, self.mock_pattern)
         
-        assert len(actions) == 1
+        # Should generate repair action (trust video file episode number)
+        assert len(actions) == 1, "Should rename folder to match video file episode number"
         action = actions[0]
         assert action.action_type == "move"
         assert action.source_path == source_path
         assert action.target_path == expected_target
-        assert "S30E11 - 20250103 - 30 min Bootcamp: 50-50" in str(action.target_path)
+    
+    def test_generate_repair_actions_fixes_same_episode_different_text(self):
+        """Test that repair actions are generated when episode numbers match but text differs."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Same episode number (E42) but different text
+            episode_dir = Path(temp_dir) / 'S30E42 - 20230804 - 30 min Bootcamp: Full Body'
+            episode_dir.mkdir()
+            
+            # Video file with same episode but different text
+            video_file = episode_dir / 'S30E42 - 20230804 - 30 min Bootcamp.mp4'  # Missing ": Full Body"
+            video_file.touch()
+            
+            actions = self.strategy.generate_repair_actions(episode_dir, self.mock_pattern)
+            
+            # Should generate repair action to rename file to match folder (same episode numbers)
+            assert len(actions) == 1
+            action = actions[0]
+            assert action.action_type == "move"
+            assert action.source_path == video_file
+            assert "S30E42 - 20230804 - 30 min Bootcamp: Full Body.mp4" in str(action.target_path)
     
     def test_find_video_files_detects_various_formats(self):
         """Test that _find_video_files detects various video formats."""

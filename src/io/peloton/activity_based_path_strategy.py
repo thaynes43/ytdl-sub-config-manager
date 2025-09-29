@@ -86,6 +86,11 @@ class ActivityBasedPathStrategy:
         # Map activity name to enum
         activity = self._map_activity_name(activity_name)
         if not activity:
+            self.logger.warning(f"  Full path being parsed: {path}")
+            self.logger.warning(f"  Path parts: {list(parts)}")
+            self.logger.warning(f"  Activity part (parts[-3]): '{parts[-3] if len(parts) >= 3 else 'N/A'}'")
+            self.logger.warning(f"  Instructor part (parts[-2]): '{parts[-2] if len(parts) >= 2 else 'N/A'}'")
+            self.logger.warning(f"  Episode part (parts[-1]): '{parts[-1] if len(parts) >= 1 else 'N/A'}'")
             return None
         
         return activity, instructor, season, episode, title
