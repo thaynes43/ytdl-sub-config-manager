@@ -20,9 +20,9 @@ class TestEpisodeAsActivityRepairStrategy:
         """Test that can_repair detects episode names used as activity names."""
         # Test cases from the actual log warnings
         test_cases = [
-            's30e412 - 20250624 - 30 min bootcamp: 50',
-            's30e250 - 20250723 - 30 min bootcamp: 50',
-            's45e128 - 20250916 - 45 min bootcamp: 50'
+            's30e412 - 20250624 - 30 min bootcamp 50-50',
+            's30e250 - 20250723 - 30 min bootcamp 50-50',
+            's45e128 - 20250916 - 45 min bootcamp 50-50'
         ]
         
         for corrupted_activity in test_cases:
@@ -65,7 +65,7 @@ class TestEpisodeAsActivityRepairStrategy:
     def test_generate_repair_actions_creates_correct_target(self):
         """Test that repair actions create correct target paths."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            corrupted_activity = 's30e412 - 20250624 - 30 min bootcamp: 50'
+            corrupted_activity = 's30e412 - 20250624 - 30 min bootcamp 50-50'
             test_path = Path(temp_dir) / corrupted_activity / 'Jess Sims' / 'S30E1 - Episode'
             test_path.mkdir(parents=True)
             
@@ -99,9 +99,9 @@ class TestEpisodeAsActivityRepairStrategy:
     def test_real_world_corruption_examples(self):
         """Test with the exact corruption examples from the logs."""
         real_examples = [
-            ('s30e412 - 20250624 - 30 min bootcamp: 50', 'Tread Bootcamp'),
-            ('s30e250 - 20250723 - 30 min bootcamp: 50', 'Tread Bootcamp'),
-            ('s45e128 - 20250916 - 45 min bootcamp: 50', 'Tread Bootcamp')
+            ('s30e412 - 20250624 - 30 min bootcamp 50-50', 'Tread Bootcamp'),
+            ('s30e250 - 20250723 - 30 min bootcamp 50-50', 'Tread Bootcamp'),
+            ('s45e128 - 20250916 - 45 min bootcamp 50-50', 'Tread Bootcamp')
         ]
         
         for corrupted_activity, expected_target_activity in real_examples:

@@ -85,6 +85,9 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        mock_config.subscription_timeout_days = 15
+        mock_config.subscription_warning_threshold_days = 3
+        mock_config.run_in_container = True
         
         # Mock GitHub configuration to disable GitHub integration
         mock_config.github_repo_url = ""
@@ -92,16 +95,27 @@ class TestApplication:
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
+        mock_file_manager.subscription_history_manager = MagicMock()
+        mock_file_manager.subscription_history_manager.sync_existing_subscriptions.return_value = True
+        mock_file_manager.subscription_history_manager.get_all_tracked_ids.return_value = set()
+        mock_file_manager.subscription_history_manager.get_stale_subscription_ids.return_value = set()
+        mock_file_manager.subscription_history_manager.get_subscriptions_near_timeout.return_value = set()
+        mock_file_manager.subscription_history_manager.save_run_snapshot.return_value = True
+        mock_file_manager.episode_manager = MagicMock()
+        mock_file_manager.episode_manager.episode_parsers = []
         
         # Setup merged episode data
         activity_data = ActivityData(activity=Activity.CYCLING)
         activity_data.max_episode = {20: 5, 30: 10}  # Season 20: 5 episodes, Season 30: 10 episodes
         merged_data = {Activity.CYCLING: activity_data}
         mock_file_manager.get_merged_episode_data.return_value = merged_data
+        mock_file_manager.get_subscriptions_episode_data.return_value = {Activity.CYCLING: activity_data}
         
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2', 'id3'}
         mock_file_manager.cleanup_subscriptions.return_value = True
         mock_file_manager.add_new_subscriptions.return_value = None
+        mock_file_manager.track_new_subscriptions.return_value = True
+        mock_file_manager.validate_and_resolve_subscription_conflicts.return_value = None
         
         mock_file_manager_class.return_value = mock_file_manager
 
@@ -113,6 +127,10 @@ class TestApplication:
         mock_scraping_results['cycling'].status.value = 'completed'
         mock_scraping_results['cycling'].classes = [MagicMock()]
         mock_scraping_results['cycling'].get_subscription_data.return_value = {'test': 'data'}
+        mock_scraping_results['cycling'].total_found = 10
+        mock_scraping_results['cycling'].total_skipped = 5
+        mock_scraping_results['cycling'].total_errors = 0
+        mock_scraping_results['cycling'].error_message = None
         
         mock_scraper_manager.scrape_activities.return_value = mock_scraping_results
         mock_scraper_factory.create_scraper.return_value = mock_scraper_manager
@@ -123,6 +141,7 @@ class TestApplication:
         assert result == 0
         
         # Verify file manager initialization
+        from unittest.mock import ANY
         mock_file_manager_class.assert_called_once_with(
             media_dir='/test/media',
             subs_file='/test/subs.yaml',
@@ -130,12 +149,14 @@ class TestApplication:
             validation_strategies=['strategy1'],
             repair_strategies=['repair1'],
             episode_parsers=['parser1'],
-            subscription_timeout_days=15  # default value
+            subscription_timeout_days=15,
+            metrics=ANY  # Metrics object is passed
         )
         
         # Verify method calls
         mock_config.log_config.assert_called_once()
-        mock_file_manager.get_merged_episode_data.assert_called_once()
+        # get_merged_episode_data is called twice - once for initial analysis, once for final totals
+        assert mock_file_manager.get_merged_episode_data.call_count == 2
         # find_all_existing_class_ids is called twice - once for initial processing and once for scraping
         assert mock_file_manager.find_all_existing_class_ids.call_count == 2
         mock_file_manager.cleanup_subscriptions.assert_called_once()
@@ -153,6 +174,8 @@ class TestApplication:
         mock_config.peloton_episode_parsers = ['parser1']
         mock_config.skip_validation = True
         mock_config.subscription_timeout_days = 15
+        mock_config.subscription_warning_threshold_days = 3
+        mock_config.run_in_container = True
         
         # Mock scraper configuration
         mock_config.scrapers = {'peloton.com': {'test': 'config'}}
@@ -168,12 +191,21 @@ class TestApplication:
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
+        mock_file_manager.subscription_history_manager = MagicMock()
+        mock_file_manager.subscription_history_manager.sync_existing_subscriptions.return_value = True
+        mock_file_manager.subscription_history_manager.get_all_tracked_ids.return_value = set()
+        mock_file_manager.subscription_history_manager.get_stale_subscription_ids.return_value = set()
+        mock_file_manager.subscription_history_manager.get_subscriptions_near_timeout.return_value = set()
+        mock_file_manager.subscription_history_manager.save_run_snapshot.return_value = True
+        mock_file_manager.episode_manager = MagicMock()
+        mock_file_manager.episode_manager.episode_parsers = []
         mock_file_manager.get_merged_episode_data.return_value = {}
+        mock_file_manager.get_subscriptions_episode_data.return_value = {}
         mock_file_manager.find_all_existing_class_ids.return_value = set()
         mock_file_manager.cleanup_subscriptions.return_value = False
         
         mock_file_manager_class.return_value = mock_file_manager
-        
+
         # Setup mock scraper
         mock_scraper_manager = MagicMock()
         mock_scraper_manager.scrape_activities.return_value = {}
@@ -183,8 +215,10 @@ class TestApplication:
         result = app.run_scrape_command(mock_config)
 
         assert result == 0
-        
+
         # Verify file manager initialization with validation disabled
+        # Note: metrics parameter is now passed, so we use ANY
+        from unittest.mock import ANY
         mock_file_manager_class.assert_called_once_with(
             media_dir='/test/media',
             subs_file='/test/subs.yaml',
@@ -192,7 +226,8 @@ class TestApplication:
             validation_strategies=['strategy1'],
             repair_strategies=['repair1'],
             episode_parsers=['parser1'],
-            subscription_timeout_days=15  # default value
+            subscription_timeout_days=15,
+            metrics=ANY  # Metrics object is passed
         )
 
     @patch('src.core.application.FileManager')
@@ -258,6 +293,9 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        mock_config.subscription_timeout_days = 15
+        mock_config.subscription_warning_threshold_days = 3
+        mock_config.run_in_container = True
         
         # Mock GitHub configuration to disable GitHub integration
         mock_config.github_repo_url = ""
@@ -265,6 +303,14 @@ class TestApplication:
 
         # Setup mock file manager with multiple activities
         mock_file_manager = MagicMock()
+        mock_file_manager.subscription_history_manager = MagicMock()
+        mock_file_manager.subscription_history_manager.sync_existing_subscriptions.return_value = True
+        mock_file_manager.subscription_history_manager.get_all_tracked_ids.return_value = set()
+        mock_file_manager.subscription_history_manager.get_stale_subscription_ids.return_value = set()
+        mock_file_manager.subscription_history_manager.get_subscriptions_near_timeout.return_value = set()
+        mock_file_manager.subscription_history_manager.save_run_snapshot.return_value = True
+        mock_file_manager.episode_manager = MagicMock()
+        mock_file_manager.episode_manager.episode_parsers = []
         
         cycling_data = ActivityData(activity=Activity.CYCLING)
         cycling_data.max_episode = {20: 5, 30: 3}
@@ -277,9 +323,12 @@ class TestApplication:
             Activity.YOGA: yoga_data
         }
         mock_file_manager.get_merged_episode_data.return_value = merged_data
+        mock_file_manager.get_subscriptions_episode_data.return_value = merged_data
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2'}
         mock_file_manager.cleanup_subscriptions.return_value = True
         mock_file_manager.add_new_subscriptions.return_value = None
+        mock_file_manager.track_new_subscriptions.return_value = True
+        mock_file_manager.validate_and_resolve_subscription_conflicts.return_value = None
         
         mock_file_manager_class.return_value = mock_file_manager
         
@@ -293,6 +342,10 @@ class TestApplication:
             result.status.value = 'completed'
             result.classes = [MagicMock()]
             result.get_subscription_data.return_value = {'test': 'data'}
+            result.total_found = 10
+            result.total_skipped = 5
+            result.total_errors = 0
+            result.error_message = None
         mock_scraper_manager.scrape_activities.return_value = mock_scraping_results
         mock_scraper_factory.create_scraper.return_value = mock_scraper_manager
 
@@ -395,6 +448,8 @@ class TestApplication:
         mock_config.peloton_password = 'test_pass'
         mock_config.peloton_class_limit_per_activity = 25
         mock_config.peloton_page_scrolls = 10
+        mock_config.subscription_warning_threshold_days = 3
+        mock_config.run_in_container = True
         
         # Mock GitHub configuration to disable GitHub integration
         mock_config.github_repo_url = ""
@@ -402,7 +457,16 @@ class TestApplication:
 
         # Setup mock file manager
         mock_file_manager = MagicMock()
+        mock_file_manager.subscription_history_manager = MagicMock()
+        mock_file_manager.subscription_history_manager.sync_existing_subscriptions.return_value = True
+        mock_file_manager.subscription_history_manager.get_all_tracked_ids.return_value = set()
+        mock_file_manager.subscription_history_manager.get_stale_subscription_ids.return_value = set()
+        mock_file_manager.subscription_history_manager.get_subscriptions_near_timeout.return_value = set()
+        mock_file_manager.subscription_history_manager.save_run_snapshot.return_value = True
+        mock_file_manager.episode_manager = MagicMock()
+        mock_file_manager.episode_manager.episode_parsers = []
         mock_file_manager.get_merged_episode_data.return_value = {}
+        mock_file_manager.get_subscriptions_episode_data.return_value = {}
         mock_file_manager.find_all_existing_class_ids.return_value = set()
         mock_file_manager.cleanup_subscriptions.return_value = False
         
@@ -419,6 +483,7 @@ class TestApplication:
         assert result == 0
         
         # Verify file manager initialization with default validation (True, since getattr default is False)
+        from unittest.mock import ANY
         mock_file_manager_class.assert_called_once_with(
             media_dir='/test/media',
             subs_file='/test/subs.yaml',
@@ -426,7 +491,8 @@ class TestApplication:
             validation_strategies=[],
             repair_strategies=[],
             episode_parsers=[],
-            subscription_timeout_days=15  # default value
+            subscription_timeout_days=15,
+            metrics=ANY  # Metrics object is passed
         )
 
     @patch('src.core.application.FileManager')

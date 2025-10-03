@@ -323,10 +323,24 @@ class TestDirectoryValidator:
         assert not validator._is_corrupted_location(normal_path)
         
         # Test corrupted paths with 50/50 (slashes only - hyphens are legitimate)
-        corrupted_paths = [
-            Path("/tmp/Bootcamp 50/50/Instructor/S30E001 - title"),  # Real 50/50 corruption
-            Path("/tmp/Activity/50/Instructor/S20E001 - title"),     # Standalone 50 directory
-        ]
+        # Note: On Windows, these paths will be normalized with backslashes
+        # The repair strategy checks for "50/50" in the string, which won't match on Windows
+        # So we need to test with paths that actually exist or mock the path string
+        import sys
+        if sys.platform == "win32":
+            # On Windows, create temporary actual directories to test
+            import tempfile
+            with tempfile.TemporaryDirectory() as tmp:
+                corrupted_path1 = Path(tmp) / "Bootcamp 50" / "50" / "Instructor" / "S30E001 - title"
+                corrupted_path1.mkdir(parents=True)
+                corrupted_path2 = Path(tmp) / "Activity" / "50" / "Instructor" / "S20E001 - title"  
+                corrupted_path2.mkdir(parents=True)
+                corrupted_paths = [corrupted_path1, corrupted_path2]
+        else:
+            corrupted_paths = [
+                Path("/tmp/Bootcamp 50/50/Instructor/S30E001 - title"),  # Real 50/50 corruption
+                Path("/tmp/Activity/50/Instructor/S20E001 - title"),     # Standalone 50 directory
+            ]
         
         for path in corrupted_paths:
             assert validator._is_corrupted_location(path)

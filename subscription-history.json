@@ -23,7 +23,71 @@
     {
       "id": "a4037efaab8b44ccb91d50b2469b6714",
       "date_added": "2025-09-26T10:41:18.678196"
+    },
+    {
+      "id": "a005dc9673f44f5e97861cc60766400c",
+      "date_added": "2025-10-03T11:21:01.824290"
+    },
+    {
+      "id": "8856314b3d0644eebdd002a92d6a4b56",
+      "date_added": "2025-10-03T11:21:01.824290"
+    },
+    {
+      "id": "ab6546208c2041688055d2554987aa0f",
+      "date_added": "2025-10-03T11:21:01.824290"
+    },
+    {
+      "id": "c56df3b42b9844de987902fdbfe9e4d8",
+      "date_added": "2025-10-03T11:21:01.824290"
+    },
+    {
+      "id": "8c1a07894e754cc1a3ecdfbd2476d680",
+      "date_added": "2025-10-03T11:21:01.824290"
+    },
+    {
+      "id": "e6f1c7ca9c684fd584ff9f3e7c8630d6",
+      "date_added": "2025-10-03T11:21:01.824290"
+    },
+    {
+      "id": "16b790a5e00448fc9246ff348a75893d",
+      "date_added": "2025-10-03T11:28:38.438621"
+    },
+    {
+      "id": "eb0279643a0440b8ae5069c72e8d369a",
+      "date_added": "2025-10-03T11:28:38.438621"
+    },
+    {
+      "id": "93b8b9c7b41f4e4c95229fdb2d3ce868",
+      "date_added": "2025-10-03T11:28:38.438621"
+    },
+    {
+      "id": "9b3dfa29301246d88ce111c84adde1c4",
+      "date_added": "2025-10-03T11:28:38.438621"
+    },
+    {
+      "id": "cbde0d52f34c4839acb8f9a7278f15d7",
+      "date_added": "2025-10-03T11:28:38.438621"
+    },
+    {
+      "id": "71252950828d40598f6f6cabdafbfa04",
+      "date_added": "2025-10-03T11:28:38.438621"
     }
   ],
-  "last_updated": "2025-09-26T10:41:18.678196"
+  "last_updated": "2025-10-03T11:28:38.463301",
+  "run_snapshots": [
+    {
+      "run_timestamp": "2025-10-03T11:19:38.800760",
+      "videos_on_disk": 297,
+      "videos_in_subscriptions": 163,
+      "new_videos_added": 6,
+      "total_activities": 3
+    },
+    {
+      "run_timestamp": "2025-10-03T11:27:17.534148",
+      "videos_on_disk": 303,
+      "videos_in_subscriptions": 171,
+      "new_videos_added": 6,
+      "total_activities": 3
+    }
+  ]
 }

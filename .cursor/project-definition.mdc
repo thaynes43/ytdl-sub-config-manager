@@ -23,13 +23,14 @@ globs:
 
 rules: |
   - Architecture
-    - **IMPLEMENTED**: Flattened package structure under `src/` with subpackages: `config`, `core`, `io`, `webscraper`.
+    - **IMPLEMENTED**: Flattened package structure under `src/` with subpackages: `config`, `core`, `io`, `webscraper`, `git_integration`.
     - **IMPLEMENTED**: `main.py` as clean entry point delegating to `core/application.py` for business logic.
     - **IMPLEMENTED**: `config/` handles CLI parsing and configuration loading separately from business logic.
-    - **IMPLEMENTED**: `core` (application, logging, models), `io` (episode parsing, file management, directory validation) modules complete.
+    - **IMPLEMENTED**: `core` (application, logging, models, metrics), `io` (episode parsing, file management, directory validation) modules complete.
     - **IMPLEMENTED**: `webscraper/` package with dependency injection architecture (ScraperFactory, ScraperManager, SessionManager).
     - **IMPLEMENTED**: Directory structure validation and repair system for handling corrupted 50/50 patterns.
     - **IMPLEMENTED**: Strategy pattern with dependency injection for extensible scraper, login, and parsing strategies.
+    - **IMPLEMENTED**: Comprehensive metrics collection system (`core/metrics.py`) fully integrated across all workflow stages with PR summaries and historical tracking.
     - Keep business logic out of the main entry point; compose dependencies explicitly.
     - Use pure functions and immutable dataclasses where feasible.
     - No module should import from `tests`.
@@ -54,6 +55,7 @@ rules: |
     - Replace prints with `logging` and structured messages.
     - **Method Organization**: Place high-level orchestration methods (like `run`, `main`, `execute`) at the top of classes, followed by the specific methods they call. This makes code flow easier to follow and understand.
     - **Logging Best Practices**: Use summary-based logging instead of per-iteration debug logs. Log meaningful summaries (e.g., "Parsed 184 episodes for 12 activities") rather than individual operations. Avoid tight-loop logging that creates noise.
+    - **Metrics Collection**: Track run statistics using the metrics system (`src/core/metrics.py`) for comprehensive reporting and historical tracking.
 
   - Config and I/O
     - **IMPLEMENTED**: `config/config.py` handles multi-source config (env vars, CLI args, YAML files) with precedence.
@@ -70,6 +72,14 @@ rules: |
       - **IMPLEMENTED**: Integration with FileManager for seamless stale subscription removal.
       - **IMPLEMENTED**: URL parsing to extract Peloton class IDs from subscription URLs.
       - **IMPLEMENTED**: History file stored alongside subscriptions.yaml for easy management.
+      - **IMPLEMENTED**: Run snapshot metrics stored in subscription-history.json for historical comparison and PR diff generation.
+      - **IMPLEMENTED**: Configurable warning threshold (`subscription_warning_threshold_days`) for subscriptions approaching purge limit.
+      - **IMPLEMENTED**: Metrics track:
+        - Directory repairs by strategy with failure counts
+        - Episode counts on disk with delta from previous run
+        - Web scraping results with page_scrolls config and limit checking
+        - Subscription changes with detailed breakdown
+        - History status with near-purge warnings
     - **CRITICAL - Peloton Video Naming Convention**: The application follows the exact naming convention used by ytdl-sub for Peloton videos: `S{season}E{episode} - {upload_date} - {title}` with **NO LEADING ZEROS** (e.g., `S20E1` not `S20E001`). This naming convention is controlled by the `output_options.file_name` template in `subscriptions.yaml`. **⚠️ IMPORTANT**: If the `file_name` template changes, the conflict detection logic in `src/io/file_manager.py` must be updated accordingly to match the new pattern.
     - **Configuration Architecture**: Use nested YAML structure that groups related settings (application-wide, per-source, per-service). This scales better for multiple data sources and makes configuration more maintainable.
     - **YAML Path Formatting**: Use forward slashes for file paths in YAML (works on both Windows and Unix). Avoid backslashes in double quotes due to YAML escape character conflicts. Example: `"D:/path/to/file"` or `'D:\path\to\file'`.
@@ -95,6 +105,12 @@ rules: |
     - **IMPLEMENTED**: Auto-merge capability for PRs (configurable, defaults to manual merge).
     - **IMPLEMENTED**: Secure token-based authentication with masked logging.
     - **IMPLEMENTED**: Complete GitHub workflow integration in main application with disabled state logging.
+    - **IMPLEMENTED**: PR descriptions include comprehensive metrics summary with:
+      - Activity breakdown with classes added per activity
+      - Cleanup actions (already-downloaded, stale subscriptions removed)
+      - Current state with episode counts and deltas from previous run
+      - Directory repair summary
+      - Warnings for activities over limit and subscriptions near purge
 
   - Testing (CRITICAL - PROJECT IS TEST-GATED)
     - **ALL CODE CHANGES MUST PASS TESTS** - The CI/CD pipeline will fail if tests don't pass.
@@ -119,6 +135,7 @@ rules: |
       - `src/config/config.py`: 98% coverage
       - `src/config/cli_config.py`: 99% coverage
       - `src/core/application.py`: 86% coverage
+      - `src/core/metrics.py`: TBD% coverage (new module - tests needed)
       - `src/main.py`: 97% coverage
       - `src/io/strategy_loader.py`: 100% coverage
       - `src/io/file_manager.py`: 88% coverage

@@ -44,6 +44,12 @@ Plex TV Show by Date:
         tv_show_directory: D:/labspace/tmp/test-media/Cycling/Cody Rigsby
         season_number: 30
         episode_number: 2
+    30 min 90s Rock Ride with Camila Ramón:
+      download: https://members.onepeloton.com/classes/player/a005dc9673f44f5e97861cc60766400c
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Cycling/Camila Ramón
+        season_number: 30
+        episode_number: 3
   = Walking (45 min):
     45 min Hike with Rebecca Kennedy:
       download: https://members.onepeloton.com/classes/player/3848173801f64e87bdbbcaae7d9cd785
@@ -58,6 +64,24 @@ Plex TV Show by Date:
         tv_show_directory: D:/labspace/tmp/test-media/Strength/Robin Arzón
         season_number: 20
         episode_number: 152
+    20 min Black UK Legends Full Body with Joslyn Thompson Rule:
+      download: https://members.onepeloton.com/classes/player/ab6546208c2041688055d2554987aa0f
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Strength/Joslyn Thompson Rule
+        season_number: 20
+        episode_number: 153
+    20 min Glutes & Legs Strength with Robin Arzón:
+      download: https://members.onepeloton.com/classes/player/c56df3b42b9844de987902fdbfe9e4d8
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Strength/Robin Arzón
+        season_number: 20
+        episode_number: 154
+    20 min R&B Pilates with Aditi Shah:
+      download: https://members.onepeloton.com/classes/player/16b790a5e00448fc9246ff348a75893d
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Strength/Aditi Shah
+        season_number: 20
+        episode_number: 155
   = Walking (30 min):
     30 min Walk + Run with Mariana Fernández:
       download: https://members.onepeloton.com/classes/player/a4037efaab8b44ccb91d50b2469b6714
@@ -65,3 +89,56 @@ Plex TV Show by Date:
         tv_show_directory: D:/labspace/tmp/test-media/Walking/Mariana Fernández
         season_number: 30
         episode_number: 1
+    30 min Hike with Emma Lovewell:
+      download: https://members.onepeloton.com/classes/player/eb0279643a0440b8ae5069c72e8d369a
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Walking/Emma Lovewell
+        season_number: 30
+        episode_number: 2
+  = Walking (15 min):
+    15 min Power Walk with Olivia Amato:
+      download: https://members.onepeloton.com/classes/player/8c1a07894e754cc1a3ecdfbd2476d680
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Walking/Olivia Amato
+        season_number: 15
+        episode_number: 1
+    15 min Walk + Run with Olivia Amato:
+      download: https://members.onepeloton.com/classes/player/e6f1c7ca9c684fd584ff9f3e7c8630d6
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Walking/Olivia Amato
+        season_number: 15
+        episode_number: 2
+  = Cycling (5 min):
+    5 min Cool Down Ride with Alex Toussaint:
+      download: https://members.onepeloton.com/classes/player/8856314b3d0644eebdd002a92d6a4b56
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Cycling/Alex Toussaint
+        season_number: 5
+        episode_number: 3
+  = Walking (20 min):
+    20 min Hike with Jon Hosking:
+      download: https://members.onepeloton.com/classes/player/cbde0d52f34c4839acb8f9a7278f15d7
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Walking/Jon Hosking
+        season_number: 20
+        episode_number: 1
+  = Strength (30 min):
+    30 min Upper Body Strength with Katie Wang:
+      download: https://members.onepeloton.com/classes/player/93b8b9c7b41f4e4c95229fdb2d3ce868
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Strength/Katie Wang
+        season_number: 30
+        episode_number: 1
+  = Cycling (20 min):
+    20 min HIIT Ride with Robin Arzón:
+      download: https://members.onepeloton.com/classes/player/71252950828d40598f6f6cabdafbfa04
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Cycling/Robin Arzón
+        season_number: 20
+        episode_number: 139
+    20 min 80s Ride with Robin Arzón:
+      download: https://members.onepeloton.com/classes/player/9b3dfa29301246d88ce111c84adde1c4
+      overrides:
+        tv_show_directory: D:/labspace/tmp/test-media/Cycling/Robin Arzón
+        season_number: 20
+        episode_number: 140

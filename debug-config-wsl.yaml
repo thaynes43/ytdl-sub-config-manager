@@ -5,7 +5,8 @@
 application:
   media-dir: "D:/labspace/tmp/test-media"
   #subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.yaml"
-  subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.test.yaml"
+  #subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.test.yaml"
+  subs-file: "D:/labspace/tmp/peloton-scrape-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml" # GitHub Repo
   run-in-container: false  # Set to false for local debugging
   media-source: "peloton"  # Media source strategy to use
 
@@ -23,6 +24,7 @@ github:
   repo-url: ""
   token: ""
   temp-repo-dir: "D:/labspace/tmp/peloton-scrape-repo"
+  auto-merge: false
 
 # Peloton source configuration (will be overridden by environment variables in debug)
 peloton:

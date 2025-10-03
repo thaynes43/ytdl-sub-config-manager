@@ -81,6 +81,32 @@ class GenericEpisodeManager:
         
         return merged_data
     
+    def get_disk_episode_data(self) -> Dict[Activity, ActivityData]:
+        """Get episode data from disk only (not subscriptions).
+        
+        Returns:
+            Dictionary mapping Activity to ActivityData with disk-only episode information
+        """
+        self.logger.info("Gathering episode data from disk only")
+        
+        disk_data = {}
+        
+        for parser in self.episode_parsers:
+            try:
+                # Only get data from disk parser
+                if 'disk' in parser.__class__.__name__.lower() and hasattr(parser, 'parse_episodes'):
+                    data = parser.parse_episodes()
+                    disk_data.update(data)
+                    self.logger.info(f"{parser.__class__.__name__}: {len(data)} activities")
+                else:
+                    self.logger.debug(f"Skipping parser {parser.__class__.__name__} (not disk parser)")
+            except Exception as e:
+                self.logger.error(f"Error getting disk episode data from {parser.__class__.__name__}: {e}")
+        
+        self.logger.info(f"Disk only: {len(disk_data)} activities")
+        
+        return disk_data
+    
     def get_subscriptions_episode_data(self) -> Dict[Activity, ActivityData]:
         """Get episode data from subscriptions only (not disk).
         

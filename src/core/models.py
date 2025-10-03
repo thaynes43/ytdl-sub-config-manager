@@ -24,19 +24,25 @@ class Activity(Enum):
 
 @dataclass
 class ActivityData:
-    """Tracks maximum episode numbers per season for an activity."""
+    """Tracks episode counts and maximum episode numbers per season for an activity."""
     
     activity: Activity
-    max_episode: Dict[int, int]
+    max_episode: Dict[int, int]  # season -> highest episode number
+    episode_count: Dict[int, int]  # season -> count of actual episodes
     
     def __init__(self, activity: Activity):
         self.activity = activity
         self.max_episode = {}
+        self.episode_count = {}
     
     def update(self, season: int, episode: int) -> None:
-        """Update the maximum episode for a given season."""
+        """Update the maximum episode and count for a given season."""
+        # Update max episode
         if season not in self.max_episode or episode > self.max_episode[season]:
             self.max_episode[season] = episode
+        
+        # Increment episode count
+        self.episode_count[season] = self.episode_count.get(season, 0) + 1
     
     def get_next_episode(self, season: int) -> int:
         """Get the next episode number for a season."""
@@ -45,7 +51,7 @@ class ActivityData:
     @staticmethod
     def merge_collections(map1: Dict[Activity, 'ActivityData'], 
                          map2: Dict[Activity, 'ActivityData']) -> Dict[Activity, 'ActivityData']:
-        """Merge two dicts of ActivityData, keeping the largest episode per season."""
+        """Merge two dicts of ActivityData, keeping the largest episode per season and summing counts."""
         merged = {}
         all_activities = set(map1.keys()) | set(map2.keys())
         
@@ -59,9 +65,15 @@ class ActivityData:
                 seasons.update(map2[activity].max_episode.keys())
             
             for season in seasons:
+                # Max episode: take the highest
                 ep1 = map1[activity].max_episode.get(season, 0) if activity in map1 else 0
                 ep2 = map2[activity].max_episode.get(season, 0) if activity in map2 else 0
                 merged_data.max_episode[season] = max(ep1, ep2)
+                
+                # Episode count: sum the counts
+                count1 = map1[activity].episode_count.get(season, 0) if activity in map1 else 0
+                count2 = map2[activity].episode_count.get(season, 0) if activity in map2 else 0
+                merged_data.episode_count[season] = count1 + count2
             
             merged[activity] = merged_data
         

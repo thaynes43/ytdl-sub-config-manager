@@ -57,10 +57,17 @@ class TestRepair5050StrategyBug:
     def test_can_repair_detects_50_slash_50_corruption(self):
         """Test that can_repair detects 50/50 corruption patterns."""
         # Test path with 50/50 corruption (creates extra directory levels)
-        corrupted_path = Path("/cephfs-hdd/media/peloton/Tread Bootcamp/Selena Samuela/S30E11 - 20250103 - 30 min Bootcamp: 50/50")
+        # Create a path that would have 50/50 in the name (Windows filesystems don't allow this)
+        # So we test by creating the string representation that the strategy would see
+        corrupted_path_str = "/cephfs-hdd/media/peloton/Tread Bootcamp/Selena Samuela/S30E11 - 20250103 - 30 min Bootcamp: 50/50"
+        
+        # Mock the path to return this string
+        from unittest.mock import MagicMock
+        mock_path = MagicMock(spec=Path)
+        mock_path.__str__ = MagicMock(return_value=corrupted_path_str)
         
         # Should detect this as needing repair
-        can_repair = self.strategy.can_repair(corrupted_path, self.mock_pattern)
+        can_repair = self.strategy.can_repair(mock_path, self.mock_pattern)
         
         assert can_repair is True, f"Should detect '50/50' as corruption, but can_repair returned {can_repair}"
     

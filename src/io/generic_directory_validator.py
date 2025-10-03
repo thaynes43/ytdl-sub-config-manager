@@ -73,8 +73,11 @@ class GenericDirectoryValidator:
             except Exception as e:
                 self.logger.error(f"Failed to load repair strategy {strategy_path}: {e}")
     
-    def validate_and_repair(self) -> bool:
+    def validate_and_repair(self, metrics=None) -> bool:
         """Main entry point to validate and repair directory structure.
+        
+        Args:
+            metrics: Optional DirectoryRepairMetrics to track statistics
         
         Returns:
             True if validation passed or repairs were successful, False otherwise
@@ -87,22 +90,28 @@ class GenericDirectoryValidator:
         
         # Step 1: Scan for all episode files and detect structural issues
         all_episodes = self._scan_all_episodes(log_context="initial")
+        if metrics:
+            metrics.total_episodes_scanned = len(all_episodes)
         
         # Step 2: Detect and fix corrupted directory structures
         corrupted_episodes = [ep for ep in all_episodes if ep.is_corrupted_location]
         repaired_corrupted_count = 0
         if corrupted_episodes:
+            if metrics:
+                metrics.corrupted_locations_found = len(corrupted_episodes)
             self.logger.warning(f"Found {len(corrupted_episodes)} episodes in corrupted locations")
-            if not self._repair_corrupted_locations(corrupted_episodes):
+            if not self._repair_corrupted_locations(corrupted_episodes, metrics):
                 return False
             repaired_corrupted_count = len(corrupted_episodes)
+            if metrics:
+                metrics.corrupted_locations_repaired = repaired_corrupted_count
             
         # Step 2.5: Scan and repair parent directories (for cleanup strategies)
         # Run multiple passes until no more repairs are needed (max 10 passes to prevent infinite loops)
         total_parent_repairs = 0
         max_passes = 10
         for pass_num in range(max_passes):
-            parent_repairs = self._scan_and_repair_parent_directories()
+            parent_repairs = self._scan_and_repair_parent_directories(metrics)
             total_parent_repairs += parent_repairs
             if parent_repairs == 0:
                 break  # No more repairs needed
@@ -110,6 +119,10 @@ class GenericDirectoryValidator:
         
         if total_parent_repairs > 0:
             self.logger.info(f"Completed parent directory repairs in {pass_num + 1} passes: {total_parent_repairs} total repairs")
+        
+        if metrics:
+            metrics.parent_directories_repaired = total_parent_repairs
+            metrics.repair_passes_executed = pass_num + 1 if total_parent_repairs > 0 else 0
         
         repaired_corrupted_count += total_parent_repairs
         
@@ -121,10 +134,14 @@ class GenericDirectoryValidator:
         conflicts = self._detect_episode_conflicts(all_episodes)
         repaired_conflicts_count = 0
         if conflicts:
+            if metrics:
+                metrics.episode_conflicts_found = len(conflicts)
             self.logger.warning(f"Found {len(conflicts)} episode number conflicts")
             if not self._resolve_episode_conflicts(conflicts, all_episodes):
                 return False
             repaired_conflicts_count = len(conflicts)
+            if metrics:
+                metrics.episode_conflicts_resolved = repaired_conflicts_count
         
         # Step 4: Final validation
         final_episodes = self._scan_all_episodes(log_context="final validation")
@@ -331,8 +348,11 @@ class GenericDirectoryValidator:
         
         return False
     
-    def _scan_and_repair_parent_directories(self) -> int:
+    def _scan_and_repair_parent_directories(self, metrics=None) -> int:
         """Scan and repair parent directories (for cleanup strategies like empty directory removal).
+        
+        Args:
+            metrics: Optional DirectoryRepairMetrics to track statistics
         
         Returns:
             Number of directories repaired
@@ -354,8 +374,11 @@ class GenericDirectoryValidator:
                         # Generate and execute repair actions
                         actions = repair_strategy.generate_repair_actions(root_path, None)
                         if actions and self._execute_repair_actions(actions):
-                            self.logger.info(f"Successfully repaired {root_path} using {repair_strategy.__class__.__name__}")
+                            strategy_name = repair_strategy.__class__.__name__
+                            self.logger.info(f"Successfully repaired {root_path} using {strategy_name}")
                             repaired_count += 1
+                            if metrics:
+                                metrics.repairs_by_strategy[strategy_name] = metrics.repairs_by_strategy.get(strategy_name, 0) + 1
                         break  # Only use the first strategy that can handle it
                 except Exception as e:
                     self.logger.debug(f"Strategy {repair_strategy.__class__.__name__} failed on {root_path}: {e}")
@@ -366,28 +389,34 @@ class GenericDirectoryValidator:
         
         return repaired_count
     
-    def _repair_corrupted_locations(self, corrupted_episodes: List[EpisodeInfo]) -> bool:
+    def _repair_corrupted_locations(self, corrupted_episodes: List[EpisodeInfo], metrics=None) -> bool:
         """Repair episodes in corrupted directory locations using strategies.
         
         Args:
             corrupted_episodes: List of episodes in corrupted locations
+            metrics: Optional DirectoryRepairMetrics to track statistics
             
         Returns:
             True if repairs were successful, False otherwise
         """
         self.logger.info(f"Repairing {len(corrupted_episodes)} corrupted episode locations")
         
+        failed_repairs = 0
         for episode in corrupted_episodes:
-            if not self._repair_single_episode(episode):
-                return False
+            if not self._repair_single_episode(episode, metrics):
+                failed_repairs += 1
         
-        return True
+        if metrics and failed_repairs > 0:
+            metrics.corrupted_locations_failed = failed_repairs
+        
+        return failed_repairs == 0
     
-    def _repair_single_episode(self, episode: EpisodeInfo) -> bool:
+    def _repair_single_episode(self, episode: EpisodeInfo, metrics=None) -> bool:
         """Repair a single episode using available repair strategies.
         
         Args:
             episode: Episode to repair
+            metrics: Optional DirectoryRepairMetrics to track statistics
             
         Returns:
             True if repair was successful, False otherwise
@@ -406,7 +435,10 @@ class GenericDirectoryValidator:
                             continue  # Try next strategy
                         
                         if self._execute_repair_actions(actions):
-                            self.logger.info(f"Successfully repaired {episode.path} using {repair_strategy.__class__.__name__}")
+                            strategy_name = repair_strategy.__class__.__name__
+                            self.logger.info(f"Successfully repaired {episode.path} using {strategy_name}")
+                            if metrics:
+                                metrics.repairs_by_strategy[strategy_name] = metrics.repairs_by_strategy.get(strategy_name, 0) + 1
                             return True
                         else:
                             self.logger.warning(f"Failed to execute repair actions from {repair_strategy.__class__.__name__} for {episode.path}")

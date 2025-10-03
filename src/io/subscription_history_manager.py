@@ -8,6 +8,7 @@ from typing import Dict, Set, List, Optional
 from dataclasses import dataclass
 
 from ..core.logging import get_logger
+from ..core.snapshot import RunSnapshot
 
 logger = get_logger(__name__)
 
@@ -73,18 +74,19 @@ class SubscriptionHistoryManager:
                 entry = SubscriptionEntry.from_dict(entry_data)
                 history[entry.id] = entry
             
-            self.logger.info(f"Loaded {len(history)} subscription entries from history file")
+            self.logger.debug(f"Loaded {len(history)} subscription entries from history file")
             return history
             
         except (json.JSONDecodeError, KeyError, ValueError) as e:
             self.logger.error(f"Error loading subscription history file: {e}")
             return {}
     
-    def _save_history(self, history: Dict[str, SubscriptionEntry]) -> bool:
+    def _save_history(self, history: Dict[str, SubscriptionEntry], snapshot = None) -> bool:
         """Save subscription history to file.
         
         Args:
             history: Dictionary mapping subscription ID to SubscriptionEntry
+            snapshot: Optional run snapshot to append to history
             
         Returns:
             True if successful, False otherwise
@@ -93,17 +95,36 @@ class SubscriptionHistoryManager:
             # Ensure directory exists
             self.history_file_path.parent.mkdir(parents=True, exist_ok=True)
             
+            # Load existing run snapshots if file exists
+            existing_snapshots = []
+            if self.history_file_path.exists():
+                try:
+                    with open(self.history_file_path, 'r', encoding='utf-8') as f:
+                        existing_data = json.load(f)
+                        existing_snapshots = existing_data.get('run_snapshots', [])
+                except Exception as e:
+                    self.logger.warning(f"Could not load existing run snapshots: {e}")
+            
             # Convert to list format for JSON
             subscriptions = [entry.to_dict() for entry in history.values()]
             data = {
                 'subscriptions': subscriptions,
-                'last_updated': datetime.now().isoformat()
+                'last_updated': datetime.now().isoformat(),
+                'run_snapshots': existing_snapshots
             }
+            
+            # Append new snapshot if provided
+            if snapshot:
+                data['run_snapshots'].append(snapshot.to_dict())
+                # Keep only the last 50 snapshots to avoid unbounded growth
+                data['run_snapshots'] = data['run_snapshots'][-50:]
             
             with open(self.history_file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             
-            self.logger.info(f"Saved {len(history)} subscription entries to history file")
+            self.logger.debug(f"Saved {len(history)} subscription entries to history file")
+            if snapshot:
+                self.logger.info(f"Saved run snapshot to history file")
             return True
             
         except Exception as e:
@@ -137,6 +158,35 @@ class SubscriptionHistoryManager:
         
         return stale_ids
     
+    def get_subscriptions_near_timeout(self, warning_threshold_days: int = 3) -> Set[str]:
+        """Get subscription IDs that are within N days of the timeout period.
+        
+        Args:
+            warning_threshold_days: Number of days before timeout to warn about
+            
+        Returns:
+            Set of subscription IDs approaching timeout
+        """
+        history = self._load_history()
+        warning_cutoff = datetime.now() - timedelta(days=self.timeout_days - warning_threshold_days)
+        timeout_cutoff = datetime.now() - timedelta(days=self.timeout_days)
+        near_timeout_ids = set()
+        
+        for entry in history.values():
+            try:
+                entry_date = datetime.fromisoformat(entry.date_added)
+                # Include entries between warning threshold and timeout
+                if entry_date < warning_cutoff and entry_date >= timeout_cutoff:
+                    near_timeout_ids.add(entry.id)
+            except ValueError:
+                # Skip entries with invalid dates
+                continue
+        
+        if near_timeout_ids:
+            self.logger.info(f"Found {len(near_timeout_ids)} subscriptions within {warning_threshold_days} days of timeout")
+        
+        return near_timeout_ids
+    
     def add_subscription_ids(self, subscription_ids: Set[str]) -> bool:
         """Add new subscription IDs to the history file.
         
@@ -160,9 +210,9 @@ class SubscriptionHistoryManager:
         
         if added_count > 0:
             self.logger.info(f"Adding {added_count} new subscription IDs to history")
-            return self._save_history(history)
+            return self._save_history(history, snapshot=None)
         else:
-            self.logger.info("No new subscription IDs to add to history")
+            self.logger.debug("No new subscription IDs to add to history")
             return True
     
     def remove_subscription_ids(self, subscription_ids: Set[str]) -> bool:
@@ -187,9 +237,9 @@ class SubscriptionHistoryManager:
         
         if removed_count > 0:
             self.logger.info(f"Removing {removed_count} subscription IDs from history")
-            return self._save_history(history)
+            return self._save_history(history, snapshot=None)
         else:
-            self.logger.info("No subscription IDs to remove from history")
+            self.logger.debug("No subscription IDs to remove from history")
             return True
     
     def extract_subscription_ids_from_urls(self, urls: List[str]) -> Set[str]:
@@ -309,10 +359,65 @@ class SubscriptionHistoryManager:
                     return False
             
             if not changes_made:
-                self.logger.info("History file is already in sync with subscriptions")
+                self.logger.debug("History file is already in sync with subscriptions")
             
             return True
             
         except Exception as e:
             self.logger.error(f"Error syncing existing subscriptions: {e}")
             return False
+    
+    def save_run_snapshot(self, snapshot) -> bool:
+        """Save a run snapshot to the history file.
+        
+        Args:
+            snapshot: Run snapshot to save
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Load current history
+            history = self._load_history()
+            
+            # Save with snapshot
+            return self._save_history(history, snapshot=snapshot)
+            
+        except Exception as e:
+            self.logger.error(f"Error saving run snapshot: {e}")
+            return False
+    
+    def get_run_snapshots(self, limit: int = 10):
+        """Get the most recent run snapshots from history.
+        
+        Args:
+            limit: Maximum number of snapshots to return
+            
+        Returns:
+            List of run snapshots (most recent first)
+        """
+        try:
+            if not self.history_file_path.exists():
+                return []
+            
+            with open(self.history_file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            snapshots_data = data.get('run_snapshots', [])
+            snapshots = [RunSnapshot.from_dict(s) for s in snapshots_data]
+            
+            # Return most recent first
+            return snapshots[-limit:][::-1]
+            
+        except Exception as e:
+            self.logger.error(f"Error loading run snapshots: {e}")
+            return []
+    
+    def get_last_run_snapshot(self):
+        """Get the most recent run snapshot.
+        
+        Returns:
+            Last run snapshot or None if no snapshots exist
+        """
+        snapshots = self.get_run_snapshots(limit=1)
+        return snapshots[0] if snapshots else None

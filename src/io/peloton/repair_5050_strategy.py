@@ -29,6 +29,16 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         if "50/50" in path_str:
             self.logger.debug(f"50/50 strategy detected '50/50' corruption in path: {path}")
             return True
+        
+        # Also check path parts for standalone "50" directories (Windows compatibility)
+        # Check if there's a "50" directory that shouldn't be there
+        parts = list(path.parts)
+        for i, part in enumerate(parts):
+            if part == "50":
+                # Check if previous part ends with "50" (indicating it was split from "50/50")
+                if i > 0 and parts[i-1].endswith(" 50"):
+                    self.logger.debug(f"50/50 strategy detected split '50' directory in path: {path}")
+                    return True
             
         # Check for duplicated episode name corruption
         if self._has_duplicated_episode_name(path):
