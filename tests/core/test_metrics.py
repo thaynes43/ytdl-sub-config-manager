@@ -576,7 +576,7 @@ class TestRunMetrics:
         assert "yoga: 7 added (10 found, 3 skipped)" in pr_summary
         assert "Episodes on disk:** 100" in pr_summary
         assert "Subscriptions in YAML:** 35" in pr_summary  # 20 + 15
-        assert "Activities tracked:** 12" in pr_summary
+        assert "Activities with episodes on disk:** 12" in pr_summary
         assert "Removed 5 already-downloaded subscriptions" in pr_summary
         assert "Removed 3 stale subscriptions" in pr_summary
         assert "### Directory Validation" in pr_summary
