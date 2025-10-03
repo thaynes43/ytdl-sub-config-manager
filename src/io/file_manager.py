@@ -18,7 +18,7 @@ class FileManager:
     
     def __init__(self, media_dir: str, subs_file: str, validate_and_repair: bool = True, 
                  validation_strategies: Optional[List[str]] = None, repair_strategies: Optional[List[str]] = None, 
-                 episode_parsers: Optional[List[str]] = None, subscription_timeout_days: int = 15):
+                 episode_parsers: Optional[List[str]] = None, subscription_timeout_days: int = 15, metrics=None):
         """Initialize the file manager.
         
         Args:
@@ -29,6 +29,7 @@ class FileManager:
             repair_strategies: List of repair strategy module paths (required if validate_and_repair=True)
             episode_parsers: List of episode parser module paths (required)
             subscription_timeout_days: Number of days after which subscriptions are considered stale
+            metrics: Optional metrics object to track statistics
         """
         self.media_dir = media_dir
         self.subs_file = subs_file
@@ -71,7 +72,8 @@ class FileManager:
         # Validate and repair directory structure if requested
         if validate_and_repair and self.directory_validator:
             self.logger.info("Validating and repairing directory structure")
-            if not self.directory_validator.validate_and_repair():
+            repair_metrics = metrics.directory_repair if metrics else None
+            if not self.directory_validator.validate_and_repair(repair_metrics):
                 self.logger.error("Directory validation and repair failed!")
                 raise RuntimeError("Directory structure validation failed")
     
@@ -82,6 +84,14 @@ class FileManager:
             Dictionary mapping Activity to ActivityData with merged episode information
         """
         return self.episode_manager.get_merged_episode_data()
+    
+    def get_disk_episode_data(self) -> Dict[Activity, ActivityData]:
+        """Get episode data from disk only (not subscriptions).
+        
+        Returns:
+            Dictionary mapping Activity to ActivityData with disk-only episode information
+        """
+        return self.episode_manager.get_disk_episode_data()
     
     def get_subscriptions_episode_data(self) -> Dict[Activity, ActivityData]:
         """Get episode data from subscriptions only (not disk).

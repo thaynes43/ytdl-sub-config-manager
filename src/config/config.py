@@ -35,6 +35,7 @@ class Config:
     peloton_page_scrolls: int = 10
     media_source: str = "peloton"
     subscription_timeout_days: int = 15
+    subscription_warning_threshold_days: int = 3  # Warn when subscriptions are within N days of timeout
     
     # Strategy injection configuration
     peloton_directory_validation_strategies: List[str] = field(default_factory=list)
@@ -78,6 +79,10 @@ class Config:
             raise ValueError("PELOTON_PAGE_SCROLLS must be positive")
         if self.subscription_timeout_days <= 0:
             raise ValueError("SUBSCRIPTION_TIMEOUT_DAYS must be positive")
+        if self.subscription_warning_threshold_days < 0:
+            raise ValueError("subscription_warning_threshold_days must be non-negative")
+        if self.subscription_warning_threshold_days >= self.subscription_timeout_days:
+            raise ValueError("subscription_warning_threshold_days must be less than subscription_timeout_days")
         
         # Set default activities if empty
         if not self.peloton_activities:
@@ -256,6 +261,7 @@ class ConfigLoader:
             'RUN_IN_CONTAINER': 'run_in_container',
             'PELOTON_PAGE_SCROLLS': 'peloton_page_scrolls',
             'SUBSCRIPTION_TIMEOUT_DAYS': 'subscription_timeout_days',
+            'SUBSCRIPTION_WARNING_THRESHOLD_DAYS': 'subscription_warning_threshold_days',
             'LOG_LEVEL': 'log_level',
             'LOG_FORMAT': 'log_format',
             'LOG_FILE': 'log_file',
@@ -268,7 +274,7 @@ class ConfigLoader:
             value = os.getenv(env_var)
             if value is not None:
                 # Type conversion
-                if config_key in ['peloton_class_limit_per_activity', 'peloton_page_scrolls', 'subscription_timeout_days']:
+                if config_key in ['peloton_class_limit_per_activity', 'peloton_page_scrolls', 'subscription_timeout_days', 'subscription_warning_threshold_days']:
                     try:
                         config[config_key] = int(value)
                     except ValueError:
@@ -296,6 +302,7 @@ class ConfigLoader:
             'container': 'run_in_container',
             'scrolls': 'peloton_page_scrolls',
             'subscription_timeout_days': 'subscription_timeout_days',
+            'subscription_warning_threshold_days': 'subscription_warning_threshold_days',
             'log_level': 'log_level',
             'log_format': 'log_format'
         }

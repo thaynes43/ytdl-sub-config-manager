@@ -79,7 +79,7 @@ class EpisodesFromSubscriptions(EpisodeParser):
         if results:
             activity_summary = []
             for activity, data in results.items():
-                episode_count = sum(data.max_episode.values())
+                episode_count = sum(data.episode_count.values())
                 activity_summary.append(f"{activity.name.lower()} ({episode_count})")
             
             self.logger.info(f"Parsed {total_episodes} total episodes for activities: {', '.join(activity_summary)}")
@@ -88,8 +88,9 @@ class EpisodesFromSubscriptions(EpisodeParser):
             for activity, data in results.items():
                 seasons_info = []
                 for season in sorted(data.max_episode.keys()):
-                    max_ep = data.max_episode[season]
-                    seasons_info.append(f"Season {season}: {max_ep} episodes (max E{max_ep})")
+                    actual_count = data.episode_count.get(season, 0)
+                    max_ep = data.max_episode.get(season, 0)
+                    seasons_info.append(f"Season {season}: {actual_count} episodes (max E{max_ep})")
                 
                 self.logger.info(f"{activity.name} episodes: {'; '.join(seasons_info)}")
         else:

@@ -192,11 +192,11 @@ class TestFolderFilenameMismatchRepairStrategy:
         """Test that repair actions are generated when episode numbers match but text differs."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Same episode number (E42) but different text
-            episode_dir = Path(temp_dir) / 'S30E42 - 20230804 - 30 min Bootcamp: Full Body'
+            episode_dir = Path(temp_dir) / 'S30E42 - 20230804 - 30 min Bootcamp - Full Body'
             episode_dir.mkdir()
             
             # Video file with same episode but different text
-            video_file = episode_dir / 'S30E42 - 20230804 - 30 min Bootcamp.mp4'  # Missing ": Full Body"
+            video_file = episode_dir / 'S30E42 - 20230804 - 30 min Bootcamp.mp4'  # Missing "- Full Body"
             video_file.touch()
             
             actions = self.strategy.generate_repair_actions(episode_dir, self.mock_pattern)
@@ -206,7 +206,7 @@ class TestFolderFilenameMismatchRepairStrategy:
             action = actions[0]
             assert action.action_type == "move"
             assert action.source_path == video_file
-            assert "S30E42 - 20230804 - 30 min Bootcamp: Full Body.mp4" in str(action.target_path)
+            assert "S30E42 - 20230804 - 30 min Bootcamp - Full Body.mp4" in str(action.target_path)
     
     def test_find_video_files_detects_various_formats(self):
         """Test that _find_video_files detects various video formats."""
