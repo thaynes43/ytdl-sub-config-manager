@@ -292,19 +292,25 @@ class TestSubscriptionChangesMetrics:
         assert metrics.subscription_directories_updated == 0
         assert metrics.subscription_titles_sanitized == 0
         assert metrics.subscription_conflicts_resolved == 0
+        assert metrics.subscriptions_before_cleanup == 0
+        assert metrics.subscriptions_after_cleanup == 0
     
     def test_to_dict(self):
         """Test dictionary conversion."""
         metrics = SubscriptionChangesMetrics(
             subscriptions_removed_already_downloaded=5,
             subscriptions_added_new=15,
-            subscription_conflicts_resolved=2
+            subscription_conflicts_resolved=2,
+            subscriptions_before_cleanup=100,
+            subscriptions_after_cleanup=80
         )
         
         data = metrics.to_dict()
         assert data['subscriptions_removed_already_downloaded'] == 5
         assert data['subscriptions_added_new'] == 15
         assert data['subscription_conflicts_resolved'] == 2
+        assert data['subscriptions_before_cleanup'] == 100
+        assert data['subscriptions_after_cleanup'] == 80
     
     def test_summary_no_changes(self):
         """Test summary when no changes made."""
@@ -315,21 +321,25 @@ class TestSubscriptionChangesMetrics:
     def test_summary_with_changes(self):
         """Test summary with various changes."""
         metrics = SubscriptionChangesMetrics(
+            subscriptions_before_cleanup=100,
             subscriptions_removed_already_downloaded=5,
             subscriptions_removed_stale=3,
             subscriptions_added_new=15,
             subscription_directories_updated=20,
             subscription_titles_sanitized=2,
-            subscription_conflicts_resolved=1
+            subscription_conflicts_resolved=1,
+            subscriptions_after_cleanup=80
         )
         
         summary = metrics.get_summary()
-        assert "5 already-downloaded removed" in summary
-        assert "3 stale removed" in summary
+        assert "File started with 100 subscriptions" in summary
+        assert "Removed 5 because they were found on disk" in summary
+        assert "Removed 3 because they expired" in summary
         assert "15 new added" in summary
         assert "20 directories updated" in summary
         assert "2 titles sanitized" in summary
         assert "1 conflicts resolved" in summary
+        assert "80 subscriptions remain in the base file" in summary
 
 
 class TestSubscriptionHistoryMetrics:

@@ -108,7 +108,7 @@ class ActivityEpisodeStats:
                 sync_issues.append(f"S{season_num}: {season_stats.episode_count} episodes, highest E{season_stats.highest_episode_number}")
         
         if sync_issues:
-            parts.append(f"WARNING - Sync issues: {'; '.join(sync_issues)}")
+            parts.append(f"⚠️ Sync issues: {'; '.join(sync_issues)}")
         
         return " - ".join(parts)
 
@@ -223,7 +223,7 @@ class ExistingEpisodesMetrics:
             # Show season details if available
             if activity_stats.seasons:
                 for season_num, season_stats in sorted(activity_stats.seasons.items()):
-                    sync_status = "OK" if season_stats.is_synchronized() else "SYNC ISSUE"
+                    sync_status = "✅" if season_stats.is_synchronized() else "⚠️"
                     lines.append(
                         f"    S{season_num}: {season_stats.episode_count} episodes, "
                         f"highest E{season_stats.highest_episode_number} ({sync_status})"
@@ -325,6 +325,8 @@ class SubscriptionChangesMetrics:
     subscription_directories_updated: int = 0
     subscription_titles_sanitized: int = 0
     subscription_conflicts_resolved: int = 0
+    subscriptions_before_cleanup: int = 0  # Count before any removals
+    subscriptions_after_cleanup: int = 0   # Count after removals
     
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
@@ -334,10 +336,13 @@ class SubscriptionChangesMetrics:
         """Generate a human-readable summary."""
         changes = []
         
+        if self.subscriptions_before_cleanup > 0:
+            changes.append(f"File started with {self.subscriptions_before_cleanup} subscriptions")
+        
         if self.subscriptions_removed_already_downloaded > 0:
-            changes.append(f"{self.subscriptions_removed_already_downloaded} already-downloaded removed")
+            changes.append(f"Removed {self.subscriptions_removed_already_downloaded} because they were found on disk")
         if self.subscriptions_removed_stale > 0:
-            changes.append(f"{self.subscriptions_removed_stale} stale removed")
+            changes.append(f"Removed {self.subscriptions_removed_stale} because they expired")
         if self.subscriptions_added_new > 0:
             changes.append(f"{self.subscriptions_added_new} new added")
         if self.subscription_directories_updated > 0:
@@ -346,6 +351,9 @@ class SubscriptionChangesMetrics:
             changes.append(f"{self.subscription_titles_sanitized} titles sanitized")
         if self.subscription_conflicts_resolved > 0:
             changes.append(f"{self.subscription_conflicts_resolved} conflicts resolved")
+        
+        if self.subscriptions_after_cleanup > 0:
+            changes.append(f"{self.subscriptions_after_cleanup} subscriptions remain in the base file")
         
         if not changes:
             return "No changes to subscriptions.yaml"
@@ -508,48 +516,58 @@ class RunMetrics:
             ""
         ]
         
-        # Web scraping results
+        # Subscription File Summary
+        lines.extend([
+            "### Subscription File Summary",
+            ""
+        ])
+        
+        # High-level subscription metrics
+        if self.subscription_changes.subscriptions_before_cleanup > 0:
+            lines.append(f"- **File started with {self.subscription_changes.subscriptions_before_cleanup} subscriptions**")
+        
+        removals = []
+        if self.subscription_changes.subscriptions_removed_already_downloaded > 0:
+            removals.append(f"{self.subscription_changes.subscriptions_removed_already_downloaded} because they were found on disk")
+        if self.subscription_changes.subscriptions_removed_stale > 0:
+            removals.append(f"{self.subscription_changes.subscriptions_removed_stale} because they expired")
+        
+        if removals:
+            lines.append(f"- **Removed {', '.join(removals)}**")
+        
+        if self.subscription_changes.subscriptions_after_cleanup > 0:
+            lines.append(f"- **{self.subscription_changes.subscriptions_after_cleanup} subscriptions remain in the base file**")
+        
+        lines.append("")
+        
+        # Activity breakdown with existing + added + total
         if self.web_scraping.total_classes_added > 0:
             lines.extend([
-                f"- **{self.web_scraping.total_classes_added} new classes added**",
+                "### Activity Breakdown",
                 ""
             ])
             
-            # Per-activity breakdown with found/skipped/added
-            if self.web_scraping.activities:
-                lines.append("  **Activity Breakdown:**")
-                for activity_name, stats in sorted(self.web_scraping.activities.items()):
-                    if stats.classes_added > 0:
-                        lines.append(
-                            f"  - {activity_name}: {stats.classes_added} added "
-                            f"({stats.classes_found} found, {stats.classes_skipped} skipped)"
-                        )
-                lines.append("")
-        else:
-            lines.extend(["- No new classes found", ""])
-        
-        # Cleanup actions
-        cleanup_actions = []
-        if self.subscription_changes.subscriptions_removed_already_downloaded > 0:
-            cleanup_actions.append(
-                f"- Removed {self.subscription_changes.subscriptions_removed_already_downloaded} already-downloaded subscriptions"
-            )
-        if self.subscription_changes.subscriptions_removed_stale > 0:
-            cleanup_actions.append(
-                f"- Removed {self.subscription_changes.subscriptions_removed_stale} stale subscriptions"
-            )
-        if self.subscription_changes.subscription_conflicts_resolved > 0:
-            cleanup_actions.append(
-                f"- Resolved {self.subscription_changes.subscription_conflicts_resolved} path conflicts"
-            )
-        if self.subscription_changes.subscription_titles_sanitized > 0:
-            cleanup_actions.append(
-                f"- Sanitized {self.subscription_changes.subscription_titles_sanitized} titles"
-            )
-        
-        if cleanup_actions:
-            lines.extend(cleanup_actions)
+            # Activity breakdown with added classes
+            for activity_name, stats in sorted(self.web_scraping.activities.items()):
+                if stats.classes_added > 0:
+                    lines.append(
+                        f"- **{activity_name}:** {stats.classes_added} added "
+                        f"({stats.classes_found} scraped, {stats.classes_skipped} skipped by scraper)"
+                    )
+            
             lines.append("")
+            
+            # Calculate total subscriptions after scraper updates
+            total_after_scraper = self.subscription_changes.subscriptions_after_cleanup + self.web_scraping.total_classes_added
+            lines.extend([
+                f"**After scraper updates, we are now tracking {total_after_scraper} subscriptions**",
+                ""
+            ])
+        else:
+            lines.extend([
+                "- No new classes found",
+                ""
+            ])
         
         # Current state with detailed breakdown
         lines.extend([
@@ -586,7 +604,7 @@ class RunMetrics:
                 lines.append(f"  - {activity_name}: {activity_stats.total_episodes} episodes{change_str}")
                 if activity_stats.seasons:
                     for season_num, season_stats in sorted(activity_stats.seasons.items()):
-                        sync_status = "OK" if season_stats.is_synchronized() else "SYNC ISSUE"
+                        sync_status = "✅" if season_stats.is_synchronized() else "⚠️"
                         lines.append(f"    - S{season_num}: {season_stats.episode_count} episodes, highest E{season_stats.highest_episode_number} {sync_status}")
         
         lines.append("")

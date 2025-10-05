@@ -176,11 +176,11 @@ class GenericEpisodeManager:
         
         return all_class_ids
     
-    def cleanup_subscriptions(self) -> bool:
+    def cleanup_subscriptions(self) -> tuple[bool, int]:
         """Clean up subscriptions by removing already-downloaded classes.
         
         Returns:
-            True if changes were made, False if no cleanup was needed
+            Tuple of (True if changes were made, count of episodes removed)
         """
         self.logger.info("Cleaning up subscriptions file")
         
@@ -196,13 +196,16 @@ class GenericEpisodeManager:
         
         # Remove from subscriptions
         changes_made = False
+        total_removed = 0
         for parser in self.episode_parsers:
             if 'subscription' in parser.__class__.__name__.lower():
                 try:
                     if hasattr(parser, 'remove_existing_classes'):
-                        if parser.remove_existing_classes(filesystem_ids):
+                        parser_changed, parser_removed = parser.remove_existing_classes(filesystem_ids)
+                        if parser_changed:
                             changes_made = True
+                            total_removed += parser_removed
                 except Exception as e:
                     self.logger.error(f"Failed to clean up subscriptions: {e}")
         
-        return changes_made
+        return changes_made, total_removed

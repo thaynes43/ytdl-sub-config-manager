@@ -264,22 +264,22 @@ class EpisodesFromSubscriptions(EpisodeParser):
         self.logger.debug(f"Found {len(class_ids)} subscription class IDs for {activity.name}")
         return class_ids
     
-    def remove_existing_classes(self, existing_class_ids: Set[str]) -> bool:
+    def remove_existing_classes(self, existing_class_ids: Set[str]) -> tuple[bool, int]:
         """Remove existing class IDs from the subscriptions file.
         
         Args:
             existing_class_ids: Set of class IDs to remove
             
         Returns:
-            True if changes were made, False otherwise
+            Tuple of (True if changes were made, count of episodes removed)
         """
         if not self.subs_file.exists():
             self.logger.warning(f"Subscriptions file does not exist: {self.subs_file}")
-            return False
+            return False, 0
         
         if not existing_class_ids:
             self.logger.info("No existing class IDs to remove")
-            return False
+            return False, 0
         
         self.logger.info(f"Removing {len(existing_class_ids)} existing classes from subscriptions")
         
@@ -290,7 +290,7 @@ class EpisodesFromSubscriptions(EpisodeParser):
             
             if not subs_data:
                 self.logger.warning("Subscriptions file is empty or invalid")
-                return False
+                return False, 0
             
             changes_made = False
             removed_episodes = []
@@ -299,7 +299,7 @@ class EpisodesFromSubscriptions(EpisodeParser):
             tv_shows = subs_data.get("Plex TV Show by Date", {})
             if not tv_shows:
                 self.logger.warning("No 'Plex TV Show by Date' section found in subscriptions")
-                return False
+                return False, 0
             
             # Process each duration group (e.g., "= Cycling (20 min)")
             # Create a list of duration keys to avoid modifying dict during iteration
@@ -349,11 +349,11 @@ class EpisodesFromSubscriptions(EpisodeParser):
                 for episode in removed_episodes:
                     self.logger.info(f"  - {episode}")
                 
-                return True
+                return True, len(removed_episodes)
             else:
                 self.logger.info("No matching episodes found to remove")
-                return False
+                return False, 0
                 
         except Exception as e:
             self.logger.error(f"Error updating subscriptions file: {e}")
-            return False
+            return False, 0

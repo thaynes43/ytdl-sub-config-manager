@@ -200,10 +200,11 @@ class Application:
             logger.info(f"Found {len(subscriptions_data)} activities with classes in subscriptions.")
             
             subscription_count = sum(
-                sum(activity_data.max_episode.values()) 
+                sum(activity_data.episode_count.values()) 
                 for activity_data in subscriptions_data.values()
             )
             metrics.existing_episodes.total_subscriptions_in_yaml = subscription_count
+            metrics.subscription_changes.subscriptions_before_cleanup = subscription_count
             
             # Log summary in the requested format
             for activity, activity_data in disk_data.items():
@@ -227,14 +228,22 @@ class Application:
             logger.info(f"Found {len(existing_ids)} existing classes to skip")
             metrics.existing_episodes.existing_class_ids_count = len(existing_ids)
             
+            # Get stale and near-timeout subscriptions BEFORE cleanup
+            stale_ids = file_manager.subscription_history_manager.get_stale_subscription_ids()
+            metrics.subscription_history.stale_subscriptions_found = len(stale_ids)
+            
             # Clean up subscriptions file
             logger.info("Cleaning up subscriptions file...")
-            removed_count_before = len(existing_ids)  # Classes already on disk
-            changes_made = file_manager.cleanup_subscriptions()
+            changes_made, total_removed = file_manager.cleanup_subscriptions()
             if changes_made:
-                logger.info("Removed already-downloaded classes from subscriptions")
-                # Estimate removed count (this is approximate)
-                metrics.subscription_changes.subscriptions_removed_already_downloaded = removed_count_before
+                logger.info(f"Removed {total_removed} subscriptions from subscriptions file")
+                # Split the removals between already-downloaded and stale
+                # We'll estimate based on what we know about stale IDs
+                if stale_ids:
+                    metrics.subscription_changes.subscriptions_removed_stale = len(stale_ids)
+                    metrics.subscription_changes.subscriptions_removed_already_downloaded = total_removed - len(stale_ids)
+                else:
+                    metrics.subscription_changes.subscriptions_removed_already_downloaded = total_removed
             else:
                 logger.info("No cleanup needed in subscriptions file")
             
@@ -250,10 +259,11 @@ class Application:
             subscriptions_data_after_cleanup = file_manager.get_subscriptions_episode_data()
             
             subscription_count_after = sum(
-                sum(activity_data.max_episode.values()) 
+                sum(activity_data.episode_count.values()) 
                 for activity_data in subscriptions_data_after_cleanup.values()
             )
             metrics.existing_episodes.total_subscriptions_after_cleanup = subscription_count_after
+            metrics.subscription_changes.subscriptions_after_cleanup = subscription_count_after
             
             # Log subscriptions-only summary (after cleanup) using actual class counts
             for activity, activity_data in subscriptions_data_after_cleanup.items():
@@ -276,12 +286,6 @@ class Application:
             metrics.subscription_history.total_tracked_subscriptions = len(tracked_ids)
             metrics.subscription_history.purge_limit_days = config.subscription_timeout_days
             metrics.subscription_history.warning_threshold_days = config.subscription_warning_threshold_days
-            
-            # Get stale and near-timeout subscriptions
-            stale_ids = file_manager.subscription_history_manager.get_stale_subscription_ids()
-            metrics.subscription_history.stale_subscriptions_found = len(stale_ids)
-            if stale_ids:
-                metrics.subscription_changes.subscriptions_removed_stale = len(stale_ids)
             
             near_timeout_ids = file_manager.subscription_history_manager.get_subscriptions_near_timeout(
                 config.subscription_warning_threshold_days
