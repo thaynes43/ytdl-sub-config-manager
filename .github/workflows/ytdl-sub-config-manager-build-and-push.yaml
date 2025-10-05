@@ -63,7 +63,10 @@ jobs:
         id: tags
         run: |
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "stable_tags=ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:latest ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:${{ env.VERSION }}" >> $GITHUB_OUTPUT
+            echo "stable_tags<<EOF" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:latest" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:${{ env.VERSION }}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
             # Extract branch name from ref (remove refs/heads/ prefix)
             BRANCH_NAME=${GITHUB_REF#refs/heads/}
