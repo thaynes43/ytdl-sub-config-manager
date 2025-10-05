@@ -265,6 +265,11 @@ class Application:
             metrics.existing_episodes.total_subscriptions_after_cleanup = subscription_count_after
             metrics.subscription_changes.subscriptions_after_cleanup = subscription_count_after
             
+            # Store subscription counts by activity after cleanup
+            for activity, activity_data in subscriptions_data_after_cleanup.items():
+                activity_count = sum(activity_data.episode_count.values())
+                metrics.subscription_changes.subscriptions_after_cleanup_by_activity[activity.name.lower()] = activity_count
+            
             # Log subscriptions-only summary (after cleanup) using actual class counts
             for activity, activity_data in subscriptions_data_after_cleanup.items():
                 # Get actual class count for this activity from subscriptions

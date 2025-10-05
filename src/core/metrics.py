@@ -327,6 +327,7 @@ class SubscriptionChangesMetrics:
     subscription_conflicts_resolved: int = 0
     subscriptions_before_cleanup: int = 0  # Count before any removals
     subscriptions_after_cleanup: int = 0   # Count after removals
+    subscriptions_after_cleanup_by_activity: Dict[str, int] = field(default_factory=dict)  # activity -> count after cleanup
     
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
@@ -540,20 +541,52 @@ class RunMetrics:
         
         lines.append("")
         
-        # Activity breakdown with existing + added + total
+        # Subscription File Activity Breakdown with existing + added + total
         if self.web_scraping.total_classes_added > 0:
             lines.extend([
-                "### Activity Breakdown",
+                "### Subscription File Activity Breakdown",
                 ""
             ])
             
-            # Activity breakdown with added classes
-            for activity_name, stats in sorted(self.web_scraping.activities.items()):
+            # Activity breakdown with existing + added + total + limit status
+            # Show all activities that have subscriptions (either existing or newly added)
+            all_activities_with_subscriptions = set()
+            
+            # Add activities that have existing subscriptions
+            all_activities_with_subscriptions.update(self.subscription_changes.subscriptions_after_cleanup_by_activity.keys())
+            
+            # Add activities that had new classes added
+            for activity_name, stats in self.web_scraping.activities.items():
                 if stats.classes_added > 0:
-                    lines.append(
-                        f"- **{activity_name}:** {stats.classes_added} added "
-                        f"({stats.classes_found} scraped, {stats.classes_skipped} skipped by scraper)"
-                    )
+                    all_activities_with_subscriptions.add(activity_name.lower())
+            
+            # Generate breakdown for all activities with subscriptions
+            for activity_name in sorted(all_activities_with_subscriptions):
+                # Get existing count from subscriptions that remained after cleanup
+                existing_count = self.subscription_changes.subscriptions_after_cleanup_by_activity.get(activity_name, 0)
+                
+                # Get added count from scraping stats
+                added_count = 0
+                classes_found = 0
+                classes_skipped = 0
+                if activity_name in self.web_scraping.activities:
+                    stats = self.web_scraping.activities[activity_name]
+                    added_count = stats.classes_added
+                    classes_found = stats.classes_found
+                    classes_skipped = stats.classes_skipped
+                
+                # Total count is existing + added
+                new_total = existing_count + added_count
+                
+                # Check if at limit
+                limit_status = "✅" if new_total == self.web_scraping.class_limit_per_activity else "⚠️"
+                
+                # Only show scraping details if there was scraping activity
+                scraping_details = f" ({classes_found} scraped, {classes_skipped} skipped by scraper)" if classes_found > 0 else ""
+                
+                lines.append(
+                    f"- **{activity_name}:** {existing_count} existing, {added_count} added, {new_total} total {limit_status}{scraping_details}"
+                )
             
             lines.append("")
             

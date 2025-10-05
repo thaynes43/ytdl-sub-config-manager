@@ -112,7 +112,7 @@ class TestApplication:
         mock_file_manager.get_subscriptions_episode_data.return_value = {Activity.CYCLING: activity_data}
         
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2', 'id3'}
-        mock_file_manager.cleanup_subscriptions.return_value = True
+        mock_file_manager.cleanup_subscriptions.return_value = (True, 3)
         mock_file_manager.add_new_subscriptions.return_value = None
         mock_file_manager.track_new_subscriptions.return_value = True
         mock_file_manager.validate_and_resolve_subscription_conflicts.return_value = None
@@ -202,7 +202,7 @@ class TestApplication:
         mock_file_manager.get_merged_episode_data.return_value = {}
         mock_file_manager.get_subscriptions_episode_data.return_value = {}
         mock_file_manager.find_all_existing_class_ids.return_value = set()
-        mock_file_manager.cleanup_subscriptions.return_value = False
+        mock_file_manager.cleanup_subscriptions.return_value = (False, 0)
         
         mock_file_manager_class.return_value = mock_file_manager
 
@@ -259,7 +259,7 @@ class TestApplication:
         mock_file_manager = MagicMock()
         mock_file_manager.get_merged_episode_data.return_value = {}
         mock_file_manager.find_all_existing_class_ids.return_value = set()
-        mock_file_manager.cleanup_subscriptions.return_value = False  # No cleanup needed
+        mock_file_manager.cleanup_subscriptions.return_value = (False, 0)  # No cleanup needed
         
         mock_file_manager_class.return_value = mock_file_manager
         
@@ -325,7 +325,7 @@ class TestApplication:
         mock_file_manager.get_merged_episode_data.return_value = merged_data
         mock_file_manager.get_subscriptions_episode_data.return_value = merged_data
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2'}
-        mock_file_manager.cleanup_subscriptions.return_value = True
+        mock_file_manager.cleanup_subscriptions.return_value = (True, 3)
         mock_file_manager.add_new_subscriptions.return_value = None
         mock_file_manager.track_new_subscriptions.return_value = True
         mock_file_manager.validate_and_resolve_subscription_conflicts.return_value = None
@@ -468,7 +468,7 @@ class TestApplication:
         mock_file_manager.get_merged_episode_data.return_value = {}
         mock_file_manager.get_subscriptions_episode_data.return_value = {}
         mock_file_manager.find_all_existing_class_ids.return_value = set()
-        mock_file_manager.cleanup_subscriptions.return_value = False
+        mock_file_manager.cleanup_subscriptions.return_value = (False, 0)
         
         mock_file_manager_class.return_value = mock_file_manager
         
@@ -524,7 +524,7 @@ class TestApplication:
         mock_file_manager = MagicMock()
         mock_file_manager.get_merged_episode_data.return_value = {}  # Empty
         mock_file_manager.find_all_existing_class_ids.return_value = set()  # Empty
-        mock_file_manager.cleanup_subscriptions.return_value = False
+        mock_file_manager.cleanup_subscriptions.return_value = (False, 0)
         
         mock_file_manager_class.return_value = mock_file_manager
         

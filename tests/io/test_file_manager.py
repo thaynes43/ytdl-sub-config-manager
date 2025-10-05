@@ -188,7 +188,7 @@ class TestFileManager:
         """Test cleanup_subscriptions method."""
         with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
             mock_manager = MagicMock()
-            mock_manager.cleanup_subscriptions.return_value = True
+            mock_manager.cleanup_subscriptions.return_value = (True, 3)
             mock_manager_class.return_value = mock_manager
             
             file_manager = FileManager(
@@ -199,7 +199,7 @@ class TestFileManager:
             )
             
             result = file_manager.cleanup_subscriptions()
-            assert result is True
+            assert result == (True, 3)
             mock_manager.cleanup_subscriptions.assert_called_once()
 
     @patch('builtins.open')
@@ -932,7 +932,7 @@ class TestSubscriptionCleanup:
         
         # Run cleanup
         changes_made = file_manager.cleanup_subscriptions()
-        assert changes_made is True
+        assert changes_made == (True, 1)
         
         # Verify episode was removed from subscriptions
         with open(subs_file, 'r', encoding='utf-8') as f:
@@ -982,7 +982,7 @@ class TestSubscriptionCleanup:
         
         # Run cleanup
         changes_made = file_manager.cleanup_subscriptions()
-        assert changes_made is False
+        assert changes_made == (False, 0)
         
         # Verify no changes were made
         with open(subs_file, 'r', encoding='utf-8') as f:
@@ -1178,7 +1178,7 @@ class TestConflictResolution:
                     mock_validator_class.return_value = mock_validator
                     
                     mock_manager = MagicMock()
-                    mock_manager.cleanup_subscriptions.return_value = True
+                    mock_manager.cleanup_subscriptions.return_value = (True, 3)
                     mock_manager.episode_parsers = []
                     mock_manager_class.return_value = mock_manager
                     
@@ -1199,7 +1199,7 @@ class TestConflictResolution:
                     
                     result = file_manager.cleanup_subscriptions()
                     
-                    assert result is True
+                    assert result == (True, 3)
                     mock_manager.cleanup_subscriptions.assert_called_once()
                     mock_history.get_stale_subscription_ids.assert_called_once()
                     mock_history.remove_subscription_ids.assert_called_once_with({'stale_id1', 'stale_id2'})
@@ -1214,7 +1214,7 @@ class TestConflictResolution:
                     mock_validator_class.return_value = mock_validator
                     
                     mock_manager = MagicMock()
-                    mock_manager.cleanup_subscriptions.return_value = False
+                    mock_manager.cleanup_subscriptions.return_value = (False, 0)
                     mock_manager.episode_parsers = []
                     mock_manager_class.return_value = mock_manager
                     
@@ -1233,7 +1233,7 @@ class TestConflictResolution:
                     
                     result = file_manager.cleanup_subscriptions()
                     
-                    assert result is False
+                    assert result == (False, 0)
                     mock_manager.cleanup_subscriptions.assert_called_once()
                     mock_history.get_stale_subscription_ids.assert_called_once()
                     mock_history.remove_subscription_ids.assert_not_called()

@@ -581,14 +581,15 @@ class TestRunMetrics:
         assert "Class limit per activity:** 25" in pr_summary
         assert "Page scrolls:** 10" in pr_summary
         assert "Activities:** 2 scraped" in pr_summary
-        assert "15 new classes added" in pr_summary
-        assert "strength: 8 added (15 found, 7 skipped)" in pr_summary
-        assert "yoga: 7 added (10 found, 3 skipped)" in pr_summary
+        assert "### Subscription File Summary" in pr_summary
+        assert "Removed 5 because they were found on disk, 3 because they expired" in pr_summary
+        assert "### Subscription File Activity Breakdown" in pr_summary
+        assert "**strength:**" in pr_summary and "existing," in pr_summary and "added," in pr_summary and "total" in pr_summary
+        assert "**yoga:**" in pr_summary and "existing," in pr_summary and "added," in pr_summary and "total" in pr_summary
+        assert "After scraper updates, we are now tracking" in pr_summary
         assert "Episodes on disk:** 100" in pr_summary
         assert "Subscriptions in YAML:** 35" in pr_summary  # 20 + 15
         assert "Activities with episodes on disk:** 12" in pr_summary
-        assert "Removed 5 already-downloaded subscriptions" in pr_summary
-        assert "Removed 3 stale subscriptions" in pr_summary
         assert "### Directory Validation" in pr_summary
     
     def test_get_pr_summary_no_new_classes(self):
@@ -672,7 +673,8 @@ class TestIntegration:
         
         # Verify PR summary
         pr_summary = metrics.get_pr_summary()
-        assert "15 new classes added" in pr_summary
+        assert "### Subscription File Summary" in pr_summary
+        assert "Removed 5 because they were found on disk" in pr_summary
         
         # Verify snapshot
         snapshot = metrics.create_snapshot()
