@@ -18,7 +18,7 @@ class FileManager:
     
     def __init__(self, media_dir: str, subs_file: str, validate_and_repair: bool = True, 
                  validation_strategies: Optional[List[str]] = None, repair_strategies: Optional[List[str]] = None, 
-                 episode_parsers: Optional[List[str]] = None, subscription_timeout_days: int = 15):
+                 episode_parsers: Optional[List[str]] = None, subscription_timeout_days: int = 15, metrics=None):
         """Initialize the file manager.
         
         Args:
@@ -29,6 +29,7 @@ class FileManager:
             repair_strategies: List of repair strategy module paths (required if validate_and_repair=True)
             episode_parsers: List of episode parser module paths (required)
             subscription_timeout_days: Number of days after which subscriptions are considered stale
+            metrics: Optional metrics object to track statistics
         """
         self.media_dir = media_dir
         self.subs_file = subs_file
@@ -71,7 +72,8 @@ class FileManager:
         # Validate and repair directory structure if requested
         if validate_and_repair and self.directory_validator:
             self.logger.info("Validating and repairing directory structure")
-            if not self.directory_validator.validate_and_repair():
+            repair_metrics = metrics.directory_repair if metrics else None
+            if not self.directory_validator.validate_and_repair(repair_metrics):
                 self.logger.error("Directory validation and repair failed!")
                 raise RuntimeError("Directory structure validation failed")
     
@@ -82,6 +84,14 @@ class FileManager:
             Dictionary mapping Activity to ActivityData with merged episode information
         """
         return self.episode_manager.get_merged_episode_data()
+    
+    def get_disk_episode_data(self) -> Dict[Activity, ActivityData]:
+        """Get episode data from disk only (not subscriptions).
+        
+        Returns:
+            Dictionary mapping Activity to ActivityData with disk-only episode information
+        """
+        return self.episode_manager.get_disk_episode_data()
     
     def get_subscriptions_episode_data(self) -> Dict[Activity, ActivityData]:
         """Get episode data from subscriptions only (not disk).
@@ -119,17 +129,20 @@ class FileManager:
         """
         return self.episode_manager.find_all_existing_class_ids()
     
-    def cleanup_subscriptions(self) -> bool:
+    def cleanup_subscriptions(self) -> tuple[bool, int]:
         """Remove already-downloaded classes and stale subscriptions from subscriptions.
         
         Returns:
-            True if changes were made, False if no cleanup was needed
+            Tuple of (True if changes were made, count of episodes removed)
         """
         changes_made = False
+        total_removed = 0
         
         # First, clean up already-downloaded classes
-        if self.episode_manager.cleanup_subscriptions():
+        episode_changes, episode_removed = self.episode_manager.cleanup_subscriptions()
+        if episode_changes:
             changes_made = True
+            total_removed += episode_removed
         
         # Then, clean up stale subscriptions
         stale_ids = self.subscription_history_manager.get_stale_subscription_ids()
@@ -137,20 +150,25 @@ class FileManager:
             self.logger.info(f"Removing {len(stale_ids)} stale subscriptions (older than {self.subscription_history_manager.timeout_days} days)")
             
             # Remove stale subscriptions from the subscriptions file
+            stale_removed = 0
             for parser in self.episode_manager.episode_parsers:
                 if 'subscription' in parser.__class__.__name__.lower():
                     try:
                         if hasattr(parser, 'remove_existing_classes'):
-                            if parser.remove_existing_classes(stale_ids):
+                            parser_changed, parser_removed = parser.remove_existing_classes(stale_ids)
+                            if parser_changed:
                                 changes_made = True
+                                stale_removed += parser_removed
                     except Exception as e:
                         self.logger.error(f"Failed to remove stale subscriptions: {e}")
             
             # Remove stale IDs from history file
             if self.subscription_history_manager.remove_subscription_ids(stale_ids):
                 self.logger.info("Removed stale subscription IDs from history file")
+            
+            total_removed += stale_removed
         
-        return changes_made
+        return changes_made, total_removed
     
     def track_new_subscriptions(self, subscription_urls: List[str]) -> bool:
         """Track new subscription URLs in the history file.

@@ -81,6 +81,32 @@ class GenericEpisodeManager:
         
         return merged_data
     
+    def get_disk_episode_data(self) -> Dict[Activity, ActivityData]:
+        """Get episode data from disk only (not subscriptions).
+        
+        Returns:
+            Dictionary mapping Activity to ActivityData with disk-only episode information
+        """
+        self.logger.info("Gathering episode data from disk only")
+        
+        disk_data = {}
+        
+        for parser in self.episode_parsers:
+            try:
+                # Only get data from disk parser
+                if 'disk' in parser.__class__.__name__.lower() and hasattr(parser, 'parse_episodes'):
+                    data = parser.parse_episodes()
+                    disk_data.update(data)
+                    self.logger.info(f"{parser.__class__.__name__}: {len(data)} activities")
+                else:
+                    self.logger.debug(f"Skipping parser {parser.__class__.__name__} (not disk parser)")
+            except Exception as e:
+                self.logger.error(f"Error getting disk episode data from {parser.__class__.__name__}: {e}")
+        
+        self.logger.info(f"Disk only: {len(disk_data)} activities")
+        
+        return disk_data
+    
     def get_subscriptions_episode_data(self) -> Dict[Activity, ActivityData]:
         """Get episode data from subscriptions only (not disk).
         
@@ -150,11 +176,11 @@ class GenericEpisodeManager:
         
         return all_class_ids
     
-    def cleanup_subscriptions(self) -> bool:
+    def cleanup_subscriptions(self) -> tuple[bool, int]:
         """Clean up subscriptions by removing already-downloaded classes.
         
         Returns:
-            True if changes were made, False if no cleanup was needed
+            Tuple of (True if changes were made, count of episodes removed)
         """
         self.logger.info("Cleaning up subscriptions file")
         
@@ -170,13 +196,16 @@ class GenericEpisodeManager:
         
         # Remove from subscriptions
         changes_made = False
+        total_removed = 0
         for parser in self.episode_parsers:
             if 'subscription' in parser.__class__.__name__.lower():
                 try:
                     if hasattr(parser, 'remove_existing_classes'):
-                        if parser.remove_existing_classes(filesystem_ids):
+                        parser_changed, parser_removed = parser.remove_existing_classes(filesystem_ids)
+                        if parser_changed:
                             changes_made = True
+                            total_removed += parser_removed
                 except Exception as e:
                     self.logger.error(f"Failed to clean up subscriptions: {e}")
         
-        return changes_made
+        return changes_made, total_removed

@@ -14,7 +14,7 @@ permissions:
   packages: write
 
 env:
-  VERSION: "0.3.3"
+  VERSION: "0.4.1"
 
 jobs:
   test:
@@ -59,6 +59,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set image tags
+        id: tags
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "stable_tags=ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:latest ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:${{ env.VERSION }}" >> $GITHUB_OUTPUT
+          else
+            # Extract branch name from ref (remove refs/heads/ prefix)
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            # Sanitize branch name for Docker tag (replace / with -)
+            SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | sed 's/\//-/g')
+            echo "stable_tags=" >> $GITHUB_OUTPUT
+            echo "dev_tag=ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
+          fi
+          echo "commit_tag=ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:${{ github.sha }}" >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -68,6 +83,6 @@ jobs:
           build-args: |
             VERSION=${{ env.VERSION }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:latest
-            ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:${{ env.VERSION }}
-            ghcr.io/${{ github.repository_owner }}/ytdl-sub-config-manager:${{ github.sha }}
+            ${{ steps.tags.outputs.stable_tags }}
+            ${{ steps.tags.outputs.dev_tag }}
+            ${{ steps.tags.outputs.commit_tag }}

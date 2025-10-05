@@ -61,7 +61,7 @@ class TestApplicationSubscriptionsCount:
         ]
 
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2', 'id3'}
-        mock_file_manager.cleanup_subscriptions.return_value = True
+        mock_file_manager.cleanup_subscriptions.return_value = (True, 3)
         mock_file_manager.add_new_subscriptions.return_value = None
 
         # Setup mock scraper manager
@@ -142,7 +142,7 @@ class TestApplicationSubscriptionsCount:
         ]
 
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2', 'id3'}
-        mock_file_manager.cleanup_subscriptions.return_value = True
+        mock_file_manager.cleanup_subscriptions.return_value = (True, 3)
         mock_file_manager.add_new_subscriptions.return_value = None
 
         # Setup mock scraper manager
@@ -219,7 +219,7 @@ class TestApplicationSubscriptionsCount:
         mock_file_manager.get_subscriptions_episode_data.return_value = subscriptions_data_after
 
         mock_file_manager.find_all_existing_class_ids.return_value = {'id1', 'id2', 'id3'}
-        mock_file_manager.cleanup_subscriptions.return_value = True
+        mock_file_manager.cleanup_subscriptions.return_value = (True, 3)
         mock_file_manager.add_new_subscriptions.return_value = None
 
         # Setup mock scraper manager
@@ -303,7 +303,7 @@ class TestApplicationSubscriptionsCount:
         mock_file_manager.episode_manager.episode_parsers = [mock_subscription_parser]
 
         mock_file_manager.find_all_existing_class_ids.return_value = set()
-        mock_file_manager.cleanup_subscriptions.return_value = True
+        mock_file_manager.cleanup_subscriptions.return_value = (True, 3)
         mock_file_manager.add_new_subscriptions.return_value = None
 
         # Setup mock scraper manager

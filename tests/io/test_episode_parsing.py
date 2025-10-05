@@ -368,7 +368,7 @@ class TestEpisodesFromSubscriptions:
         existing_class_ids = {"abc123"}
         result = parser.remove_existing_classes(existing_class_ids)
         
-        assert result is True
+        assert result == (True, 1)
         
         # Verify the file was modified
         with open(subs_file, 'r', encoding='utf-8') as f:
@@ -416,7 +416,7 @@ class TestEpisodesFromSubscriptions:
         existing_class_ids = {"abc123"}
         result = parser.remove_existing_classes(existing_class_ids)
         
-        assert result is True
+        assert result == (True, 1)
         
         # Verify the file was modified
         with open(subs_file, 'r', encoding='utf-8') as f:
@@ -456,7 +456,7 @@ class TestEpisodesFromSubscriptions:
         existing_class_ids = {"nonexistent123"}
         result = parser.remove_existing_classes(existing_class_ids)
         
-        assert result is False  # No changes made
+        assert result == (False, 0)  # No changes made
         
         # Verify the file was not modified
         with open(subs_file, 'r', encoding='utf-8') as f:
@@ -491,7 +491,7 @@ class TestEpisodesFromSubscriptions:
         existing_class_ids = set()
         result = parser.remove_existing_classes(existing_class_ids)
         
-        assert result is False  # No changes made
+        assert result == (False, 0)  # No changes made
         
         # Verify the file was not modified
         with open(subs_file, 'r', encoding='utf-8') as f:
@@ -507,7 +507,7 @@ class TestEpisodesFromSubscriptions:
         existing_class_ids = {"abc123"}
         result = parser.remove_existing_classes(existing_class_ids)
         
-        assert result is False
+        assert result == (False, 0)
     
     def test_remove_existing_classes_invalid_yaml(self, tmp_path):
         """Test removing from invalid YAML file."""
@@ -522,7 +522,7 @@ class TestEpisodesFromSubscriptions:
         existing_class_ids = {"abc123"}
         result = parser.remove_existing_classes(existing_class_ids)
         
-        assert result is False
+        assert result == (False, 0)
     
     def test_remove_existing_classes_empty_file(self, tmp_path):
         """Test removing from empty subscriptions file."""
@@ -534,7 +534,7 @@ class TestEpisodesFromSubscriptions:
         existing_class_ids = {"abc123"}
         result = parser.remove_existing_classes(existing_class_ids)
         
-        assert result is False
+        assert result == (False, 0)
     
     # test_extract_activity_from_directory removed - internal implementation moved to strategy
 

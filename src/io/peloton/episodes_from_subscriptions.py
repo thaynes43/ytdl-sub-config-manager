@@ -79,7 +79,7 @@ class EpisodesFromSubscriptions(EpisodeParser):
         if results:
             activity_summary = []
             for activity, data in results.items():
-                episode_count = sum(data.max_episode.values())
+                episode_count = sum(data.episode_count.values())
                 activity_summary.append(f"{activity.name.lower()} ({episode_count})")
             
             self.logger.info(f"Parsed {total_episodes} total episodes for activities: {', '.join(activity_summary)}")
@@ -88,8 +88,9 @@ class EpisodesFromSubscriptions(EpisodeParser):
             for activity, data in results.items():
                 seasons_info = []
                 for season in sorted(data.max_episode.keys()):
-                    max_ep = data.max_episode[season]
-                    seasons_info.append(f"Season {season}: {max_ep} episodes (max E{max_ep})")
+                    actual_count = data.episode_count.get(season, 0)
+                    max_ep = data.max_episode.get(season, 0)
+                    seasons_info.append(f"Season {season}: {actual_count} episodes (max E{max_ep})")
                 
                 self.logger.info(f"{activity.name} episodes: {'; '.join(seasons_info)}")
         else:
@@ -263,22 +264,22 @@ class EpisodesFromSubscriptions(EpisodeParser):
         self.logger.debug(f"Found {len(class_ids)} subscription class IDs for {activity.name}")
         return class_ids
     
-    def remove_existing_classes(self, existing_class_ids: Set[str]) -> bool:
+    def remove_existing_classes(self, existing_class_ids: Set[str]) -> tuple[bool, int]:
         """Remove existing class IDs from the subscriptions file.
         
         Args:
             existing_class_ids: Set of class IDs to remove
             
         Returns:
-            True if changes were made, False otherwise
+            Tuple of (True if changes were made, count of episodes removed)
         """
         if not self.subs_file.exists():
             self.logger.warning(f"Subscriptions file does not exist: {self.subs_file}")
-            return False
+            return False, 0
         
         if not existing_class_ids:
             self.logger.info("No existing class IDs to remove")
-            return False
+            return False, 0
         
         self.logger.info(f"Removing {len(existing_class_ids)} existing classes from subscriptions")
         
@@ -289,7 +290,7 @@ class EpisodesFromSubscriptions(EpisodeParser):
             
             if not subs_data:
                 self.logger.warning("Subscriptions file is empty or invalid")
-                return False
+                return False, 0
             
             changes_made = False
             removed_episodes = []
@@ -298,7 +299,7 @@ class EpisodesFromSubscriptions(EpisodeParser):
             tv_shows = subs_data.get("Plex TV Show by Date", {})
             if not tv_shows:
                 self.logger.warning("No 'Plex TV Show by Date' section found in subscriptions")
-                return False
+                return False, 0
             
             # Process each duration group (e.g., "= Cycling (20 min)")
             # Create a list of duration keys to avoid modifying dict during iteration
@@ -348,11 +349,11 @@ class EpisodesFromSubscriptions(EpisodeParser):
                 for episode in removed_episodes:
                     self.logger.info(f"  - {episode}")
                 
-                return True
+                return True, len(removed_episodes)
             else:
                 self.logger.info("No matching episodes found to remove")
-                return False
+                return False, 0
                 
         except Exception as e:
             self.logger.error(f"Error updating subscriptions file: {e}")
-            return False
+            return False, 0

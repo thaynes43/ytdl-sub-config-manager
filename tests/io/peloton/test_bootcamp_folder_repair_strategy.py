@@ -311,4 +311,7 @@ class TestBootcampFolderRepairStrategy:
                 
                 assert len(actions) == 1
                 action = actions[0]
-                assert str(action.target_path) == test_case["expected"], f"Failed for input: {test_case['input']}"
+                # Normalize paths for cross-platform comparison
+                actual_path = str(action.target_path).replace('\\', '/')
+                expected_path = test_case["expected"]
+                assert actual_path == expected_path, f"Failed for input: {test_case['input']}"
