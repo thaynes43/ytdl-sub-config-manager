@@ -685,15 +685,6 @@ class RunMetrics:
             ""
         ])
         
-        # Detailed episode breakdown (always show)
-        lines.extend([
-            "### Episode Breakdown by Activity and Season",
-            "",
-            f"```",
-            self.existing_episodes.get_detailed_breakdown(),
-            f"```",
-            ""
-        ])
         
         lines.extend([
             "---",
