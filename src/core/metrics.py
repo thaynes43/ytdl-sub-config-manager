@@ -410,6 +410,9 @@ class RunMetrics:
     subscription_changes: SubscriptionChangesMetrics = field(default_factory=SubscriptionChangesMetrics)
     subscription_history: SubscriptionHistoryMetrics = field(default_factory=SubscriptionHistoryMetrics)
     
+    # Configuration values
+    subscription_timeout_days: int = 15
+    
     # Overall status
     success: bool = True
     error_message: Optional[str] = None
@@ -428,6 +431,7 @@ class RunMetrics:
             'end_time': self.end_time,
             'success': self.success,
             'error_message': self.error_message,
+            'subscription_timeout_days': self.subscription_timeout_days,
             'directory_repair': self.directory_repair.to_dict(),
             'existing_episodes': self.existing_episodes.to_dict(),
             'web_scraping': self.web_scraping.to_dict(),
@@ -499,7 +503,7 @@ class RunMetrics:
         
         return "\n".join(lines)
     
-    def get_pr_summary(self) -> str:
+    def get_pr_summary(self, subscription_history_manager=None) -> str:
         """Generate a formatted summary for GitHub PR description."""
         lines = [
             "## Subscription Update Summary",
@@ -512,6 +516,7 @@ class RunMetrics:
             f"- **Class limit per activity:** {self.web_scraping.class_limit_per_activity}",
             f"- **Page scrolls:** {self.web_scraping.page_scrolls_config}",
             f"- **Activities:** {len(self.web_scraping.activities)} scraped",
+            f"- **Subscription timeout days:** {self.subscription_timeout_days}",
             "",
             "### Changes Made",
             ""
@@ -685,15 +690,25 @@ class RunMetrics:
             ""
         ])
         
-        # Detailed episode breakdown (always show)
-        lines.extend([
-            "### Episode Breakdown by Activity and Season",
-            "",
-            f"```",
-            self.existing_episodes.get_detailed_breakdown(),
-            f"```",
-            ""
-        ])
+        # History Summary (if subscription history manager is available)
+        if subscription_history_manager:
+            try:
+                date_stats = subscription_history_manager.get_date_based_statistics()
+                if date_stats:
+                    lines.extend([
+                        "### History Summary",
+                        "",
+                        "| Date | Days Active | Count |",
+                        "|------|-------------|-------|"
+                    ])
+                    
+                    for stat in date_stats:
+                        lines.append(f"| {stat['date']} | {stat['days_active']} | {stat['count']} |")
+                    
+                    lines.append("")
+            except Exception as e:
+                # If there's an error getting history stats, just skip the section
+                pass
         
         lines.extend([
             "---",

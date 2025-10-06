@@ -329,6 +329,8 @@ class ConfigLoader:
                 normalized['run_in_container'] = app_config['run-in-container']
             if 'media-source' in app_config:
                 normalized['media_source'] = app_config['media-source']
+            if 'subscription-timeout-days' in app_config:
+                normalized['subscription_timeout_days'] = app_config['subscription-timeout-days']
         
         # Handle logging section
         if 'logging' in data:
