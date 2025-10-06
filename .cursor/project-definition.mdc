@@ -61,6 +61,7 @@ rules: |
     - **IMPLEMENTED**: `config/config.py` handles multi-source config (env vars, CLI args, YAML files) with precedence.
     - **IMPLEMENTED**: `config/cli_config.py` manages CLI argument parsing separately from configuration loading.
     - **IMPLEMENTED**: Nested YAML configuration structure with sections: `application`, `logging`, `github`, `peloton` (with backwards compatibility for flat structure).
+    - **IMPLEMENTED**: Dynamic scrolling configuration options: `peloton.dynamic-scrolling` (boolean toggle) and `peloton.max-scrolls` (failsafe limit).
     - **IMPLEMENTED**: `io/file_manager.py` provides unified interface for filesystem and subscription parsing.
     - **IMPLEMENTED**: `io/directory_validator.py` pre-processes directories to fix corrupted structures and episode conflicts.
     - **IMPLEMENTED**: Episode numbering system with filesystem and subscription parsers in `io/` module.
@@ -93,6 +94,7 @@ rules: |
     - **IMPLEMENTED**: `webscraper/peloton/` contains Peloton-specific implementations (login, scraping).
     - **IMPLEMENTED**: Container-friendly Selenium configuration with headless mode and chromium drivers.
     - **IMPLEMENTED**: Modular design allows easy addition of new sources through strategy pattern.
+    - **IMPLEMENTED**: Dynamic scrolling system that scrolls until class limits are met or max scrolls reached, with configurable toggle and failsafe limits.
 
   - Git Integration Services (GENERIC DESIGN)
     - **IMPLEMENTED**: `git_integration/` package with GitHub repository management.

@@ -255,8 +255,13 @@ class EpisodesFromSubscriptions(EpisodeParser):
                 for episode_title, episode_data in duration_episodes.items():
                     if isinstance(episode_data, dict):
                         download_url = episode_data.get('download', '')
-                        # Extract class ID from URL like "https://members.onepeloton.com/classes?classId=abc123"
-                        if 'classId=' in download_url:
+                        # Extract class ID from URL like "https://members.onepeloton.com/classes/player/abc123"
+                        if '/classes/player/' in download_url:
+                            class_id = download_url.split('/classes/player/')[-1].split('?')[0].split('#')[0]
+                            if class_id:
+                                class_ids.add(class_id)
+                        # Also handle legacy format with classId parameter
+                        elif 'classId=' in download_url:
                             class_id = download_url.split('classId=')[-1].split('&')[0]
                             if class_id:
                                 class_ids.add(class_id)

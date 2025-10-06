@@ -33,6 +33,8 @@ class Config:
     peloton_activities: List[Activity] = field(default_factory=list)
     run_in_container: bool = True
     peloton_page_scrolls: int = 10
+    peloton_dynamic_scrolling: bool = False  # Enable dynamic scrolling based on class limits
+    peloton_max_scrolls: int = 50  # Maximum scrolls when using dynamic scrolling
     media_source: str = "peloton"
     subscription_timeout_days: int = 15
     subscription_warning_threshold_days: int = 3  # Warn when subscriptions are within N days of timeout
@@ -77,6 +79,8 @@ class Config:
             raise ValueError("PELOTON_CLASS_LIMIT_PER_ACTIVITY must be positive")
         if self.peloton_page_scrolls <= 0:
             raise ValueError("PELOTON_PAGE_SCROLLS must be positive")
+        if self.peloton_max_scrolls <= 0:
+            raise ValueError("PELOTON_MAX_SCROLLS must be positive")
         if self.subscription_timeout_days <= 0:
             raise ValueError("SUBSCRIPTION_TIMEOUT_DAYS must be positive")
         if self.subscription_warning_threshold_days < 0:
@@ -112,6 +116,8 @@ class Config:
         logger.info(f"  PELOTON_ACTIVITIES: {[a.value for a in self.peloton_activities]}")
         logger.info(f"  RUN_IN_CONTAINER: {self.run_in_container}")
         logger.info(f"  PELOTON_PAGE_SCROLLS: {self.peloton_page_scrolls}")
+        logger.info(f"  PELOTON_DYNAMIC_SCROLLING: {self.peloton_dynamic_scrolling}")
+        logger.info(f"  PELOTON_MAX_SCROLLS: {self.peloton_max_scrolls}")
         logger.info(f"  LOG_LEVEL: {self.log_level}")
         logger.info(f"  LOG_FORMAT: {self.log_format}")
 
@@ -200,6 +206,8 @@ class ConfigLoader:
             'peloton_activities': 'cycling,yoga,strength,meditation,cardio,stretching,running,walking,bootcamp,bike_bootcamp,rowing,row_bootcamp',
             'run_in_container': True,
             'peloton_page_scrolls': 10,
+            'peloton_dynamic_scrolling': False,
+            'peloton_max_scrolls': 50,
             'log_level': 'INFO',
             'log_format': 'standard',
             'temp_repo_dir': '/tmp/ytdl-sub-repo',
@@ -260,6 +268,8 @@ class ConfigLoader:
             'PELOTON_ACTIVITY': 'peloton_activities',
             'RUN_IN_CONTAINER': 'run_in_container',
             'PELOTON_PAGE_SCROLLS': 'peloton_page_scrolls',
+            'PELOTON_DYNAMIC_SCROLLING': 'peloton_dynamic_scrolling',
+            'PELOTON_MAX_SCROLLS': 'peloton_max_scrolls',
             'SUBSCRIPTION_TIMEOUT_DAYS': 'subscription_timeout_days',
             'SUBSCRIPTION_WARNING_THRESHOLD_DAYS': 'subscription_warning_threshold_days',
             'LOG_LEVEL': 'log_level',
@@ -274,12 +284,12 @@ class ConfigLoader:
             value = os.getenv(env_var)
             if value is not None:
                 # Type conversion
-                if config_key in ['peloton_class_limit_per_activity', 'peloton_page_scrolls', 'subscription_timeout_days', 'subscription_warning_threshold_days']:
+                if config_key in ['peloton_class_limit_per_activity', 'peloton_page_scrolls', 'peloton_max_scrolls', 'subscription_timeout_days', 'subscription_warning_threshold_days']:
                     try:
                         config[config_key] = int(value)
                     except ValueError:
                         self.logger.warning(f"Invalid integer value for {env_var}: {value}")
-                elif config_key == 'run_in_container':
+                elif config_key in ['run_in_container', 'peloton_dynamic_scrolling']:
                     config[config_key] = value.strip().lower() in ('1', 'true', 'yes')
                 else:
                     config[config_key] = value
@@ -371,6 +381,10 @@ class ConfigLoader:
                 normalized['peloton_activities'] = peloton_config['activities']
             if 'page-scrolls' in peloton_config:
                 normalized['peloton_page_scrolls'] = peloton_config['page-scrolls']
+            if 'dynamic-scrolling' in peloton_config:
+                normalized['peloton_dynamic_scrolling'] = peloton_config['dynamic-scrolling']
+            if 'max-scrolls' in peloton_config:
+                normalized['peloton_max_scrolls'] = peloton_config['max-scrolls']
             
             # Handle strategy injection configurations
             if 'directory_validation_strategies' in peloton_config:

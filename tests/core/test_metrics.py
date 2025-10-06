@@ -588,7 +588,7 @@ class TestRunMetrics:
         assert "**yoga:**" in pr_summary and "existing," in pr_summary and "added," in pr_summary and "total" in pr_summary
         assert "After scraper updates, we are now tracking" in pr_summary
         assert "Episodes on disk:** 100" in pr_summary
-        assert "Subscriptions in YAML:** 35" in pr_summary  # 20 + 15
+        assert "Subscriptions in YAML:** 20" in pr_summary  # Just the final count, not double-counted
         assert "Activities with episodes on disk:** 12" in pr_summary
         assert "### Directory Validation" in pr_summary
     

@@ -143,6 +143,45 @@ peloton:
   subscription_timeout_days: 20
 ```
 
+## Dynamic Scrolling
+
+The application supports dynamic scrolling to optimize class discovery based on your subscription limits. Instead of using a fixed number of page scrolls, dynamic scrolling continues until either the class limit per activity is met or a maximum scroll limit is reached.
+
+### How It Works
+
+1. **Class Limit Tracking**: The system tracks how many classes you already have in your subscriptions file
+2. **Dynamic Scrolling**: When enabled, the scraper scrolls until it finds enough new classes to reach your `class-limit-per-activity` setting
+3. **Failsafe Limit**: A `max-scrolls` setting prevents infinite scrolling if not enough classes are found
+
+### Configuration
+
+**Enable Dynamic Scrolling:**
+```yaml
+peloton:
+  dynamic-scrolling: true
+  max-scrolls: 50  # Maximum scrolls when using dynamic scrolling
+  class-limit-per-activity: 25
+  page-scrolls: 10  # Used only when dynamic-scrolling is false
+```
+
+**Environment Variables:**
+```bash
+PELOTON_DYNAMIC_SCROLLING=true
+PELOTON_MAX_SCROLLS=50
+```
+
+**CLI Arguments:**
+```bash
+python -m src scrape --peloton-dynamic-scrolling --peloton-max-scrolls 50
+```
+
+### Benefits
+
+- **Efficient**: Stops scrolling as soon as enough classes are found
+- **Reliable**: Ensures you get your full quota of classes per activity
+- **Configurable**: Set your own maximum scroll limit as a failsafe
+- **Backward Compatible**: Falls back to fixed scrolling when disabled
+
 ### History File Format
 
 The `subscription-history.json` file stores subscription data in this format:
