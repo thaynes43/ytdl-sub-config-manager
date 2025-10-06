@@ -5,10 +5,12 @@
 application:
   media-dir: "D:/labspace/tmp/test-media"
   #subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.yaml"
-  #subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.test.yaml"
-  subs-file: "D:/labspace/tmp/peloton-scrape-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml" # GitHub Repo
+  subs-file: "D:/labspace/ytdl-sub-config-manager/subscriptions.test.yaml"
+  #subs-file: "D:/labspace/tmp/peloton-scrape-repo/kubernetes/main/apps/downloads/ytdl-sub/peloton/config/subscriptions.yaml" # GitHub Repo
   run-in-container: false  # Set to false for local debugging
   media-source: "peloton"  # Media source strategy to use
+  # Number of days after which subscriptions are considered stale
+  subscription-timeout-days: 30
 
 # Logging configuration
 logging:
@@ -30,7 +32,7 @@ github:
 peloton:
   username: ""
   password: ""
-  class-limit-per-activity: 2
+  class-limit-per-activity: 40
   activities: "walking,strength,cycling"  # comma-separated list
   page-scrolls: 2
   

@@ -11,6 +11,8 @@ application:
   run-in-container: true
   # Media source strategy to use (peloton, etc.)
   media-source: "peloton"
+  # Number of days after which subscriptions are considered stale
+  subscription-timeout-days: 30
 
 # Logging configuration
 logging:

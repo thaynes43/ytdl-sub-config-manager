@@ -91,6 +91,7 @@ class Application:
         
         # Create metrics collector
         metrics = RunMetrics()
+        metrics.subscription_timeout_days = config.subscription_timeout_days
         
         try:
             logger.info("Starting Peloton scraping workflow...")
@@ -462,6 +463,11 @@ class Application:
             logger.info(metrics.get_summary())
             logger.info("="*60)
             
+            # Log detailed PR-style summary
+            logger.info("\n" + "="*60)
+            logger.info(metrics.get_pr_summary(file_manager.subscription_history_manager))
+            logger.info("="*60)
+            
             # Save run snapshot
             snapshot = metrics.create_snapshot()
             if not file_manager.subscription_history_manager.save_run_snapshot(snapshot):
@@ -472,7 +478,7 @@ class Application:
                 logger.info("Finalizing GitHub integration...")
                 
                 # Generate PR body with metrics
-                pr_body = metrics.get_pr_summary()
+                pr_body = metrics.get_pr_summary(file_manager.subscription_history_manager)
                 
                 finalize_result = github_manager.finalize_subscription_updates(
                     pr_title=f"Auto-update subscriptions - {metrics.run_id}",

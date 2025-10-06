@@ -4,7 +4,7 @@ import json
 import csv
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Set, List, Optional
+from typing import Dict, Set, List, Optional, Any
 from dataclasses import dataclass
 
 from ..core.logging import get_logger
@@ -421,3 +421,43 @@ class SubscriptionHistoryManager:
         """
         snapshots = self.get_run_snapshots(limit=1)
         return snapshots[0] if snapshots else None
+    
+    def get_date_based_statistics(self) -> List[Dict[str, Any]]:
+        """Get subscription statistics grouped by date.
+        
+        Returns:
+            List of dictionaries with 'date', 'days_active', and 'count' keys,
+            sorted from oldest to newest date
+        """
+        try:
+            if not Path(self.history_file_path).exists():
+                return []
+            
+            with open(self.history_file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            subscriptions = data.get('subscriptions', [])
+            
+            # Group subscriptions by date
+            date_counts = {}
+            for sub in subscriptions:
+                date_str = sub['date_added'][:10]  # Extract just the date part (YYYY-MM-DD)
+                date_counts[date_str] = date_counts.get(date_str, 0) + 1
+            
+            # Convert to list and calculate days active
+            now = datetime.now()
+            result = []
+            for date_str in sorted(date_counts.keys()):
+                date_obj = datetime.fromisoformat(date_str)
+                days_active = (now - date_obj).days
+                result.append({
+                    'date': date_str,
+                    'days_active': days_active,
+                    'count': date_counts[date_str]
+                })
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Error getting date-based statistics: {e}")
+            return []
