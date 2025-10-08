@@ -36,14 +36,22 @@ class PelotonScraperStrategy(ScraperStrategy):
         """
         activity_url = self.get_activity_url(config.activity)
         self.logger.info(f"Navigating to {config.activity} classes: {activity_url}")
-        
+
+        # Initialize scrolls_performed to 0 in case of early error
+        scrolls_performed = 0
+
         try:
             # Navigate to activity page
             driver.get(activity_url)
             self._wait_for_page_load(driver, config.page_load_wait_time)
             
-            # Scroll to load more content
-            self._scroll_to_load_content(driver, config.page_scrolls, config.scroll_pause_time)
+            # Scroll to load more content - use dynamic scrolling if enabled
+            if config.dynamic_scrolling:
+                scrolls_performed = self._scroll_dynamically_until_limit(driver, config, config.scroll_pause_time)
+                self.logger.info(f"Dynamic scrolling completed: {scrolls_performed} scrolls performed")
+            else:
+                self._scroll_to_load_content(driver, config.page_scrolls, config.scroll_pause_time)
+                scrolls_performed = config.page_scrolls
             
             # Find all class links
             links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="classId="]')
@@ -125,7 +133,8 @@ class PelotonScraperStrategy(ScraperStrategy):
                 total_found=len(links),
                 total_skipped=skipped_count,
                 total_errors=error_count,
-                status=ScrapingStatus.COMPLETED
+                status=ScrapingStatus.COMPLETED,
+                scrolls_performed=scrolls_performed
             )
             
         except Exception as e:
@@ -137,6 +146,7 @@ class PelotonScraperStrategy(ScraperStrategy):
                 total_skipped=0,
                 total_errors=1,
                 status=ScrapingStatus.FAILED,
+                scrolls_performed=scrolls_performed,
                 error_message=str(e)
             )
     

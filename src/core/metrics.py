@@ -188,7 +188,7 @@ class ExistingEpisodesMetrics:
             elif disk_delta < 0:
                 parts.append(f"({disk_delta} since last run)")
             else:
-                parts.append("(no change)")
+                parts.append("(+0)")
         else:
             parts.append("(+0)")
         
@@ -202,7 +202,7 @@ class ExistingEpisodesMetrics:
             elif subs_delta < 0:
                 parts.append(f"({subs_delta} since last run)")
             else:
-                parts.append("(no change)")
+                parts.append("(+0)")
         else:
             parts.append("(+0)")
         
@@ -241,6 +241,7 @@ class ActivityScrapingStats:
     classes_skipped: int = 0
     classes_added: int = 0
     errors: int = 0
+    scrolls_performed: int = 0  # Number of scrolls performed for this activity
     status: str = "pending"  # pending, completed, failed
     error_message: Optional[str] = None
     
@@ -263,6 +264,8 @@ class WebScrapingMetrics:
     total_classes_added: int = 0
     total_errors: int = 0
     page_scrolls_config: int = 0  # Configuration value used
+    dynamic_scrolling_enabled: bool = False  # Whether dynamic scrolling was enabled
+    max_scrolls_config: int = 0  # Maximum scrolls configuration when using dynamic scrolling
     activities: Dict[str, ActivityScrapingStats] = field(default_factory=dict)
     activity_totals: Dict[str, int] = field(default_factory=dict)  # activity -> total episodes after scraping
     activity_totals_previous: Dict[str, int] = field(default_factory=dict)  # activity -> total from last run
@@ -279,6 +282,8 @@ class WebScrapingMetrics:
             'total_classes_added': self.total_classes_added,
             'total_errors': self.total_errors,
             'page_scrolls_config': self.page_scrolls_config,
+            'dynamic_scrolling_enabled': self.dynamic_scrolling_enabled,
+            'max_scrolls_config': self.max_scrolls_config,
             'class_limit_per_activity': self.class_limit_per_activity,
             'activities_over_limit': self.activities_over_limit,
             'activities': {k: v.to_dict() for k, v in self.activities.items()},
@@ -291,8 +296,12 @@ class WebScrapingMetrics:
         if self.total_activities_scraped == 0:
             return "No activities scraped"
         
+        scroll_info = f"page_scrolls={self.page_scrolls_config}"
+        if self.dynamic_scrolling_enabled:
+            scroll_info = f"dynamic_scrolling=true, max_scrolls={self.max_scrolls_config}"
+        
         parts = [
-            f"Scraped {self.total_activities_scraped} activities (page_scrolls={self.page_scrolls_config})",
+            f"Scraped {self.total_activities_scraped} activities ({scroll_info})",
             f"{self.total_classes_found} classes found"
         ]
         
@@ -514,13 +523,22 @@ class RunMetrics:
             "### Configuration",
             "",
             f"- **Class limit per activity:** {self.web_scraping.class_limit_per_activity}",
-            f"- **Page scrolls:** {self.web_scraping.page_scrolls_config}",
+            f"- **Dynamic scrolling:** {self.web_scraping.dynamic_scrolling_enabled}",
+        ]
+        
+        # Add scrolling configuration based on dynamic scrolling setting
+        if self.web_scraping.dynamic_scrolling_enabled:
+            lines.append(f"- **Max scrolls:** {self.web_scraping.max_scrolls_config}")
+        else:
+            lines.append(f"- **Page scrolls:** {self.web_scraping.page_scrolls_config}")
+        
+        lines.extend([
             f"- **Activities:** {len(self.web_scraping.activities)} scraped",
             f"- **Subscription timeout days:** {self.subscription_timeout_days}",
             "",
             "### Changes Made",
             ""
-        ]
+        ])
         
         # Subscription File Summary
         lines.extend([
@@ -567,7 +585,7 @@ class RunMetrics:
             
             # Generate breakdown for all activities with subscriptions
             for activity_name in sorted(all_activities_with_subscriptions):
-                # Get existing count from subscriptions that remained after cleanup
+                # Get existing count from cleanup data (before scraping)
                 existing_count = self.subscription_changes.subscriptions_after_cleanup_by_activity.get(activity_name, 0)
                 
                 # Get added count from scraping stats
@@ -580,17 +598,22 @@ class RunMetrics:
                     classes_found = stats.classes_found
                     classes_skipped = stats.classes_skipped
                 
-                # Total count is existing + added
-                new_total = existing_count + added_count
+                # Calculate final count as existing + added
+                final_count = existing_count + added_count
                 
                 # Check if at limit
-                limit_status = "✅" if new_total == self.web_scraping.class_limit_per_activity else "⚠️"
+                limit_status = "✅" if final_count == self.web_scraping.class_limit_per_activity else "⚠️"
                 
                 # Only show scraping details if there was scraping activity
-                scraping_details = f" ({classes_found} scraped, {classes_skipped} skipped by scraper)" if classes_found > 0 else ""
+                if classes_found > 0:
+                    activity_stats = self.web_scraping.activities.get(activity_name)
+                    scrolls_count = activity_stats.scrolls_performed if activity_stats else 0
+                    scraping_details = f" ({classes_found} scraped, {classes_skipped} skipped by scraper, {scrolls_count} scrolls)"
+                else:
+                    scraping_details = ""
                 
                 lines.append(
-                    f"- **{activity_name}:** {existing_count} existing, {added_count} added, {new_total} total {limit_status}{scraping_details}"
+                    f"- **{activity_name}:** {existing_count} existing, {added_count} added, {final_count} total {limit_status}{scraping_details}"
                 )
             
             lines.append("")
@@ -621,7 +644,7 @@ class RunMetrics:
             elif disk_delta < 0:
                 disk_change = f" ({disk_delta})"
             else:
-                disk_change = " (no change)"
+                disk_change = " (+0)"
         else:
             disk_change = " (+0)"
         
@@ -637,7 +660,7 @@ class RunMetrics:
                 elif change < 0:
                     change_str = f" ({change})"
                 else:
-                    change_str = " (no change)" if self.existing_episodes.previous_snapshot else " (+0)"
+                    change_str = " (+0)"
                 
                 lines.append(f"  - {activity_name}: {activity_stats.total_episodes} episodes{change_str}")
                 if activity_stats.seasons:
@@ -648,29 +671,37 @@ class RunMetrics:
         lines.append("")
         
         # Subscriptions in YAML with detailed breakdown
-        total_subs = self.existing_episodes.total_subscriptions_in_yaml + self.web_scraping.total_classes_added
-        subs_delta = self.existing_episodes.get_subscriptions_delta()
-        if self.existing_episodes.total_subscriptions_in_yaml_previous > 0:
-            if subs_delta > 0:
-                subs_change = f" (+{subs_delta})"
-            elif subs_delta < 0:
-                subs_change = f" ({subs_delta})"
-            else:
-                subs_change = " (no change)"
-        else:
-            subs_change = " (+0)"
+        total_subs = self.existing_episodes.total_subscriptions_in_yaml
         
-        lines.append(f"- **Subscriptions in YAML:** {total_subs}{subs_change}")
+        lines.append(f"- **Subscriptions in YAML:** {total_subs}")
         
         # Break down subscriptions by activity and flag limit violations
-        if self.web_scraping.activities:
-            for activity_name, activity_stats in sorted(self.web_scraping.activities.items()):
-                # Get subscription count for this activity
-                activity_sub_count = self.web_scraping.activity_totals.get(activity_name, 0)
+        # Use cleanup data as base and calculate final counts by adding scraping results
+        if self.subscription_changes.subscriptions_after_cleanup_by_activity:
+            for activity_name, existing_count in sorted(self.subscription_changes.subscriptions_after_cleanup_by_activity.items()):
+                # Get added count from scraping stats to show delta
+                added_count = 0
+                if activity_name in self.web_scraping.activities:
+                    added_count = self.web_scraping.activities[activity_name].classes_added
+                
+                # Calculate final count as existing + added
+                final_count = existing_count + added_count
+                
+                # Check if over limit (use final count for limit checking)
                 limit_warning = ""
                 if activity_name in self.web_scraping.activities_over_limit:
                     limit_warning = " **OVER LIMIT**"
-                lines.append(f"  - {activity_name}: {activity_sub_count} subscriptions{limit_warning}")
+                
+                lines.append(f"  - {activity_name}: {final_count} subscriptions{limit_warning}")
+        elif self.web_scraping.activity_totals:
+            # Fallback to web scraping totals if cleanup data not available
+            for activity_name, final_sub_count in sorted(self.web_scraping.activity_totals.items()):
+                # Check if over limit (use disk episodes for limit checking)
+                limit_warning = ""
+                if activity_name in self.web_scraping.activities_over_limit:
+                    limit_warning = " **OVER LIMIT**"
+                
+                lines.append(f"  - {activity_name}: {final_sub_count} subscriptions{limit_warning}")
         
         lines.append("")
         

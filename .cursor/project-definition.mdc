@@ -61,11 +61,13 @@ rules: |
     - **IMPLEMENTED**: `config/config.py` handles multi-source config (env vars, CLI args, YAML files) with precedence.
     - **IMPLEMENTED**: `config/cli_config.py` manages CLI argument parsing separately from configuration loading.
     - **IMPLEMENTED**: Nested YAML configuration structure with sections: `application`, `logging`, `github`, `peloton` (with backwards compatibility for flat structure).
+    - **IMPLEMENTED**: Dynamic scrolling configuration options: `peloton.dynamic-scrolling` (boolean toggle) and `peloton.max-scrolls` (failsafe limit).
     - **IMPLEMENTED**: `io/file_manager.py` provides unified interface for filesystem and subscription parsing.
     - **IMPLEMENTED**: `io/directory_validator.py` pre-processes directories to fix corrupted structures and episode conflicts.
     - **IMPLEMENTED**: Episode numbering system with filesystem and subscription parsers in `io/` module.
     - **IMPLEMENTED**: Season = duration (minutes), Episode = sequential numbering per activity/instructor.
     - **IMPLEMENTED**: Robust handling of 50/50 directory corruption issues from legacy implementations.
+    - **CRITICAL - Subscription Limit Enforcement**: `class-limit-per-activity` must be strictly enforced. Count existing subscriptions AFTER cleanup, not before. Activity names with underscores (e.g., `bike_bootcamp`) must be properly mapped to duration keys with spaces (e.g., "Bike Bootcamp") using `_get_activity_folder_name()` method. Special mappings: `bootcamp` → "Tread Bootcamp", `bike_bootcamp` → "Bike Bootcamp", `row_bootcamp` → "Row Bootcamp".
     - **IMPLEMENTED**: Subscription history tracking system with configurable timeout for stale subscription cleanup.
       - **IMPLEMENTED**: `io/subscription_history_manager.py` manages subscription ID tracking in JSON format.
       - **IMPLEMENTED**: Automatic cleanup of subscriptions older than configurable timeout (default: 15 days).
@@ -74,6 +76,7 @@ rules: |
       - **IMPLEMENTED**: History file stored alongside subscriptions.yaml for easy management.
       - **IMPLEMENTED**: Run snapshot metrics stored in subscription-history.json for historical comparison and PR diff generation.
       - **IMPLEMENTED**: Configurable warning threshold (`subscription_warning_threshold_days`) for subscriptions approaching purge limit.
+      - **CRITICAL**: Previous run snapshot MUST be loaded AFTER GitHub repo is cloned (if using GitHub integration) to ensure history file is available for delta calculations.
       - **IMPLEMENTED**: Metrics track:
         - Directory repairs by strategy with failure counts
         - Episode counts on disk with delta from previous run
@@ -93,6 +96,7 @@ rules: |
     - **IMPLEMENTED**: `webscraper/peloton/` contains Peloton-specific implementations (login, scraping).
     - **IMPLEMENTED**: Container-friendly Selenium configuration with headless mode and chromium drivers.
     - **IMPLEMENTED**: Modular design allows easy addition of new sources through strategy pattern.
+    - **IMPLEMENTED**: Dynamic scrolling system that scrolls until class limits are met or max scrolls reached, with configurable toggle and failsafe limits.
 
   - Git Integration Services (GENERIC DESIGN)
     - **IMPLEMENTED**: `git_integration/` package with GitHub repository management.

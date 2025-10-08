@@ -99,23 +99,6 @@ class Application:
             # Log the configuration
             config.log_config()
             
-            # Load previous run snapshot for comparison
-            previous_snapshot = None
-            try:
-                history_file = Path(config.subs_file).parent / "subscription-history.json"
-                if history_file.exists():
-                    temp_history = SubscriptionHistoryManager(config.subs_file, config.subscription_timeout_days)
-                    previous_snapshot = temp_history.get_last_run_snapshot()
-                    if previous_snapshot:
-                        logger.info(f"Loaded previous run snapshot from {previous_snapshot.run_timestamp}")
-                        metrics.existing_episodes.total_episodes_on_disk_previous = previous_snapshot.videos_on_disk
-                        metrics.existing_episodes.total_subscriptions_in_yaml_previous = previous_snapshot.videos_in_subscriptions
-                        metrics.web_scraping.total_classes_found_previous = previous_snapshot.new_videos_added
-                        # Store previous snapshot for detailed change tracking
-                        metrics.existing_episodes.previous_snapshot = previous_snapshot
-            except Exception as e:
-                logger.warning(f"Could not load previous run snapshot: {e}")
-            
             # Initialize GitHub integration if configured
             github_manager = None
             if config.github_repo_url and config.github_token:
@@ -147,6 +130,23 @@ class Application:
                     logger.info("GitHub integration disabled - no repository URL configured")
                 elif not config.github_token:
                     logger.info("GitHub integration disabled - no GitHub token configured")
+            
+            # Load previous run snapshot for comparison (AFTER repo is cloned if using GitHub)
+            previous_snapshot = None
+            try:
+                history_file = Path(config.subs_file).parent / "subscription-history.json"
+                if history_file.exists():
+                    temp_history = SubscriptionHistoryManager(config.subs_file, config.subscription_timeout_days)
+                    previous_snapshot = temp_history.get_last_run_snapshot()
+                    if previous_snapshot:
+                        logger.info(f"Loaded previous run snapshot from {previous_snapshot.run_timestamp}")
+                        metrics.existing_episodes.total_episodes_on_disk_previous = previous_snapshot.videos_on_disk
+                        metrics.existing_episodes.total_subscriptions_in_yaml_previous = previous_snapshot.videos_in_subscriptions
+                        metrics.web_scraping.total_classes_found_previous = previous_snapshot.new_videos_added
+                        # Store previous snapshot for detailed change tracking
+                        metrics.existing_episodes.previous_snapshot = previous_snapshot
+            except Exception as e:
+                logger.warning(f"Could not load previous run snapshot: {e}")
             
             # Initialize file manager (with validation unless skipped)
             skip_validation = getattr(config, 'skip_validation', False)
@@ -303,6 +303,8 @@ class Application:
             
             # Set scraping config values in metrics
             metrics.web_scraping.page_scrolls_config = config.peloton_page_scrolls
+            metrics.web_scraping.dynamic_scrolling_enabled = config.peloton_dynamic_scrolling
+            metrics.web_scraping.max_scrolls_config = config.peloton_max_scrolls
             metrics.web_scraping.class_limit_per_activity = config.peloton_class_limit_per_activity
             
             # Get scraper configuration
@@ -329,11 +331,13 @@ class Application:
                 
                 # Prepare scraping configurations for each activity
                 scraping_configs = {}
+                activities_to_scrape = []
                 existing_class_ids = file_manager.find_all_existing_class_ids()
                 
                 # Get merged data for episode numbering (includes disk + subscriptions)
                 merged_data = file_manager.get_merged_episode_data()
                 
+                # Filter activities that need scraping (not at or over limit)
                 for activity in config.peloton_activities:
                     # Get episode numbering data for this activity (from merged data - includes disk + subscriptions)
                     activity_data = merged_data.get(activity)
@@ -357,6 +361,13 @@ class Application:
                     if subscriptions_count == 0:
                         logger.warning(f"Could not get actual class count for {activity.name} - using 0 to prevent incorrect limits")
                     
+                    # Check if activity is already at or over the limit
+                    if subscriptions_count >= config.peloton_class_limit_per_activity:
+                        logger.info(f"Skipping scraping for {activity.name}: already at limit ({subscriptions_count} >= {config.peloton_class_limit_per_activity})")
+                        continue
+                    
+                    # Activity needs scraping - add to list and create config
+                    activities_to_scrape.append(activity)
                     scraping_configs[activity.value] = ScrapingConfig(
                         activity=activity.value,
                         max_classes=config.peloton_class_limit_per_activity,
@@ -368,17 +379,23 @@ class Application:
                         container_mode=config.run_in_container,
                         scroll_pause_time=peloton_scraper_config.get('scroll_pause_time', 3.0),
                         login_wait_time=peloton_scraper_config.get('login_wait_time', 15.0),
-                        page_load_wait_time=peloton_scraper_config.get('page_load_wait_time', 10.0)
+                        page_load_wait_time=peloton_scraper_config.get('page_load_wait_time', 10.0),
+                        dynamic_scrolling=config.peloton_dynamic_scrolling,
+                        max_scrolls=config.peloton_max_scrolls
                     )
                 
-                # Perform scraping
-                logger.info(f"Scraping {len(config.peloton_activities)} activities")
-                scraping_results = scraper_manager.scrape_activities(
-                    username=config.peloton_username,
-                    password=config.peloton_password,
-                    activities=[activity.value for activity in config.peloton_activities],
-                    configs=scraping_configs
-                )
+                # Perform scraping only for activities that need it
+                if activities_to_scrape:
+                    logger.info(f"Scraping {len(activities_to_scrape)} activities (skipped {len(config.peloton_activities) - len(activities_to_scrape)} already at limit)")
+                    scraping_results = scraper_manager.scrape_activities(
+                        username=config.peloton_username,
+                        password=config.peloton_password,
+                        activities=[activity.value for activity in activities_to_scrape],
+                        configs=scraping_configs
+                    )
+                else:
+                    logger.info("No activities need scraping - all are already at or over the limit")
+                    scraping_results = {}
                 
                 # Process results and update subscriptions
                 total_new_classes = 0
@@ -391,6 +408,7 @@ class Application:
                         classes_skipped=result.total_skipped,
                         classes_added=len(result.classes) if result.status.value == "completed" else 0,
                         errors=result.total_errors,
+                        scrolls_performed=result.scrolls_performed,
                         status=result.status.value,
                         error_message=result.error_message
                     )
@@ -439,14 +457,30 @@ class Application:
                 
                 # Get final activity totals after scraping
                 final_merged_data = file_manager.get_merged_episode_data()
+                total_final_subscriptions = 0
                 for activity, activity_data in final_merged_data.items():
-                    total_episodes = sum(activity_data.max_episode.values())
-                    metrics.web_scraping.activity_totals[activity.name] = total_episodes
+                    # Use actual subscription count instead of episode numbers
+                    actual_subscription_count = 0
+                    for parser in file_manager.episode_manager.episode_parsers:
+                        if 'subscription' in parser.__class__.__name__.lower():
+                            try:
+                                if hasattr(parser, 'find_subscription_class_ids_for_activity'):
+                                    activity_class_ids = parser.find_subscription_class_ids_for_activity(activity)
+                                    actual_subscription_count = len(activity_class_ids)
+                                    break
+                            except Exception as e:
+                                logger.error(f"Failed to get final subscription class count for {activity}: {e}")
                     
-                    # Check if over limit
-                    if total_episodes > config.peloton_class_limit_per_activity:
+                    metrics.web_scraping.activity_totals[activity.name] = actual_subscription_count
+                    total_final_subscriptions += actual_subscription_count
+                    
+                    # Check if over limit using actual subscription count (not episode numbers)
+                    if actual_subscription_count > config.peloton_class_limit_per_activity:
                         metrics.web_scraping.activities_over_limit.append(activity.name)
-                        logger.warning(f"⚠️  Activity {activity.name} has {total_episodes} episodes, exceeding limit of {config.peloton_class_limit_per_activity}")
+                        logger.warning(f"⚠️  Activity {activity.name} has {actual_subscription_count} subscriptions, exceeding limit of {config.peloton_class_limit_per_activity}")
+                
+                # Update the final subscription count for accurate delta calculation
+                metrics.existing_episodes.total_subscriptions_in_yaml = total_final_subscriptions
                 
             except Exception as e:
                 logger.error(f"Web scraping failed: {e}")

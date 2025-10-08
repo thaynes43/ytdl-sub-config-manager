@@ -32,9 +32,11 @@ github:
 peloton:
   username: ""
   password: ""
-  class-limit-per-activity: 40
+  class-limit-per-activity: 15
   activities: "walking,strength,cycling"  # comma-separated list
   page-scrolls: 2
+  dynamic-scrolling: true  # Enable dynamic scrolling based on class limits
+  max-scrolls: 50  # Maximum scrolls when using dynamic scrolling
   
   # Dependency injection configuration for strategies
   directory_validation_strategies:

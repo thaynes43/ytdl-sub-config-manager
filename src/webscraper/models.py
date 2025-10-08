@@ -210,6 +210,7 @@ class ScrapingResult:
     total_skipped: int
     total_errors: int
     status: ScrapingStatus
+    scrolls_performed: int = 0  # Number of scrolls performed during scraping
     error_message: Optional[str] = None
     
     def get_subscription_data(self, media_dir: str = "/media/peloton") -> Dict[str, Dict[str, Any]]:
@@ -265,3 +266,5 @@ class ScrapingConfig:
     scroll_pause_time: float = 3.0
     login_wait_time: float = 15.0
     page_load_wait_time: float = 10.0
+    dynamic_scrolling: bool = False  # Enable dynamic scrolling based on class limits
+    max_scrolls: int = 50  # Maximum scrolls when using dynamic scrolling
