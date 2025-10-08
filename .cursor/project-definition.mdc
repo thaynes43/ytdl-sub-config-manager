@@ -67,6 +67,7 @@ rules: |
     - **IMPLEMENTED**: Episode numbering system with filesystem and subscription parsers in `io/` module.
     - **IMPLEMENTED**: Season = duration (minutes), Episode = sequential numbering per activity/instructor.
     - **IMPLEMENTED**: Robust handling of 50/50 directory corruption issues from legacy implementations.
+    - **CRITICAL - Subscription Limit Enforcement**: `class-limit-per-activity` must be strictly enforced. Count existing subscriptions AFTER cleanup, not before. Activity names with underscores (e.g., `bike_bootcamp`) must be properly mapped to duration keys with spaces (e.g., "Bike Bootcamp") using `_get_activity_folder_name()` method. Special mappings: `bootcamp` → "Tread Bootcamp", `bike_bootcamp` → "Bike Bootcamp", `row_bootcamp` → "Row Bootcamp".
     - **IMPLEMENTED**: Subscription history tracking system with configurable timeout for stale subscription cleanup.
       - **IMPLEMENTED**: `io/subscription_history_manager.py` manages subscription ID tracking in JSON format.
       - **IMPLEMENTED**: Automatic cleanup of subscriptions older than configurable timeout (default: 15 days).
@@ -75,6 +76,7 @@ rules: |
       - **IMPLEMENTED**: History file stored alongside subscriptions.yaml for easy management.
       - **IMPLEMENTED**: Run snapshot metrics stored in subscription-history.json for historical comparison and PR diff generation.
       - **IMPLEMENTED**: Configurable warning threshold (`subscription_warning_threshold_days`) for subscriptions approaching purge limit.
+      - **CRITICAL**: Previous run snapshot MUST be loaded AFTER GitHub repo is cloned (if using GitHub integration) to ensure history file is available for delta calculations.
       - **IMPLEMENTED**: Metrics track:
         - Directory repairs by strategy with failure counts
         - Episode counts on disk with delta from previous run

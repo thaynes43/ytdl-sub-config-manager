@@ -240,6 +240,11 @@ class EpisodesFromSubscriptions(EpisodeParser):
         if not subs_data:
             return set()
         
+        # Get the expected folder name for this activity to match duration keys
+        # Duration keys look like "= Bike Bootcamp (45 min)", "= Cycling (20 min)", etc.
+        activity_folder_name = self._get_activity_folder_name(activity.value.lower())
+        self.logger.debug(f"Looking for activity folder name: {activity_folder_name}")
+        
         class_ids = set()
         tv_shows = subs_data.get("Plex TV Show by Date", {})
         
@@ -249,8 +254,8 @@ class EpisodesFromSubscriptions(EpisodeParser):
                 continue
             
             # Check if this duration group matches our activity
-            # Duration keys look like "= Cycling (20 min)", "= Strength (30 min)", etc.
-            if activity.name.lower() in duration_key.lower():
+            # Match the folder name against the duration key (case-insensitive)
+            if activity_folder_name.lower() in duration_key.lower():
                 # Extract class IDs from all episodes in this duration group
                 for episode_title, episode_data in duration_episodes.items():
                     if isinstance(episode_data, dict):
@@ -268,6 +273,33 @@ class EpisodesFromSubscriptions(EpisodeParser):
         
         self.logger.debug(f"Found {len(class_ids)} subscription class IDs for {activity.name}")
         return class_ids
+    
+    def _get_activity_folder_name(self, activity: str) -> str:
+        """Get the proper folder name for an activity, handling special cases like bootcamp variants.
+        
+        This must match the logic in ScrapedClass._get_activity_folder_name to ensure
+        proper matching between duration keys and activity names.
+        
+        Args:
+            activity: The activity string (e.g., 'bootcamp', 'bike_bootcamp', 'row_bootcamp')
+            
+        Returns:
+            Proper folder name (e.g., 'Tread Bootcamp', 'Bike Bootcamp', 'Row Bootcamp')
+        """
+        # Special mappings for bootcamp variants to match ScrapedClass logic
+        bootcamp_mappings = {
+            'bootcamp': 'Tread Bootcamp',
+            'bike_bootcamp': 'Bike Bootcamp', 
+            'row_bootcamp': 'Row Bootcamp'
+        }
+        
+        # Check for exact match first
+        if activity.lower() in bootcamp_mappings:
+            return bootcamp_mappings[activity.lower()]
+        
+        # For other activities, use title case (first letter of each word capitalized)
+        # Also replace underscores with spaces for activities like bike_bootcamp -> Bike Bootcamp
+        return activity.replace('_', ' ').title()
     
     def remove_existing_classes(self, existing_class_ids: Set[str]) -> tuple[bool, int]:
         """Remove existing class IDs from the subscriptions file.

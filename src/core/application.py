@@ -99,23 +99,6 @@ class Application:
             # Log the configuration
             config.log_config()
             
-            # Load previous run snapshot for comparison
-            previous_snapshot = None
-            try:
-                history_file = Path(config.subs_file).parent / "subscription-history.json"
-                if history_file.exists():
-                    temp_history = SubscriptionHistoryManager(config.subs_file, config.subscription_timeout_days)
-                    previous_snapshot = temp_history.get_last_run_snapshot()
-                    if previous_snapshot:
-                        logger.info(f"Loaded previous run snapshot from {previous_snapshot.run_timestamp}")
-                        metrics.existing_episodes.total_episodes_on_disk_previous = previous_snapshot.videos_on_disk
-                        metrics.existing_episodes.total_subscriptions_in_yaml_previous = previous_snapshot.videos_in_subscriptions
-                        metrics.web_scraping.total_classes_found_previous = previous_snapshot.new_videos_added
-                        # Store previous snapshot for detailed change tracking
-                        metrics.existing_episodes.previous_snapshot = previous_snapshot
-            except Exception as e:
-                logger.warning(f"Could not load previous run snapshot: {e}")
-            
             # Initialize GitHub integration if configured
             github_manager = None
             if config.github_repo_url and config.github_token:
@@ -147,6 +130,23 @@ class Application:
                     logger.info("GitHub integration disabled - no repository URL configured")
                 elif not config.github_token:
                     logger.info("GitHub integration disabled - no GitHub token configured")
+            
+            # Load previous run snapshot for comparison (AFTER repo is cloned if using GitHub)
+            previous_snapshot = None
+            try:
+                history_file = Path(config.subs_file).parent / "subscription-history.json"
+                if history_file.exists():
+                    temp_history = SubscriptionHistoryManager(config.subs_file, config.subscription_timeout_days)
+                    previous_snapshot = temp_history.get_last_run_snapshot()
+                    if previous_snapshot:
+                        logger.info(f"Loaded previous run snapshot from {previous_snapshot.run_timestamp}")
+                        metrics.existing_episodes.total_episodes_on_disk_previous = previous_snapshot.videos_on_disk
+                        metrics.existing_episodes.total_subscriptions_in_yaml_previous = previous_snapshot.videos_in_subscriptions
+                        metrics.web_scraping.total_classes_found_previous = previous_snapshot.new_videos_added
+                        # Store previous snapshot for detailed change tracking
+                        metrics.existing_episodes.previous_snapshot = previous_snapshot
+            except Exception as e:
+                logger.warning(f"Could not load previous run snapshot: {e}")
             
             # Initialize file manager (with validation unless skipped)
             skip_validation = getattr(config, 'skip_validation', False)
