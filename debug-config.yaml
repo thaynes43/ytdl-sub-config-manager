@@ -12,7 +12,9 @@ application:
   run-in-container: false  # Set to false for local debugging
   media-source: "peloton"  # Media source strategy to use
   # Number of days after which subscriptions are considered stale
-  subscription-timeout-days: 30
+  subscription-timeout-days: 14
+  # Number of days to retain run snapshots in history
+  history-retention-days: 14
 
 # Logging configuration
 logging:

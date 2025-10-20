@@ -12,6 +12,8 @@ application:
   media-source: "peloton"
   # Number of days after which subscriptions are considered stale
   subscription-timeout-days: 30
+  # Number of days to retain run snapshots in history
+  history-retention-days: 14
 
 # Logging configuration
 logging:
@@ -33,7 +35,7 @@ github:
 peloton:
   username: "your-peloton-username"
   password: "your-peloton-password"
-  class-limit-per-activity: 25
+  class-limit-per-activity: 14
   activities: "cycling,yoga,strength"  # comma-separated list
   page-scrolls: 10
   dynamic-scrolling: false  # Enable dynamic scrolling based on class limits

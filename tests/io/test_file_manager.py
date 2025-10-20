@@ -62,6 +62,29 @@ class TestFileManager:
             
             assert file_manager.directory_validator is None
 
+    def test_file_manager_initialization_with_history_retention_days(self):
+        """Test FileManager initialization with custom history retention days."""
+        with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
+            with patch('src.io.file_manager.SubscriptionHistoryManager') as mock_history_class:
+                mock_manager = MagicMock()
+                mock_manager_class.return_value = mock_manager
+                
+                mock_history = MagicMock()
+                mock_history_class.return_value = mock_history
+                
+                file_manager = FileManager(
+                    media_dir="/test/media",
+                    subs_file="/test/subs.yaml",
+                    validate_and_repair=False,
+                    episode_parsers=["parser1"],
+                    history_retention_days=7
+                )
+                
+                # Verify SubscriptionHistoryManager was called with correct retention_days
+                mock_history_class.assert_called_once()
+                call_args = mock_history_class.call_args
+                assert call_args[1]['retention_days'] == 7
+
     def test_file_manager_validation_strategies_required_error(self):
         """Test that validation strategies are required when validate_and_repair=True."""
         with pytest.raises(ValueError, match="validation_strategies and repair_strategies are required"):
@@ -1164,7 +1187,8 @@ class TestConflictResolution:
                     # Should create subscription history manager
                     mock_history_class.assert_called_once_with(
                         subs_file_path="/test/subs.yaml",
-                        timeout_days=20
+                        timeout_days=20,
+                        retention_days=14
                     )
                     assert file_manager.subscription_history_manager == mock_history
 

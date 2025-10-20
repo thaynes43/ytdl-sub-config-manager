@@ -12,7 +12,9 @@ application:
   # Media source strategy to use (peloton, etc.)
   media-source: "peloton"
   # Number of days after which subscriptions are considered stale
-  subscription-timeout-days: 30
+  subscription-timeout-days: 14
+  # Number of days to retain run snapshots in history
+  history-retention-days: 14
 
 # Logging configuration
 logging:

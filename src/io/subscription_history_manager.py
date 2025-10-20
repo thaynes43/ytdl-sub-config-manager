@@ -38,15 +38,17 @@ class SubscriptionEntry:
 class SubscriptionHistoryManager:
     """Manages subscription history tracking in a flat file."""
     
-    def __init__(self, subs_file_path: str, timeout_days: int = 15):
+    def __init__(self, subs_file_path: str, timeout_days: int = 15, retention_days: int = 14):
         """Initialize the subscription history manager.
         
         Args:
             subs_file_path: Path to the subscriptions YAML file
             timeout_days: Number of days after which subscriptions are considered stale
+            retention_days: Number of days to retain run snapshots (default: 14)
         """
         self.subs_file_path = Path(subs_file_path)
         self.timeout_days = timeout_days
+        self.retention_days = retention_days
         
         # Create history file path in the same directory as subs file
         self.history_file_path = self.subs_file_path.parent / "subscription-history.json"
@@ -90,6 +92,10 @@ class SubscriptionHistoryManager:
             
         Returns:
             True if successful, False otherwise
+            
+        Note:
+            Run snapshots older than retention_days will be automatically removed
+            to keep the file size manageable.
         """
         try:
             # Ensure directory exists
@@ -116,8 +122,19 @@ class SubscriptionHistoryManager:
             # Append new snapshot if provided
             if snapshot:
                 data['run_snapshots'].append(snapshot.to_dict())
-                # Keep only the last 50 snapshots to avoid unbounded growth
-                data['run_snapshots'] = data['run_snapshots'][-50:]
+            
+            # Keep only snapshots within the retention period to avoid unbounded growth
+            cutoff_date = datetime.now() - timedelta(days=self.retention_days)
+            original_count = len(data['run_snapshots'])
+            self.logger.debug(f"Retention check: {original_count} snapshots, retention_days={self.retention_days}, cutoff_date={cutoff_date}")
+            data['run_snapshots'] = [
+                snap for snap in data['run_snapshots']
+                if datetime.fromisoformat(snap['run_timestamp']) >= cutoff_date
+            ]
+            filtered_count = len(data['run_snapshots'])
+            self.logger.debug(f"Retention result: {original_count} -> {filtered_count} snapshots")
+            if original_count != filtered_count:
+                self.logger.info(f"Retention cleanup: removed {original_count - filtered_count} old snapshots (retention_days={self.retention_days})")
             
             with open(self.history_file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)

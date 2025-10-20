@@ -38,6 +38,7 @@ class Config:
     media_source: str = "peloton"
     subscription_timeout_days: int = 15
     subscription_warning_threshold_days: int = 3  # Warn when subscriptions are within N days of timeout
+    history_retention_days: int = 14  # Number of days to retain run snapshots in history
     
     # Strategy injection configuration
     peloton_directory_validation_strategies: List[str] = field(default_factory=list)
@@ -87,6 +88,8 @@ class Config:
             raise ValueError("subscription_warning_threshold_days must be non-negative")
         if self.subscription_warning_threshold_days >= self.subscription_timeout_days:
             raise ValueError("subscription_warning_threshold_days must be less than subscription_timeout_days")
+        if self.history_retention_days <= 0:
+            raise ValueError("HISTORY_RETENTION_DAYS must be positive")
         
         # Set default activities if empty
         if not self.peloton_activities:
@@ -118,6 +121,8 @@ class Config:
         logger.info(f"  PELOTON_PAGE_SCROLLS: {self.peloton_page_scrolls}")
         logger.info(f"  PELOTON_DYNAMIC_SCROLLING: {self.peloton_dynamic_scrolling}")
         logger.info(f"  PELOTON_MAX_SCROLLS: {self.peloton_max_scrolls}")
+        logger.info(f"  SUBSCRIPTION_TIMEOUT_DAYS: {self.subscription_timeout_days}")
+        logger.info(f"  HISTORY_RETENTION_DAYS: {self.history_retention_days}")
         logger.info(f"  LOG_LEVEL: {self.log_level}")
         logger.info(f"  LOG_FORMAT: {self.log_format}")
 
@@ -272,6 +277,7 @@ class ConfigLoader:
             'PELOTON_MAX_SCROLLS': 'peloton_max_scrolls',
             'SUBSCRIPTION_TIMEOUT_DAYS': 'subscription_timeout_days',
             'SUBSCRIPTION_WARNING_THRESHOLD_DAYS': 'subscription_warning_threshold_days',
+            'HISTORY_RETENTION_DAYS': 'history_retention_days',
             'LOG_LEVEL': 'log_level',
             'LOG_FORMAT': 'log_format',
             'LOG_FILE': 'log_file',
@@ -341,6 +347,8 @@ class ConfigLoader:
                 normalized['media_source'] = app_config['media-source']
             if 'subscription-timeout-days' in app_config:
                 normalized['subscription_timeout_days'] = app_config['subscription-timeout-days']
+            if 'history-retention-days' in app_config:
+                normalized['history_retention_days'] = app_config['history-retention-days']
         
         # Handle logging section
         if 'logging' in data:

@@ -68,6 +68,18 @@ class TestSubscriptionHistoryManager:
             manager = SubscriptionHistoryManager(str(subs_file))
             
             assert manager.timeout_days == 15
+            assert manager.retention_days == 14
+    
+    def test_init_with_retention_days(self):
+        """Test initialization with custom retention days."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            subs_file = Path(temp_dir) / "subscriptions.yaml"
+            subs_file.touch()
+            
+            manager = SubscriptionHistoryManager(str(subs_file), timeout_days=30, retention_days=7)
+            
+            assert manager.timeout_days == 30
+            assert manager.retention_days == 7
     
     def test_load_history_file_not_exists(self):
         """Test loading history when file doesn't exist."""

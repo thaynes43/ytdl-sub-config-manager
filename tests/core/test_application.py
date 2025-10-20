@@ -150,6 +150,7 @@ class TestApplication:
             repair_strategies=['repair1'],
             episode_parsers=['parser1'],
             subscription_timeout_days=15,
+            history_retention_days=ANY,  # New parameter
             metrics=ANY  # Metrics object is passed
         )
         
@@ -227,6 +228,7 @@ class TestApplication:
             repair_strategies=['repair1'],
             episode_parsers=['parser1'],
             subscription_timeout_days=15,
+            history_retention_days=ANY,  # New parameter
             metrics=ANY  # Metrics object is passed
         )
 
@@ -492,6 +494,7 @@ class TestApplication:
             repair_strategies=[],
             episode_parsers=[],
             subscription_timeout_days=15,
+            history_retention_days=ANY,  # New parameter
             metrics=ANY  # Metrics object is passed
         )
 

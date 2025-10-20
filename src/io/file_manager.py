@@ -18,7 +18,8 @@ class FileManager:
     
     def __init__(self, media_dir: str, subs_file: str, validate_and_repair: bool = True, 
                  validation_strategies: Optional[List[str]] = None, repair_strategies: Optional[List[str]] = None, 
-                 episode_parsers: Optional[List[str]] = None, subscription_timeout_days: int = 15, metrics=None):
+                 episode_parsers: Optional[List[str]] = None, subscription_timeout_days: int = 15, 
+                 history_retention_days: int = 14, metrics=None):
         """Initialize the file manager.
         
         Args:
@@ -29,6 +30,7 @@ class FileManager:
             repair_strategies: List of repair strategy module paths (required if validate_and_repair=True)
             episode_parsers: List of episode parser module paths (required)
             subscription_timeout_days: Number of days after which subscriptions are considered stale
+            history_retention_days: Number of days to retain run snapshots in history
             metrics: Optional metrics object to track statistics
         """
         self.media_dir = media_dir
@@ -64,7 +66,8 @@ class FileManager:
         # Initialize subscription history manager
         self.subscription_history_manager = SubscriptionHistoryManager(
             subs_file_path=subs_file,
-            timeout_days=subscription_timeout_days
+            timeout_days=subscription_timeout_days,
+            retention_days=history_retention_days
         )
         
         self.logger = get_logger(__name__)

@@ -136,7 +136,7 @@ class Application:
             try:
                 history_file = Path(config.subs_file).parent / "subscription-history.json"
                 if history_file.exists():
-                    temp_history = SubscriptionHistoryManager(config.subs_file, config.subscription_timeout_days)
+                    temp_history = SubscriptionHistoryManager(config.subs_file, config.subscription_timeout_days, config.history_retention_days)
                     previous_snapshot = temp_history.get_last_run_snapshot()
                     if previous_snapshot:
                         logger.info(f"Loaded previous run snapshot from {previous_snapshot.run_timestamp}")
@@ -158,6 +158,7 @@ class Application:
                 repair_strategies=config.peloton_directory_repair_strategies,
                 episode_parsers=config.peloton_episode_parsers,
                 subscription_timeout_days=config.subscription_timeout_days,
+                history_retention_days=config.history_retention_days,
                 metrics=metrics
             )
             

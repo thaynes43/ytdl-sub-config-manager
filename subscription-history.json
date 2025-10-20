@@ -1,406 +1,1092 @@
 {
   "subscriptions": [
     {
-      "id": "3b784236209b4d30aba4a9289b55dabd",
-      "date_added": "2025-10-06T13:30:50.100153"
+      "id": "33c6d6dc554d44d194fabb3f38cc605b",
+      "date_added": "2025-10-07T22:09:36.809388"
     },
     {
-      "id": "bd023361a3d34e7da35ce6dd70d30c6d",
-      "date_added": "2025-10-06T15:05:12.979308"
+      "id": "16858cbc29cb4480a30ab15f86051e57",
+      "date_added": "2025-10-08T22:21:38.570349"
     },
     {
-      "id": "dcf510cf0e174d1a8f89a5021db745a4",
-      "date_added": "2025-10-06T15:05:12.979308"
+      "id": "fe30657f7b164c37ae56f0e0aa3324a9",
+      "date_added": "2025-10-08T22:21:38.570349"
     },
     {
-      "id": "bb97d2b9eaab4c649bd36acce1934cf7",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "13c5056c6bfe443d8414201372a22144",
+      "date_added": "2025-10-14T22:35:56.654016"
     },
     {
-      "id": "e6754ad642414497911f86c360ae776b",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "bfdf54609dcb49bfa77cff7946809191",
+      "date_added": "2025-10-15T22:26:41.794085"
     },
     {
-      "id": "db65dc595b4d44b6a7df3d015f528382",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "ff629436a63148ec82338a631a4caf16",
+      "date_added": "2025-10-16T22:27:16.807073"
     },
     {
-      "id": "163c8b8057834bcdb8ff337c05243924",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "1885131b2f824ff68c8b9ceca7835381",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "43671862d8fa469c9e2aec00b6beddbd",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "2851cbff445e4531803b0e4ca49757da",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "e186c271fb034e2c93a6d0a9ff38d4cc",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "cb3058045f17431da8c06cb136be892f",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "0ff5932976ce475c831342b65a4ea289",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "c2be218e9bbe4627b2404b2319dc0f15",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "2c5ce0b9209e496e8bb41dcc5ccc4c5c",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "d74f230db0814ea795869fa21a9e42bd",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "b9711ebd4db042e8a2901e17096866b8",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "6ebe4cb7080d4b5a93bd3286e225ecf3",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "1972cfdfa19042c5af6750a10c99ca3a",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "27e4aa8543454440bf1bc2837b3cb2cc",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "c39dc27ea11c46a18d54efe1251a9a9b",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "3c4a00602ff247b0bfed70f7a85fb143",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "95a0f1e692964a18b1a39946f95b1095",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "45787c215c1e47ecb6b5ea80d89d9a88",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "547695dcf4c743168302e17b69ab45e2",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "8f28906295a743b0ad1304bab13fc136",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "1ddda3fd049a4b1daf032e948ee3a6b9",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "bb0e830fce984a7f9b35eecff884a314",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "00e3a9e8da864dacbd9d4730a1b95331",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "c4cba88e06794304bf61fb0d4dab4d1f",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "764c5069887e4ac58bbd9596f3d80460",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "92693a05c29840d48a6f974b9dfb432d",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "b81f9772a21a4b15b6a21095db2a45a0",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "1e1924b84e7b4feb90b0e8546e0ce040",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "7b530f65587c42d781661954fd50850f",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "9c19ddf6aeda43369d3dbbe18831af8f",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "608c88c8c42240fcbf004476df4af766",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "2e0dd10977414466a268d2afc00856d4",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "950098ad6afb4be0955a3b4acc25487b",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "0cf0730b8b7447ae8444685caa64e173",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "fd84066b53fd43ea91894f7f9c2d2d48",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "11046315cb844d2ba2711d3b1f27796d",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "9d9b5373382c42d2ba874de7a03f9b86",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "741ee24496104ed5bc97e0ff8d71cfd4",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "d2ac3f135e5846279351937d557ad877",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "1c15e6e9c26543a8aab8f9f83731fe5e",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "f8521e7bb2a04bbbb26ecccea74f9b60",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "aa208de64de34091b27173b69e2fb9b4",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "236c41d5e6814d0996940b3a133f4232",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "73a0e7b213194245b4dbbc7c1bfd4038",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "ddb07d8a88a04e7dba9d04afab915f48",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "0ad88f8aea0345aa8c229cad5ea13b28",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "528a104b497449e992636e2ef9a878b3",
-      "date_added": "2025-10-06T15:15:07.426346"
+      "id": "ff1ed4cdda6f4374977493c37e724993",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "b0af3bc566564c058056c283d8d269fe",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "547d7f4820c2421798ca5a7416bb8e02",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "cbde0d52f34c4839acb8f9a7278f15d7",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "38b9c07581f54a2c94b43b3f2c094858",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "6b4ca8a1c606400b90e5ab1a6f1952fe",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "3b3066c5a01744f3b103e28452fd56fd",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "da38dd0a248c471c94f9aa0ee49c59af",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "fd3ab6e1205047bc8c0c9c2a4f8eccbd",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "737cf418a22a4bbabdeabcf7bba68a9b",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "115560a144324ece9e85141c39e270fb",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "3f940a1b17604bf39e08bff43436455a",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "7ad1e8e06d5b48dab451d34999cbae06",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "e6f1c7ca9c684fd584ff9f3e7c8630d6",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "6009546d210d41ae844d272893e7e3b3",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "68f99f7602da4a92b72241ad989aa5fd",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "e17fd45946af403087d699a2a894193b",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "eb0279643a0440b8ae5069c72e8d369a",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "e213feabc2f6489ba77e3d41a1b86446",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "b598158d9b9a4f66a0471f7ac1051232",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "b69daf1c5e0a44549b1fe0bfe7e8ba97",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "e1cb0be97f31446ab121940cccdcab12",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "a8ae20869950418f8ced29a24187df73",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "eb7fef17312e41838886b79e6abbd35d",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "53b9d6cb918c4284b643650b5391bd35",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "8c1a07894e754cc1a3ecdfbd2476d680",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "89309a9782024a08af4368da3b48b591",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "443f8874af514ed8835ec51474d36c61",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "346891be8c874bf88d0891d41c484d20",
+      "date_added": "2025-10-19T22:30:56.769296"
     },
     {
-      "id": "256ceec727904ad8bb248c5efe72c8a4",
-      "date_added": "2025-10-06T15:23:55.270172"
+      "id": "c5b0bfeb9ea94e3d85f4b3429a008526",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ab112a43839740789b6bf8a3a4d69937",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "57f1bd6bfc9242dfa7502b5bfb8e3cd3",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "6cb0b3e5b8f248c4863efcd9da5b7968",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "8cccfe34d7e94a8ebb1f437a5f45a88f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "4a278061a14142f6b33658b9e01dc4f2",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "bee3fbfd5ace4b87a6013d2071a80a7b",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d4a895983a214c09b2b206165d6d86d0",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "b15559a52d0946f3a31ae75fba17fa8f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "4dcc05e141964c2b844d9c9bb8bc5ad2",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "788c8abd88164255875821bc6feb4f31",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "fd364184ac3d4e928eb2fdd57d18fa38",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "fcd31c73cc7b40c8a9146af6950c4a27",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f6ec4cfcc9fe41aca08fc64298338b17",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "0f713d19648848dc838525a82ae88cb6",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d9036fcc994540c5805acdec298093da",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2b80b92f4a124b22ab24213a173f2403",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "db3c5e93cb6048fbb4e6da95a6006610",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "aaa7b21707754e178d4c0f2c7951fd90",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "8ce9ea2e4b1d45e99365df808305dec6",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a8a1697389c549bdac465492fcaedd35",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5afed30bb7c94d7c8b18d02bf796e593",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "c3ca219e16e847ccb09c468b9780d8d7",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "043cbb172e7c4a318d955544e74db2cc",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "0e87aa703ee54a65b49d09b70c56750d",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "c77f0e5ba2a649a0b3cd2bc0df64e789",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d2b2e21f4dea417eb3cdab21dca54e71",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d1d111f28ffd41048001de60b1639e68",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a84a54124ffc4ec3afe1ba09c1ef5140",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2e825dfca0db405bb7f65d9ce4fb584c",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "16c44e6521a843fcbde0feb15f07507c",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "0d354c793568436da46b47906ce386bd",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f92a445e75e54e06a18bd9ff4033e974",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2cdfb5926e454d55bae45f5e8b5484dd",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "3ea2af2b46e445e9a9c339cb333d0477",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d13a09be58984c848805c7ce80232ed1",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "6a730f65c87e4d8face73ac49c6b27ba",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "707d6fe0a3db472580a78e6a40cb9466",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "4bcda7b507f4415388c5084a6e75b4b0",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "9c6c0f7ce7854c1db1e4099224ab0c21",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "99ffa6d43cc5445f837cec9afb386fbf",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "836f31464e4e4a6c8baa228c08eb4896",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "69017ef712ca41d185af41bf315c0249",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ffbf50c2bf9448eb9c8079b7bfedbd38",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "7fcd4de4b6a4451db38ea5315b182729",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f13500a19f714f9e94386c1ca3dd5354",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "279656e489c541a6b84bea3059795a91",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "43c7424e0ae943f18892bf287a4c2d89",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "14beb39f5f7145af96d25a6044c353ff",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "916f42b9181245158b2870bfa1abcf6d",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "cdc3cb20e14140e3906e8538d084be5d",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "3381c4c9f59040409b68a9a4cab98ff3",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "cf5d5677ba194171ae66011dccca20bf",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5734c1e856654e599d6d49c968c1385a",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "cdfd0338145645d2906e250ecc4f0fbb",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "fd139e9b28d84bae9e3ddf01ef81c36a",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "439675f0bd32457c94428eac71578205",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "0254a08a664a4c61a6a6ef49bbbbf552",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "88702090e3ef44a9ba68f4b87bc15930",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5665c55416884edbb1d7dce5e79051b1",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "fcd1c69d68a14e2d8b410c5ff60d5d3a",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f044ab768c0b4b1187606630733bd4b2",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "e3b68e64f29b41b48d403441bb4f32a5",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ce9f052a3915432ba722afdf5129689b",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f8631adbb5e84882884777f023262262",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "df08e91ed2284e31860a5cd070041bdd",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2fe61177f1b947099275477529de0845",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d19ba9c57dc24a4886bd563029742735",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "88e8977175a5492a86fe309c423ba66a",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "add927f4c15743e898608838373101c0",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "335f31f790684a638c2fd2afb28c90e2",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "cb61464250d943089c0bec3b7569596c",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "53f698dea0294196b59ecfa6dc2643f0",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "3644516f1c8943e3a43c9cd8d194017f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "dac7eea1533448d383a27bc2480dd492",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "02644773d3564acc98ef94545efbe98e",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "e1a7d8b9fe2a490682f04f572b087f63",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "db6e5d34a0d9448c818012163cf5ce2c",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "c9d61d0cf30345f8a9ceb893adb64f7c",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "b8950b58b730440e9938aa22d892f0b5",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "be223fc4edb74d47a140df307a225a98",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ca2b785aacbf41f8aa42460ced25f5c4",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "6805e4c538544e0b81f3e1a19dd9048b",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "88530c8ff0f54e548a6b39242858c80f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ec357394b5ea4e5da622d28f2a03fa65",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "070e79da826a4d9eafa0763e5e1846ed",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "54536d948ef148df828851820bdf179a",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5f7ce556323247acb677279001f802b0",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "81e28e9acbe94e4d9e052ddcba2ca275",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d2cf4cc506aa4b199a5beacb592db8dc",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "baf5ddd13d87499aa9a8667f1dc39226",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "7f6a0d5a31dc46cd8884edba0d2ee577",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "e656228a608d412a99669acbe46475d0",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "c880fdaff1b346438fd49e12392b1e31",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "aa778c1f985f4a1e8815fa9f417c800d",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f6926b7d8f604014b0d8b922641e6f8e",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "52de844148f7464da0d5274988eb556f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ce8e851e6c7f4f2bb72afd79d374f174",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "19c22188de3344e1bc673d2ab3c385f4",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "8ebaa769b13b419a8bdf717223e16003",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "de7729d3c1e5498ba393020d03c9210f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "67efc5d041cb4f448cd6703ad64b4b86",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2d2fafa0c60449c38347146300386f0f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2cf35b3402614290b3a8f613c2293253",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5932ccbd172541e286626a481703d4d2",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "add74e1773764583b30b18124463f55d",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2d1704c6f94f42048a5ba95e4dada36f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f6a978643c2c40a6a68ea2609bbb03f4",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a0d630f921c24fa5bfb73bd69d31f895",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "00908f2020304c91a42efe023a9bcb2f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d0e7952a61074322bacad3b549454561",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "86ab3f2f175a4a20beac249259de59a6",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "6e847880aa2a457586abd3d0f9c379c3",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "9c39deacea9a456b8d997a061f1ce4bd",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "e2150d723b9f4017bbd05abba5c3ca5f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "96d8b453a7a74532af91e090900670da",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "68550d3eeeb244ad92087665d2c730a2",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "34fa940ec46f4e3986ce186ae604c34e",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "b9302424c93f486db82a1bb3b0919d32",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "6a98a56af4ee495099377f3e97a3776e",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "06322984b5ab48bf8e31f698bdbbb666",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2654b480ca00483eadf1230ff8387df4",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a392aad4f61e49cdb11bb520f7c119e5",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5ce14b5dc15e454689883c207e3e8b0a",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "699864920afd43c788dffbae503a3182",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "cb335738971e4eaca566e31bd10875ea",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "78e29d0bcbb94b9fb7994ba083a38cdb",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "8267b7a8019047d7998512e8092cd2a5",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "178fc70c94f64a008f6c77e8e8f11863",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "37e4fcdd0b524eb597ca6ebc0cf74ab4",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d77c46e068ab4d95a27335125b788c20",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "fd2db007b54646c4a0ec480fc3333f3f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "7cd8bbd054694c0c9c8e175a86b3beb2",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "bf83662093a247bbbf79997f3161ebae",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "20b8b8712e984f51aaeda92d93c1592b",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "811196f743dc4188b828f6239ebb7a48",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ff8baf886e6a4df49804e81c4f3a0dd0",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f75de0a8776748e487a515c304348556",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a36f46680a6e4602951164d5b20b97a5",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ddf81552f714431a9c6f04312cf9ec04",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "304a3fee73ff4817892f180ce7a8a365",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "77ec553530d049b5bdff8f8b50dec9d7",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "e27d8671db324fdd8280cba083b35806",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "afa675b90ff440b3928471dbdb448088",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d308f9350bbe4535a8cb6decbca6640f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "faabc78369b34690848105d3dd76b583",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "28f15c78c8224eeab9047c6ff65d3c25",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "eaa242ef8bc840a8bcc7403d0062fe6f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "73492c80d7104049aead278b5b4503c1",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "38da17c5da0b45feb372d8e6eaf26dce",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "945cdee4c23843c1b4cc2ebb88a8877d",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "67bc7b577e1d47f9850034226420c004",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "57cd1bc40a334cf088bb9e887ff7a623",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "88695316a61c43f785562fead5346547",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "14f76e87b2ef4576bf9a8799d17c3413",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "4db16802464641aeb2b771deb82b49ee",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "da9faf9b09544736858f5fa1573eadcb",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "4dcfc82df60c4d4d98ca931589729c08",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5a9e557606f9406581c1a5e35537ef41",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "80f15cd29dda4e36b42e7f14cae6c633",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "3901c27f215b4d1f8ccd087b1992b3ce",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "0e24d99a184841ffb7db53f9de33818c",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "b6aa4371bafb4bca82b412f7d38ab929",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "9f034292cd2f459abd9c73a7a55b9b07",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "03934ae594cc4791b444567edd7091e8",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "d4da5973fc504181836dd282f99efa40",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "b0d4d75dfbb44c129d6ab549234838cf",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f4459e7ef05c476c9bc2bb11d0cd2f86",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5ba25d7c46934865bc791d1716833fab",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "90050f20c82e4d618e6296bf2fb8daf6",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "3c278bbb68034948a27d50655187475d",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "062285d93638475f994d09c689ba5cf7",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "63438f0d668c46e88b0f102e39274539",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "aee0c7824d31442e814c5b4df8e7dfb4",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ce46dbfd160d4a489a2f186dde300db1",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2121a26b356945bb91ababe34f6125a2",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "4769169cc6f042609b78d93a22198662",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "36e5c87ff9514facb6361e9d12ddc6de",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "382d3430642945469a6ed959335da8bc",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5e7abe277ab74384a50efbe8adee0f48",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ad9bac8a650c43598de13f428185c321",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5661bb48d8204d248d6850c8476bdfa4",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f7a29053c09d42bba3f7af4fe20005e1",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "b7e57de83b56400f8111ee746012b27a",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "49adb5faea3e45d39678ea471a96c0fc",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f245cd2aa1c3430e808e95dcc9816228",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "afb5cb5eac23461fa8b06005df0273ed",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "36d56c8b87be454c9e7f9e37753761f8",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2e8d57a1d3324108ada4be4e615bd9c5",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a0b625ec705246cc88814a9a4c675aa5",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2ce15c81bc9a4e47b895cde712eb2fd1",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "84f9ad6b9d184c8d9684a342951cd05f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "f0bbbec2bf23465d9b7ab18bc3af09c3",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "87a325dfa701405c937b41e0e440c335",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "3b2ae8627f8542fc9a8dac80d1fe2061",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5abc5a2f1cdb4e08a30076cd7e5a2fa1",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a0031dfc1e614af39054d17304125425",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "cb8be45da92043a592e960c0c8dd5516",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "c87f4c3fddac4dd18461927a369794ec",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "72678ae6fff4489db8007c8fe55f031f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "eafef1d3835d411a949c162b771c6b91",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "dd6f0505c5754dc9a46af6c2b44116b3",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ee09695f0c014a90873e0689308649a6",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a6e52c7c16ad44a59a19276ad99dfb66",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "056ff8652c3a44f1afe4698f83ea989e",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "0685a9571b02420badf2457b6c2d7f34",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a582653d28704385af723c29230ead7e",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "b13e6811c491475488644c690ad44f12",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "2bd4b6030add4213817fa11279f90914",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "31adf9300db947cda519b51dd0469c7d",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "a7c0586e95e34fcea4b32d1c4b5c6112",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "908de42103ed46f9aae0190181144e6c",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "6c7a77ae4f7d4ef9b399de63fcdf184f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "1d5cd2ab92a941709b473a6fd8cd58b0",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "50be55f1ffc64a5280e9405b16bc9469",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "19f8dc2e11194afca9a97a230eaa12cc",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "87f665242ddf4e6b9e40f2eccdf62328",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "ecf321724c704c91ba35b739521c0c3f",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "8ceef03974954253bd2c453f3eab997a",
+      "date_added": "2025-10-19T22:30:56.769296"
+    },
+    {
+      "id": "5a4b2b4af1074e76a72a453ab7f495d2",
+      "date_added": "2025-10-19T22:30:56.769296"
     }
   ],
-  "last_updated": "2025-10-06T15:26:52.585855",
+  "last_updated": "2025-10-20T15:37:07.633952",
   "run_snapshots": [
     {
-      "run_timestamp": "2024-10-05T22:00:17.684142",
-      "videos_on_disk": 5056,
-      "videos_in_subscriptions": 93,
-      "new_videos_added": 48,
+      "run_timestamp": "2025-10-19T22:00:02.039225",
+      "videos_on_disk": 6584,
+      "videos_in_subscriptions": 536,
+      "new_videos_added": 258,
       "total_activities": 12,
       "episodes_by_activity": {
-        "RUNNING": 619,
-        "STRENGTH": 676,
-        "CYCLING": 789,
-        "ROW_BOOTCAMP": 226,
-        "WALKING": 495,
-        "STRETCHING": 322,
-        "YOGA": 427,
-        "ROWING": 366,
-        "BOOTCAMP": 269,
-        "MEDITATION": 314,
-        "CARDIO": 278,
-        "BIKE_BOOTCAMP": 275
+        "RUNNING": 739,
+        "STRENGTH": 853,
+        "CYCLING": 973,
+        "ROW_BOOTCAMP": 227,
+        "WALKING": 620,
+        "STRETCHING": 439,
+        "YOGA": 582,
+        "ROWING": 485,
+        "BOOTCAMP": 388,
+        "MEDITATION": 467,
+        "CARDIO": 403,
+        "BIKE_BOOTCAMP": 408
       }
     },
     {
-      "run_timestamp": "2024-10-06T10:35:17.638442",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 164,
+      "run_timestamp": "2025-10-20T15:37:04.314522",
+      "videos_on_disk": 0,
+      "videos_in_subscriptions": 264,
       "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2024-10-06T10:51:19.637842",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 164,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2024-10-06T13:24:02.907652",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 284,
-      "new_videos_added": 120,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T13:29:30.238918",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 123,
-      "new_videos_added": 3,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T13:58:19.072659",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 123,
-      "new_videos_added": 120,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T14:15:50.818126",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 162,
-      "new_videos_added": 39,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T14:23:29.381138",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 162,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T14:30:17.407186",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 162,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T14:38:48.741867",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 162,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T14:42:35.087813",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 162,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T14:47:29.839217",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 162,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T14:52:22.786469",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 300,
-      "new_videos_added": 138,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T15:00:20.455231",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 300,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T15:04:19.048236",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 5,
-      "new_videos_added": 2,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T15:13:16.156448",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 3,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T15:14:02.484999",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 57,
-      "new_videos_added": 27,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T15:22:43.074260",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 60,
-      "new_videos_added": 15,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
-    },
-    {
-      "run_timestamp": "2025-10-06T15:26:52.227794",
-      "videos_on_disk": 4,
-      "videos_in_subscriptions": 45,
-      "new_videos_added": 0,
-      "total_activities": 2,
-      "episodes_by_activity": {
-        "CYCLING": 3,
-        "STRENGTH": 1
-      }
+      "total_activities": 0,
+      "episodes_by_activity": {}
     }
   ]
 }
