@@ -574,8 +574,13 @@ class GenericDirectoryValidator:
                     try:
                         import ffmpeg
                     except ImportError:
-                        self.logger.error("ffmpeg-python library is not installed. Cannot generate thumbnail.")
-                        return False
+                        self.logger.warning("ffmpeg-python library is not installed. Skipping thumbnail generation.")
+                        return True  # Don't fail the repair if thumbnail generation isn't available
+                    
+                    # Check if source video file exists
+                    if not action.source_path.exists():
+                        self.logger.warning(f"Source video file does not exist: {action.source_path}. Skipping thumbnail generation.")
+                        return True  # Don't fail if source file is missing
                     
                     # Generate thumbnail from video
                     # Using ss=2 to get frame at 2 seconds
@@ -589,20 +594,24 @@ class GenericDirectoryValidator:
                             .input(str(action.source_path), ss=2)
                             .output(str(action.target_path), vframes=1, qscale=2)
                             .overwrite_output()
-                            .run(capture_stdout=True, capture_stderr=True)
+                            .run(capture_stdout=True, capture_stderr=True, quiet=True)
                         )
                         
                         self.logger.info(f"Successfully generated thumbnail: {action.target_path}")
                         
                     except ffmpeg.Error as e:
-                        self.logger.error(f"Failed to generate thumbnail: {e}")
+                        self.logger.warning(f"Failed to generate thumbnail (ffmpeg error): {e}")
                         # Try to decode stderr if available
                         error_details = e.stderr.decode('utf8') if hasattr(e, 'stderr') and e.stderr else str(e)
-                        self.logger.error(f"ffmpeg error details: {error_details}")
-                        return False
+                        self.logger.debug(f"ffmpeg error details: {error_details}")
+                        # Don't fail the repair if thumbnail generation fails - it's not critical
+                        return True
+                    except FileNotFoundError:
+                        self.logger.warning("ffmpeg executable not found in PATH. Skipping thumbnail generation.")
+                        return True  # Don't fail if ffmpeg isn't installed
                     except Exception as e:
-                        self.logger.error(f"Unexpected error generating thumbnail: {e}")
-                        return False
+                        self.logger.warning(f"Unexpected error generating thumbnail: {e}. Skipping thumbnail generation.")
+                        return True  # Don't fail the repair for thumbnail generation issues
                     
                 else:
                     self.logger.error(f"Unknown repair action type: {action.action_type}")
