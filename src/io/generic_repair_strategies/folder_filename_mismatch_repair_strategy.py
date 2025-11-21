@@ -222,7 +222,8 @@ class FolderFilenameMismatchRepairStrategy(DirectoryRepairStrategy):
         Returns:
             List of video file paths
         """
-        video_extensions = {'.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v'}
+        from ...core.models import VIDEO_EXTENSIONS
+        video_extensions = {f".{ext}" for ext in VIDEO_EXTENSIONS}
         video_files = []
         
         try:

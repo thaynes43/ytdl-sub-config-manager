@@ -64,6 +64,23 @@ class IncompleteEpisodeCleanupStrategy(DirectoryRepairStrategy):
         
         # List what files are missing for logging
         missing_files = self._get_missing_files(path)
+        
+        # Check if ONLY the thumbnail is missing
+        if len(missing_files) == 1 and any(f.endswith("-thumb.jpg") for f in missing_files):
+            # Try to generate thumbnail instead of deleting
+            video_file = path / f"{folder_name}.mp4"
+            thumb_file = path / f"{folder_name}-thumb.jpg"
+            
+            if video_file.exists():
+                # Add action to generate thumbnail
+                actions.append(RepairAction(
+                    action_type="generate_thumbnail",
+                    source_path=video_file,
+                    target_path=thumb_file,
+                    reason=f"Generate missing thumbnail from video: '{folder_name}.mp4'"
+                ))
+                return actions
+        
         missing_list = ", ".join(missing_files)
         
         # Create delete action for the incomplete episode
@@ -89,8 +106,9 @@ class IncompleteEpisodeCleanupStrategy(DirectoryRepairStrategy):
         """
         folder_name = directory.name
         
-        # Expected file patterns based on folder name
-        expected_files = {
+        # Required files for the episode to be considered valid
+        # Note: Thumbnail is considered required again because we can generate it if missing
+        required_files = {
             f"{folder_name}.mp4",           # Video file
             f"{folder_name}.info.json",     # Metadata file  
             f"{folder_name}-thumb.jpg"      # Thumbnail file
@@ -106,10 +124,12 @@ class IncompleteEpisodeCleanupStrategy(DirectoryRepairStrategy):
             self.logger.debug(f"Error scanning episode directory {directory}: {e}")
             return True  # Assume incomplete if we can't scan
         
-        # Check if any required files are missing
-        missing_files = expected_files - existing_files
+        # Check if any REQUIRED files are missing
+        missing_files = required_files - existing_files
         
         if missing_files:
+            # If only thumbnail is missing, we can repair it (so it is 'incomplete' but repairable)
+            # If video or json is missing, it is 'incomplete' and needs deletion
             self.logger.debug(f"Episode {directory} missing files: {missing_files}")
             return True
         

@@ -60,7 +60,7 @@ class TestIncompleteEpisodeCleanupStrategy:
             assert result is True
     
     def test_can_repair_episode_missing_thumbnail(self):
-        """Test that episodes missing thumbnail files are detected for deletion."""
+        """Test that episodes missing ONLY thumbnail files ARE detected for repair (generation)."""
         with tempfile.TemporaryDirectory() as temp_dir:
             episode_dir = Path(temp_dir) / 'S60E3 - Test Episode'
             episode_dir.mkdir()
@@ -71,7 +71,13 @@ class TestIncompleteEpisodeCleanupStrategy:
             
             result = self.strategy.can_repair(episode_dir, self.mock_pattern)
             
-            assert result is True
+            assert result is True, "Episode missing thumbnail SHOULD be detected for repair (generation)"
+            
+            actions = self.strategy.generate_repair_actions(episode_dir, self.mock_pattern)
+            assert len(actions) == 1
+            assert actions[0].action_type == "generate_thumbnail"
+            assert actions[0].source_path == episode_dir / 'S60E3 - Test Episode.mp4'
+            assert actions[0].target_path == episode_dir / 'S60E3 - Test Episode-thumb.jpg'
     
     def test_can_repair_episode_missing_multiple_files(self):
         """Test that episodes missing multiple files are detected for deletion."""

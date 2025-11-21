@@ -125,3 +125,6 @@ class ClassMetadata:
     player_url: str
     season_number: int
     episode_number: int
+
+# Constants
+VIDEO_EXTENSIONS = {'mp4', 'mkv', 'avi', 'mov', 'webm', 'flv'}

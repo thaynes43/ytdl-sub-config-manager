@@ -564,6 +564,45 @@ class GenericDirectoryValidator:
                     
                     # Clean up empty parent directories
                     self._cleanup_empty_directories(source_parent)
+                
+                elif action.action_type == "generate_thumbnail":
+                    if not action.target_path:
+                        self.logger.error("Generate thumbnail action requires target_path")
+                        return False
+                    
+                    # Use ffmpeg-python to generate thumbnail
+                    try:
+                        import ffmpeg
+                    except ImportError:
+                        self.logger.error("ffmpeg-python library is not installed. Cannot generate thumbnail.")
+                        return False
+                    
+                    # Generate thumbnail from video
+                    # Using ss=2 to get frame at 2 seconds
+                    try:
+                        self.logger.info(f"Generating thumbnail for {action.source_path}")
+                        
+                        # Run ffmpeg command via ffmpeg-python wrapper
+                        # Equivalent to: ffmpeg -ss 00:00:02 -i input.mp4 -vframes 1 -q:v 2 -y output.jpg
+                        (
+                            ffmpeg
+                            .input(str(action.source_path), ss=2)
+                            .output(str(action.target_path), vframes=1, qscale=2)
+                            .overwrite_output()
+                            .run(capture_stdout=True, capture_stderr=True)
+                        )
+                        
+                        self.logger.info(f"Successfully generated thumbnail: {action.target_path}")
+                        
+                    except ffmpeg.Error as e:
+                        self.logger.error(f"Failed to generate thumbnail: {e}")
+                        # Try to decode stderr if available
+                        error_details = e.stderr.decode('utf8') if hasattr(e, 'stderr') and e.stderr else str(e)
+                        self.logger.error(f"ffmpeg error details: {error_details}")
+                        return False
+                    except Exception as e:
+                        self.logger.error(f"Unexpected error generating thumbnail: {e}")
+                        return False
                     
                 else:
                     self.logger.error(f"Unknown repair action type: {action.action_type}")
