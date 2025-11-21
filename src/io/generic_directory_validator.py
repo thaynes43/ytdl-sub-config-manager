@@ -564,6 +564,54 @@ class GenericDirectoryValidator:
                     
                     # Clean up empty parent directories
                     self._cleanup_empty_directories(source_parent)
+                
+                elif action.action_type == "generate_thumbnail":
+                    if not action.target_path:
+                        self.logger.error("Generate thumbnail action requires target_path")
+                        return False
+                    
+                    # Use ffmpeg-python to generate thumbnail
+                    try:
+                        import ffmpeg
+                    except ImportError:
+                        self.logger.warning("ffmpeg-python library is not installed. Skipping thumbnail generation.")
+                        return True  # Don't fail the repair if thumbnail generation isn't available
+                    
+                    # Check if source video file exists
+                    if not action.source_path.exists():
+                        self.logger.warning(f"Source video file does not exist: {action.source_path}. Skipping thumbnail generation.")
+                        return True  # Don't fail if source file is missing
+                    
+                    # Generate thumbnail from video
+                    # Using ss=2 to get frame at 2 seconds
+                    try:
+                        self.logger.info(f"Generating thumbnail for {action.source_path}")
+                        
+                        # Run ffmpeg command via ffmpeg-python wrapper
+                        # Equivalent to: ffmpeg -ss 00:00:02 -i input.mp4 -vframes 1 -q:v 2 -y output.jpg
+                        (
+                            ffmpeg
+                            .input(str(action.source_path), ss=2)
+                            .output(str(action.target_path), vframes=1, qscale=2)
+                            .overwrite_output()
+                            .run(capture_stdout=True, capture_stderr=True, quiet=True)
+                        )
+                        
+                        self.logger.info(f"Successfully generated thumbnail: {action.target_path}")
+                        
+                    except ffmpeg.Error as e:
+                        self.logger.warning(f"Failed to generate thumbnail (ffmpeg error): {e}")
+                        # Try to decode stderr if available
+                        error_details = e.stderr.decode('utf8') if hasattr(e, 'stderr') and e.stderr else str(e)
+                        self.logger.debug(f"ffmpeg error details: {error_details}")
+                        # Don't fail the repair if thumbnail generation fails - it's not critical
+                        return True
+                    except FileNotFoundError:
+                        self.logger.warning("ffmpeg executable not found in PATH. Skipping thumbnail generation.")
+                        return True  # Don't fail if ffmpeg isn't installed
+                    except Exception as e:
+                        self.logger.warning(f"Unexpected error generating thumbnail: {e}. Skipping thumbnail generation.")
+                        return True  # Don't fail the repair for thumbnail generation issues
                     
                 else:
                     self.logger.error(f"Unknown repair action type: {action.action_type}")

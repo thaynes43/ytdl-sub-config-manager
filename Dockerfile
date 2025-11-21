@@ -15,6 +15,7 @@ RUN apt-get update && \
         chromium \
         chromium-driver \
         git \
+        ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies

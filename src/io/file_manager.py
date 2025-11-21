@@ -432,6 +432,8 @@ class FileManager:
             if media_path.exists():
                 # Walk through all directories and files to find existing content
                 import os
+                from ..core.models import VIDEO_EXTENSIONS
+                
                 for root, dirs, files in os.walk(media_path):
                     # Check both episode directories and actual files
                     for dir_name in dirs:
@@ -440,8 +442,9 @@ class FileManager:
                             existing_file_paths.add(str(Path(root) / dir_name))
                     
                     # Also check for actual episode files
+                    ext_pattern = '|'.join(VIDEO_EXTENSIONS)
                     for file_name in files:
-                        if re.match(r'S\d+E\d+\s*-\s*.+\.(mp4|mkv|avi|mov)', file_name):
+                        if re.match(fr'S\d+E\d+\s*-\s*.+\.({ext_pattern})', file_name):
                             existing_file_paths.add(str(Path(root) / file_name))
             
             # Track changes
