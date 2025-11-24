@@ -18,6 +18,7 @@ class DirectoryRepairMetrics:
     corrupted_locations_repaired: int = 0
     corrupted_locations_failed: int = 0
     parent_directories_repaired: int = 0
+    thumbnails_generated: int = 0
     episode_conflicts_found: int = 0
     episode_conflicts_resolved: int = 0
     repair_passes_executed: int = 0
@@ -34,6 +35,7 @@ class DirectoryRepairMetrics:
         
         total_repairs = (self.corrupted_locations_repaired + 
                         self.parent_directories_repaired + 
+                        self.thumbnails_generated +
                         self.episode_conflicts_resolved)
         
         if total_repairs == 0:
@@ -44,6 +46,8 @@ class DirectoryRepairMetrics:
             parts.append(f"{self.corrupted_locations_repaired} corrupted locations repaired")
         if self.corrupted_locations_failed > 0:
             parts.append(f"{self.corrupted_locations_failed} FAILED to repair")
+        if self.thumbnails_generated > 0:
+            parts.append(f"{self.thumbnails_generated} thumbnails generated")
         if self.parent_directories_repaired > 0:
             parts.append(f"{self.parent_directories_repaired} parent directories cleaned")
         if self.episode_conflicts_resolved > 0:

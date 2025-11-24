@@ -27,6 +27,7 @@ class TestDirectoryRepairMetrics:
         assert metrics.corrupted_locations_found == 0
         assert metrics.corrupted_locations_repaired == 0
         assert metrics.parent_directories_repaired == 0
+        assert metrics.thumbnails_generated == 0
         assert metrics.episode_conflicts_found == 0
         assert metrics.episode_conflicts_resolved == 0
         assert metrics.repair_passes_executed == 0
@@ -63,11 +64,13 @@ class TestDirectoryRepairMetrics:
             total_episodes_scanned=100,
             corrupted_locations_repaired=5,
             parent_directories_repaired=3,
+            thumbnails_generated=10,
             episode_conflicts_resolved=2
         )
         summary = metrics.get_summary()
         assert "100 episodes" in summary
         assert "5 corrupted locations repaired" in summary
+        assert "10 thumbnails generated" in summary
         assert "3 parent directories cleaned" in summary
         assert "2 episode conflicts resolved" in summary
 

@@ -312,6 +312,13 @@ class FileManager:
             # Update the preset to use the configured media directory
             self._update_preset_media_directory(subs_data)
             
+            # Get all existing class IDs from disk (JSON files) to prevent duplicates
+            existing_class_ids_from_disk = self.find_all_existing_class_ids()
+            skipped_duplicates = 0
+            
+            # Import the proper class ID extraction function
+            from ..webscraper.models import extract_class_id_from_url
+            
             # Merge in new subscriptions
             for header, episodes in subscriptions.items():
                 if header not in subs_data["Plex TV Show by Date"]:
@@ -319,24 +326,42 @@ class FileManager:
                 
                 # Add each episode, checking for name conflicts with different class IDs
                 for ep_title, ep_data in episodes.items():
-                    # Extract class ID from download URL for logging
+                    # Extract class ID from download URL using proper extraction function
                     download_url = ep_data.get("download", "")
-                    new_class_id = download_url.split('/')[-1] if '/' in download_url else 'UNKNOWN'
+                    new_class_id = extract_class_id_from_url(download_url)
+                    
+                    # Skip if we couldn't extract a valid class ID
+                    if not new_class_id:
+                        self.logger.warning(f"Could not extract class ID from URL: {download_url}")
+                        continue
+                    
+                    # Check if this class ID already exists in JSON files on disk
+                    # BUT: Allow overwriting if the episode title already exists in subscriptions
+                    # (this handles the case where subscription is being updated)
+                    episode_exists_in_subs = ep_title in subs_data["Plex TV Show by Date"][header]
+                    
+                    if new_class_id in existing_class_ids_from_disk and not episode_exists_in_subs:
+                        skipped_duplicates += 1
+                        self.logger.info(f"Skipping duplicate subscription: '{ep_title}' (class ID {new_class_id} already exists in JSON files on disk)")
+                        continue
                     
                     # Check if episode title already exists with different class ID
                     final_ep_title = ep_title
                     if ep_title in subs_data["Plex TV Show by Date"][header]:
                         existing_episode = subs_data["Plex TV Show by Date"][header][ep_title]
                         existing_url = existing_episode.get("download", "")
-                        existing_class_id = existing_url.split('/')[-1] if '/' in existing_url else 'UNKNOWN'
+                        existing_class_id = extract_class_id_from_url(existing_url)
                         
-                        if existing_class_id != new_class_id:
+                        if existing_class_id and existing_class_id != new_class_id:
                             # Same name, different class ID - append class ID to new episode
                             final_ep_title = f"{ep_title} {new_class_id[:7]}"
                             self.logger.info(f"Deconflicted episode name: '{ep_title}' -> '{final_ep_title}' (class ID conflict: existing {existing_class_id[:7]} vs new {new_class_id[:7]})")
                     
                     subs_data["Plex TV Show by Date"][header][final_ep_title] = ep_data
                     self.logger.debug(f"Added episode: {header} -> {final_ep_title} (class ID: {new_class_id})")
+            
+            if skipped_duplicates > 0:
+                self.logger.info(f"Skipped {skipped_duplicates} duplicate subscriptions that already exist on disk")
             
             # Write back to file
             with open(subs_file_path, 'w', encoding='utf-8') as f:

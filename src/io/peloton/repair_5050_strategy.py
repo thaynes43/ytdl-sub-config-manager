@@ -24,7 +24,10 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         """
         path_str = str(path)
         
-        # SIMPLE: Check if "50/50" appears ANYWHERE in the entire file path
+        # IMPORTANT: Only repair paths with "50/50" (slash) corruption, NOT "50-50" (hyphen)
+        # The hyphen version "50-50" is the CORRECT format and should never be repaired
+        
+        # Check if "50/50" appears ANYWHERE in the entire file path
         # This catches all corruption caused by slashes in "50/50" class names
         if "50/50" in path_str:
             self.logger.debug(f"50/50 strategy detected '50/50' corruption in path: {path}")
@@ -32,11 +35,13 @@ class Repair5050Strategy(DirectoryRepairStrategy):
         
         # Also check path parts for standalone "50" directories (Windows compatibility)
         # Check if there's a "50" directory that shouldn't be there
+        # But ONLY if it's NOT part of a legitimate "50-50" name
         parts = list(path.parts)
         for i, part in enumerate(parts):
             if part == "50":
                 # Check if previous part ends with "50" (indicating it was split from "50/50")
-                if i > 0 and parts[i-1].endswith(" 50"):
+                # But make sure it's not part of a legitimate "50-50" name
+                if i > 0 and parts[i-1].endswith(" 50") and ": 50-50" not in parts[i-1]:
                     self.logger.debug(f"50/50 strategy detected split '50' directory in path: {path}")
                     return True
             
@@ -89,11 +94,17 @@ class Repair5050Strategy(DirectoryRepairStrategy):
                 continue
                 
             # Fix bootcamp names with 50/50 corruption - preserve episode name but clean corruption
+            # IMPORTANT: Only clean if it has "50/50" (slash), NOT "50-50" (hyphen)
             if "bootcamp" in part.lower() and "50" in part:
-                # Extract the episode name and clean it up
-                corrected_part = self._clean_episode_name(part)
-                self.logger.debug(f"Correcting bootcamp name: {part} -> {corrected_part}")
-                corrected_parts.append(corrected_part)
+                # Only clean if it has the corruption pattern "50/50", not the correct "50-50"
+                if "50/50" in part:
+                    # Extract the episode name and clean it up
+                    corrected_part = self._clean_episode_name(part)
+                    self.logger.debug(f"Correcting bootcamp name: {part} -> {corrected_part}")
+                    corrected_parts.append(corrected_part)
+                else:
+                    # Name already has correct "50-50" format, don't modify it
+                    corrected_parts.append(part)
             else:
                 corrected_parts.append(part)
             
@@ -134,6 +145,9 @@ class Repair5050Strategy(DirectoryRepairStrategy):
     def _clean_episode_name(self, episode_name: str) -> str:
         """Clean up episode name by fixing 50/50 corruption while preserving the episode info.
         
+        IMPORTANT: This method should ONLY be called for names with "50/50" (slash) corruption.
+        Names with "50-50" (hyphen) are already correct and should not be modified.
+        
         Args:
             episode_name: Original episode name with corruption
             
@@ -141,15 +155,26 @@ class Repair5050Strategy(DirectoryRepairStrategy):
             Cleaned episode name
         """
         # Convert "50/50" to "50-50" (this is the correct format)
-        cleaned = episode_name.replace(": 50/50", ": 50-50")
+        cleaned = episode_name.replace("50/50", "50-50")
+        cleaned = cleaned.replace(": 50/50", ": 50-50")
         
-        # Remove ": 50" suffix that appears in corrupted names (standalone : 50, not : 50-50)
-        # But only if it's not part of ": 50-50"
+        # Only remove ": 50" suffix if it's a standalone corruption (not part of ": 50-50")
+        # This preserves legitimate names like "30 min Bootcamp: 50-50 with Instructor"
         if ": 50-50" not in cleaned:
-            cleaned = cleaned.replace(": 50", "")
+            # Only remove ": 50" if it's at the end or followed by nothing meaningful
+            # Don't remove it if it's part of a longer name
+            if cleaned.endswith(": 50"):
+                cleaned = cleaned[:-4]  # Remove ": 50" from end
+            elif ": 50 " in cleaned:
+                # This might be a split corruption, but be careful not to remove legitimate parts
+                # Only remove if it's clearly a corruption pattern
+                pass  # Keep it for now to avoid truncating legitimate names
         
         # Remove any standalone "50" that might be at the end (but not "50-50")
-        if not cleaned.endswith("50-50"):
+        # Only do this if it's clearly a corruption, not part of a legitimate name
+        if cleaned.endswith(" 50") and not cleaned.endswith("50-50"):
+            # Check if this is likely corruption (ends with " 50" but not "50-50")
+            # Only remove if it's not followed by meaningful text
             cleaned = cleaned.rstrip(" 50")
         
         # Clean up any double spaces that might have been created

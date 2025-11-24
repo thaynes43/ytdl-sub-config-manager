@@ -95,16 +95,14 @@ class GenericDirectoryValidator:
         
         # Step 2: Detect and fix corrupted directory structures
         corrupted_episodes = [ep for ep in all_episodes if ep.is_corrupted_location]
-        repaired_corrupted_count = 0
         if corrupted_episodes:
             if metrics:
                 metrics.corrupted_locations_found = len(corrupted_episodes)
             self.logger.warning(f"Found {len(corrupted_episodes)} episodes in corrupted locations")
             if not self._repair_corrupted_locations(corrupted_episodes, metrics):
                 return False
-            repaired_corrupted_count = len(corrupted_episodes)
-            if metrics:
-                metrics.corrupted_locations_repaired = repaired_corrupted_count
+            # Note: corrupted_locations_repaired is tracked per-episode in _repair_single_episode
+            # (excluding thumbnail-only repairs)
             
         # Step 2.5: Scan and repair parent directories (for cleanup strategies)
         # Run multiple passes until no more repairs are needed (max 10 passes to prevent infinite loops)
@@ -124,9 +122,10 @@ class GenericDirectoryValidator:
             metrics.parent_directories_repaired = total_parent_repairs
             metrics.repair_passes_executed = pass_num + 1 if total_parent_repairs > 0 else 0
         
-        repaired_corrupted_count += total_parent_repairs
+        # Check if we need to re-scan after repairs
+        total_repairs_so_far = (metrics.corrupted_locations_repaired if metrics else 0) + total_parent_repairs
         
-        if repaired_corrupted_count > 0:
+        if total_repairs_so_far > 0:
             # Re-scan after repairs
             all_episodes = self._scan_all_episodes(log_context="after corruption repair")
         
@@ -156,9 +155,25 @@ class GenericDirectoryValidator:
             return False
         
         # Log repair summary
-        total_repairs = repaired_corrupted_count + repaired_conflicts_count
+        corrupted_count = metrics.corrupted_locations_repaired if metrics else 0
+        conflicts_count = metrics.episode_conflicts_resolved if metrics else 0
+        thumbnails_count = metrics.thumbnails_generated if metrics else 0
+        parent_count = metrics.parent_directories_repaired if metrics else 0
+        total_repairs = corrupted_count + conflicts_count + thumbnails_count + parent_count
+        
         if total_repairs > 0:
-            self.logger.info(f"Repaired {total_repairs} directories ({repaired_corrupted_count} corrupted locations, {repaired_conflicts_count} episode conflicts)")
+            parts = []
+            if corrupted_count > 0:
+                parts.append(f"{corrupted_count} corrupted locations")
+            if thumbnails_count > 0:
+                parts.append(f"{thumbnails_count} thumbnails")
+            if parent_count > 0:
+                parts.append(f"{parent_count} parent directories")
+            if conflicts_count > 0:
+                parts.append(f"{conflicts_count} episode conflicts")
+            
+            repairs_detail = ", ".join(parts)
+            self.logger.info(f"Repaired {total_repairs} items ({repairs_detail})")
         else:
             self.logger.info("Repaired 0 directories")
         
@@ -373,12 +388,18 @@ class GenericDirectoryValidator:
                     if hasattr(repair_strategy, 'can_repair') and repair_strategy.can_repair(root_path, None):
                         # Generate and execute repair actions
                         actions = repair_strategy.generate_repair_actions(root_path, None)
-                        if actions and self._execute_repair_actions(actions):
-                            strategy_name = repair_strategy.__class__.__name__
-                            self.logger.info(f"Successfully repaired {root_path} using {strategy_name}")
-                            repaired_count += 1
-                            if metrics:
-                                metrics.repairs_by_strategy[strategy_name] = metrics.repairs_by_strategy.get(strategy_name, 0) + 1
+                        if actions:
+                            # Check if this is only thumbnail generation (not a parent directory repair)
+                            is_thumbnail_only = all(action.action_type == "generate_thumbnail" for action in actions)
+                            
+                            if self._execute_repair_actions(actions, metrics):
+                                strategy_name = repair_strategy.__class__.__name__
+                                self.logger.info(f"Successfully repaired {root_path} using {strategy_name}")
+                                # Only count as parent directory repair if it's not just thumbnail generation
+                                if not is_thumbnail_only:
+                                    repaired_count += 1
+                                if metrics:
+                                    metrics.repairs_by_strategy[strategy_name] = metrics.repairs_by_strategy.get(strategy_name, 0) + 1
                         break  # Only use the first strategy that can handle it
                 except Exception as e:
                     self.logger.debug(f"Strategy {repair_strategy.__class__.__name__} failed on {root_path}: {e}")
@@ -434,11 +455,17 @@ class GenericDirectoryValidator:
                             self.logger.info(f"Strategy {repair_strategy.__class__.__name__} skipped repair for {episode.path} (no actions generated)")
                             continue  # Try next strategy
                         
-                        if self._execute_repair_actions(actions):
+                        # Check if this is only thumbnail generation (not a corrupted location repair)
+                        is_thumbnail_only = all(action.action_type == "generate_thumbnail" for action in actions)
+                        
+                        if self._execute_repair_actions(actions, metrics):
                             strategy_name = repair_strategy.__class__.__name__
                             self.logger.info(f"Successfully repaired {episode.path} using {strategy_name}")
                             if metrics:
                                 metrics.repairs_by_strategy[strategy_name] = metrics.repairs_by_strategy.get(strategy_name, 0) + 1
+                                # Only count as corrupted location repair if it's not just thumbnail generation
+                                if not is_thumbnail_only:
+                                    metrics.corrupted_locations_repaired += 1
                             return True
                         else:
                             self.logger.warning(f"Failed to execute repair actions from {repair_strategy.__class__.__name__} for {episode.path}")
@@ -466,11 +493,12 @@ class GenericDirectoryValidator:
             self.logger.error(f"No repair strategy could handle episode: {episode.path}")
             return False
     
-    def _execute_repair_actions(self, actions: List[RepairAction]) -> bool:
+    def _execute_repair_actions(self, actions: List[RepairAction], metrics=None) -> bool:
         """Execute a list of repair actions.
         
         Args:
             actions: List of repair actions to execute
+            metrics: Optional DirectoryRepairMetrics to track statistics
             
         Returns:
             True if all actions were successful, False otherwise
@@ -598,6 +626,10 @@ class GenericDirectoryValidator:
                         )
                         
                         self.logger.info(f"Successfully generated thumbnail: {action.target_path}")
+                        
+                        # Track thumbnail generation in metrics
+                        if metrics:
+                            metrics.thumbnails_generated += 1
                         
                     except ffmpeg.Error as e:
                         self.logger.warning(f"Failed to generate thumbnail (ffmpeg error): {e}")
