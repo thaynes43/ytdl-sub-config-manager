@@ -257,7 +257,7 @@ class ActivityScrapingStats:
         return data
 
 
-@dataclass
+@dataclass(init=True)
 class WebScrapingMetrics:
     """Metrics collected during web scraping stage."""
     

@@ -232,10 +232,10 @@ class TestWebScrapingMetrics:
     def test_to_dict_with_activities(self):
         """Test dictionary conversion with activities."""
         metrics = WebScrapingMetrics(
-            total_activities_scraped=2,
-            total_classes_found=35,
-            total_classes_skipped=10,
-            total_classes_added=25
+            total_activities_scraped=2,  # type: ignore
+            total_classes_found=35,  # type: ignore
+            total_classes_skipped=10,  # type: ignore
+            total_classes_added=25  # type: ignore
         )
         
         metrics.activities['strength'] = ActivityScrapingStats(
@@ -258,10 +258,10 @@ class TestWebScrapingMetrics:
     def test_summary_with_activities(self):
         """Test summary with scraped activities."""
         metrics = WebScrapingMetrics(
-            total_activities_scraped=3,
-            total_classes_found=50,
-            total_classes_skipped=10,
-            total_classes_added=40
+            total_activities_scraped=3,  # type: ignore
+            total_classes_found=50,  # type: ignore
+            total_classes_skipped=10,  # type: ignore
+            total_classes_added=40  # type: ignore
         )
         
         summary = metrics.get_summary()
@@ -273,10 +273,10 @@ class TestWebScrapingMetrics:
     def test_summary_with_errors(self):
         """Test summary with errors."""
         metrics = WebScrapingMetrics(
-            total_activities_scraped=2,
-            total_classes_found=20,
-            total_classes_added=18,
-            total_errors=2
+            total_activities_scraped=2,  # type: ignore
+            total_classes_found=20,  # type: ignore
+            total_classes_added=18,  # type: ignore
+            total_errors=2  # type: ignore
         )
         
         summary = metrics.get_summary()
