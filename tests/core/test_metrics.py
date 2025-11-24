@@ -133,9 +133,9 @@ class TestExistingEpisodesMetrics:
     def test_to_dict_with_activities(self):
         """Test dictionary conversion with activities."""
         metrics = ExistingEpisodesMetrics(
-            total_activities=2,
-            total_episodes_on_disk=40,
-            total_subscriptions_in_yaml=10
+            total_activities=2,  # type: ignore
+            total_episodes_on_disk=40,  # type: ignore
+            total_subscriptions_in_yaml=10  # type: ignore
         )
         
         from src.core.metrics import SeasonStats
@@ -158,11 +158,11 @@ class TestExistingEpisodesMetrics:
     def test_summary(self):
         """Test summary generation."""
         metrics = ExistingEpisodesMetrics(
-            total_activities=12,
-            total_episodes_on_disk=184,
-            total_subscriptions_in_yaml=23,
-            total_subscriptions_after_cleanup=20,
-            existing_class_ids_count=195
+            total_activities=12,  # type: ignore
+            total_episodes_on_disk=184,  # type: ignore
+            total_subscriptions_in_yaml=23,  # type: ignore
+            total_subscriptions_after_cleanup=20,  # type: ignore
+            existing_class_ids_count=195  # type: ignore
         )
         
         summary = metrics.get_summary()
