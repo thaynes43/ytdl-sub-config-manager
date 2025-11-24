@@ -34,11 +34,17 @@ class CorruptedFolderDeletionStrategy(DirectoryRepairStrategy):
         
         folder_name = path.name
         
+        # IMPORTANT: Don't match folders with "50-50" (hyphen) - that's a legitimate name
+        # Only match truly corrupted folders that are just numbers or "50-" without the second "50"
+        if "50-50" in folder_name:
+            # This is a legitimate folder name, not corruption
+            return False
+        
         # Check if folder name is completely corrupted (common patterns)
         corrupted_folder_patterns = [
-            r'^50$',        # Just "50"
-            r'^50-$',       # "50-"
-            r'^\d{1,2}$',   # Any 1-2 digit number
+            r'^50$',        # Just "50" (but not "50-50")
+            r'^50-$',       # "50-" (incomplete, missing second "50")
+            r'^\d{1,2}$',   # Any 1-2 digit number (but exclude if it's part of "50-50")
         ]
         
         folder_is_corrupted = any(re.match(pattern, folder_name) for pattern in corrupted_folder_patterns)

@@ -341,11 +341,12 @@ class TestFileManager:
             result = file_manager.add_new_subscriptions(subscriptions)
             assert result is False
 
+    @patch('src.webscraper.models.extract_class_id_from_url')
     @patch('builtins.open')
     @patch('yaml.dump')
     @patch('yaml.safe_load')
     @patch('src.io.file_manager.Path')
-    def test_add_new_subscriptions_unicode_handling(self, mock_path_class, mock_yaml_safe_load, mock_yaml_dump, mock_open):
+    def test_add_new_subscriptions_unicode_handling(self, mock_path_class, mock_yaml_safe_load, mock_yaml_dump, mock_open, mock_extract_class_id):
         """Test add_new_subscriptions method handles Unicode characters correctly."""
         # Setup mocks
         mock_path = MagicMock()
@@ -356,8 +357,12 @@ class TestFileManager:
         mock_file_handle = MagicMock()
         mock_open.return_value.__enter__.return_value = mock_file_handle
         
+        # Mock extract_class_id_from_url to return class IDs
+        mock_extract_class_id.side_effect = lambda url: url.split('/')[-1] if '/' in url else 'UNKNOWN'
+        
         with patch('src.io.file_manager.GenericEpisodeManager') as mock_manager_class:
             mock_manager = MagicMock()
+            mock_manager.find_all_existing_class_ids.return_value = set()  # No existing IDs
             mock_manager_class.return_value = mock_manager
             
             file_manager = FileManager(
