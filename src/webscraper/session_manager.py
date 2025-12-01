@@ -31,6 +31,9 @@ class SessionManager(ABC):
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         
+        # Enable performance logging to capture network requests
+        chrome_options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+        
         if self.container_mode:
             chrome_options.binary_location = "/usr/bin/chromium"
         

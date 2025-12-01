@@ -8,7 +8,7 @@
             "module": "src",
             "args": [
                 "--config",
-                "debug-config.yaml",
+                "debug-config-wsl.yaml",
                 "--log-level",
                 "DEBUG",
                 "scrape"

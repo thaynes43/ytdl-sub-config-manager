@@ -140,6 +140,7 @@ class TestScraperManager:
         # Should return failed result
         assert result.activity == "cycling"
         assert result.status == ScrapingStatus.FAILED
+        assert result.error_message is not None
         assert "Session error" in result.error_message
 
     def test_scrape_single_activity_scraping_failure(self):
@@ -169,6 +170,7 @@ class TestScraperManager:
         # Should return failed result
         assert result.activity == "cycling"
         assert result.status == ScrapingStatus.FAILED
+        assert result.error_message is not None
         assert "Scraping failed for cycling" in result.error_message
 
     def test_scrape_multiple_activities_success(self):
@@ -243,6 +245,7 @@ class TestScraperManager:
         assert len(results) == 2
         assert results["cycling"].status == ScrapingStatus.COMPLETED
         assert results["yoga"].status == ScrapingStatus.FAILED
+        assert results["yoga"].error_message is not None
         assert "Scraping failed for yoga" in results["yoga"].error_message
 
     def test_scrape_activities_missing_config(self):
@@ -271,6 +274,7 @@ class TestScraperManager:
         assert len(results) == 2
         assert results["cycling"].status == ScrapingStatus.COMPLETED
         assert results["yoga"].status == ScrapingStatus.FAILED
+        assert results["yoga"].error_message is not None
         assert "No configuration found" in results["yoga"].error_message
 
     def test_scrape_activities_session_creation_failure(self):
@@ -297,4 +301,121 @@ class TestScraperManager:
         
         # Should return failed result
         assert results["cycling"].status == ScrapingStatus.FAILED
+        assert results["cycling"].error_message is not None
         assert "Session error" in results["cycling"].error_message
+
+    def test_save_auth_artifacts(self, tmp_path):
+        """Test saving cookies and bearer token to files."""
+        # Create a temporary directory for media_dir
+        media_dir = tmp_path / "test_media"
+        media_dir.mkdir()
+        
+        # Create mock driver with cookies and localStorage
+        mock_driver = MagicMock()
+        mock_driver.get_cookies.return_value = [
+            {
+                'name': 'session_id',
+                'value': 'abc123',
+                'domain': '.onepeloton.com',
+                'path': '/',
+                'secure': True,
+                'httpOnly': True,
+                'expiry': None
+            },
+            {
+                'name': 'auth_token',
+                'value': 'xyz789',
+                'domain': '.onepeloton.com',
+                'path': '/',
+                'secure': True,
+                'httpOnly': False,
+                'expiry': 1234567890
+            }
+        ]
+        
+        # Mock execute_script to return token when asked for _capturedBearerToken
+        def side_effect(script):
+            if "return window._capturedBearerToken;" in script:
+                return "Bearer test_token_12345"
+            return None
+        mock_driver.execute_script.side_effect = side_effect
+        
+        # Create session manager with mock driver
+        session_manager = MockSessionManager()
+        session_manager.driver = mock_driver
+        
+        # Create scraper manager
+        scraper_strategy = MockScraperStrategy()
+        manager = ScraperManager(session_manager, scraper_strategy)
+        
+        # Call the method with a dummy class player URL to trigger token capture
+        manager._save_auth_artifacts(str(media_dir), class_player_url="https://example.com/classes/player/123")
+        
+        # Verify cookies.txt was created
+        cookies_path = media_dir / "cookies.txt"
+        assert cookies_path.exists(), "cookies.txt should be created"
+        
+        # Verify bearer.txt was created
+        bearer_path = media_dir / "bearer.txt"
+        assert bearer_path.exists(), "bearer.txt should be created"
+        
+        # Verify bearer token content
+        bearer_content = bearer_path.read_text()
+        assert bearer_content.strip() == "Bearer test_token_12345"
+        
+        # Verify cookies.txt is in Netscape format (should contain cookie data)
+        cookies_content = cookies_path.read_text()
+        assert "onepeloton.com" in cookies_content
+        assert "session_id" in cookies_content or "abc123" in cookies_content
+
+    def test_save_auth_artifacts_no_driver(self, tmp_path):
+        """Test save_auth_artifacts when driver is None."""
+        media_dir = tmp_path / "test_media"
+        media_dir.mkdir()
+        
+        session_manager = MockSessionManager()
+        session_manager.driver = None
+        
+        scraper_strategy = MockScraperStrategy()
+        manager = ScraperManager(session_manager, scraper_strategy)
+        
+        # Should not raise exception, just log warning
+        manager._save_auth_artifacts(str(media_dir))
+        
+        # Files should not be created
+        assert not (media_dir / "cookies.txt").exists()
+        assert not (media_dir / "bearer.txt").exists()
+
+    def test_save_auth_artifacts_no_token(self, tmp_path):
+        """Test save_auth_artifacts when token is not in localStorage."""
+        media_dir = tmp_path / "test_media"
+        media_dir.mkdir()
+        
+        mock_driver = MagicMock()
+        mock_driver.get_cookies.return_value = [
+            {
+                'name': 'session_id',
+                'value': 'abc123',
+                'domain': '.onepeloton.com',
+                'path': '/',
+                'secure': True,
+                'httpOnly': True,
+                'expiry': None
+            }
+        ]
+        mock_driver.execute_script.return_value = None  # No token in localStorage
+        
+        session_manager = MockSessionManager()
+        session_manager.driver = mock_driver
+        
+        scraper_strategy = MockScraperStrategy()
+        manager = ScraperManager(session_manager, scraper_strategy)
+        
+        # Call the method
+        manager._save_auth_artifacts(str(media_dir))
+        
+        # Cookies should still be saved
+        assert (media_dir / "cookies.txt").exists()
+        
+        # Bearer token should not be saved
+        assert not (media_dir / "bearer.txt").exists()
