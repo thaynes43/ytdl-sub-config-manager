@@ -392,7 +392,8 @@ class Application:
                         username=config.peloton_username,
                         password=config.peloton_password,
                         activities=[activity.value for activity in activities_to_scrape],
-                        configs=scraping_configs
+                        configs=scraping_configs,
+                        media_dir=config.media_dir
                     )
                 else:
                     logger.info("No activities need scraping - all are already at or over the limit")

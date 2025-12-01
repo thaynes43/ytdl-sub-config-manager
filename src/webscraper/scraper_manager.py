@@ -1,6 +1,8 @@
 """Generic web scraper manager with dependency injection."""
 
 from typing import Dict, List, Optional, Set
+from pathlib import Path
+from http.cookiejar import MozillaCookieJar, Cookie
 from ..core.logging import get_logger
 from .models import ScrapingConfig, ScrapingResult, ScrapingStatus
 from .session_manager import SessionManager
@@ -22,8 +24,60 @@ class ScraperManager:
         self.scraper_strategy = scraper_strategy
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
     
+    def _save_auth_artifacts(self, media_dir: str) -> None:
+        """Save cookies and bearer token to media directory."""
+        try:
+            auth_dir = Path(media_dir)
+            auth_dir.mkdir(parents=True, exist_ok=True)
+            
+            driver = self.session_manager.driver
+            if not driver:
+                self.logger.warning("No active driver to save auth artifacts")
+                return
+
+            # Save cookies
+            cookies_path = auth_dir / "cookies.txt"
+            self.logger.info(f"Saving cookies to {cookies_path}")
+            jar = MozillaCookieJar(str(cookies_path))
+            
+            for cookie in driver.get_cookies():
+                c = Cookie(
+                    version=0,
+                    name=cookie['name'],
+                    value=cookie['value'],
+                    port=None,
+                    port_specified=False,
+                    domain=cookie['domain'],
+                    domain_specified=bool(cookie.get('domain')),
+                    domain_initial_dot=bool(cookie.get('domain', '').startswith('.')),
+                    path=cookie['path'],
+                    path_specified=bool(cookie.get('path')),
+                    secure=cookie['secure'],
+                    expires=cookie.get('expiry'),
+                    discard=False,
+                    comment=None,
+                    comment_url=None,
+                    rest={'HttpOnly': str(cookie.get('httpOnly'))} if cookie.get('httpOnly') is not None else {},
+                    rfc2109=False,
+                )
+                jar.set_cookie(c)
+            
+            jar.save(ignore_discard=True, ignore_expires=True)
+            
+            # Save bearer token
+            token = driver.execute_script("return window.localStorage.getItem('accessToken')")
+            if token:
+                bearer_path = auth_dir / "bearer.txt"
+                self.logger.info(f"Saving bearer token to {bearer_path}")
+                bearer_path.write_text(token.strip())
+            else:
+                self.logger.warning("Could not retrieve accessToken from localStorage")
+                
+        except Exception as e:
+            self.logger.error(f"Failed to save auth artifacts: {e}")
+
     def scrape_activities(self, username: str, password: str, activities: List[str], 
-                         configs: Dict[str, ScrapingConfig]) -> Dict[str, ScrapingResult]:
+                         configs: Dict[str, ScrapingConfig], media_dir: Optional[str] = None) -> Dict[str, ScrapingResult]:
         """
         Scrape multiple activities in a single session.
         
@@ -32,6 +86,7 @@ class ScraperManager:
             password: Login password
             activities: List of activity names to scrape
             configs: Configuration for each activity
+            media_dir: Optional directory to save authentication artifacts (cookies/bearer token)
             
         Returns:
             Dictionary mapping activity names to scraping results
@@ -52,6 +107,10 @@ class ScraperManager:
             self.logger.info("Logging in")
             if not self.session_manager.login(username, password):
                 raise RuntimeError("Login failed")
+            
+            # Save authentication artifacts if media_dir is provided
+            if media_dir:
+                self._save_auth_artifacts(media_dir)
             
             # Scrape each activity
             for activity in activities:
