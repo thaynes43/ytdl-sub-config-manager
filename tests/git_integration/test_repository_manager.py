@@ -360,3 +360,33 @@ class TestPullRequestManager:
         assert "not mergeable" in result.message
         mock_pr.update.assert_called_once()
         mock_pr.merge.assert_not_called()
+
+    def test_delete_pull_request_branch_success(self, pr_manager):
+        """Test deleting a merged PR branch succeeds."""
+        mock_repo = Mock()
+        mock_ref = Mock()
+        mock_repo.get_git_ref.return_value = mock_ref
+
+        mock_pr = Mock()
+        mock_pr.head.ref = "feature-branch"
+        mock_pr.base.ref = "main"
+        mock_pr.base.repo = mock_repo
+
+        result = pr_manager._delete_pull_request_branch(mock_pr)
+
+        assert result.status == GitHubOperationStatus.SUCCESS
+        mock_repo.get_git_ref.assert_called_once_with("heads/feature-branch")
+        mock_ref.delete.assert_called_once()
+
+    def test_delete_pull_request_branch_refuses_base(self, pr_manager):
+        """Test deletion refuses to delete the base branch."""
+        mock_repo = Mock()
+        mock_pr = Mock()
+        mock_pr.head.ref = "main"
+        mock_pr.base.ref = "main"
+        mock_pr.base.repo = mock_repo
+
+        result = pr_manager._delete_pull_request_branch(mock_pr)
+
+        assert result.status == GitHubOperationStatus.FAILED
+        assert "Refusing to delete base branch" in result.message

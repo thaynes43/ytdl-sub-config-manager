@@ -13,6 +13,7 @@ from src.io.generic_directory_validator import (
     ConflictInfo
 )
 from src.core.models import Activity
+from src.io.media_source_strategy import RepairAction
 
 
 class TestDirectoryValidator:
@@ -356,6 +357,127 @@ class TestDirectoryValidator:
         # Test path with wrong depth
         deep_path = Path("/tmp/Activity/Extra/Level/Instructor/S20E001 - title")
         assert validator._is_corrupted_location(deep_path)
+
+    def test_execute_repair_actions_move_and_cleanup(self):
+        """Test move action and cleanup of empty source directory."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            media_dir = temp_path / "media"
+            source_dir = media_dir / "source"
+            target_dir = media_dir / "target"
+            source_dir.mkdir(parents=True)
+            target_dir.mkdir(parents=True)
+
+            source_path = source_dir / "episode"
+            source_path.mkdir()
+            (source_path / "file.txt").write_text("data")
+            target_path = target_dir / "episode"
+
+            validator = DirectoryValidator(
+                media_dir=str(media_dir),
+                validation_strategies=[],
+                repair_strategies=[],
+                dry_run=False
+            )
+
+            action = RepairAction(
+                action_type="move",
+                source_path=source_path,
+                target_path=target_path,
+                reason="Move for test"
+            )
+
+            assert validator._execute_repair_actions([action]) is True
+            assert target_path.exists()
+            assert not source_path.exists()
+            assert not source_dir.exists()
+
+    def test_execute_repair_actions_rename(self):
+        """Test rename action for episode directory."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            media_dir = temp_path / "media"
+            episode_dir = media_dir / "episode-old"
+            episode_dir.mkdir(parents=True)
+            (episode_dir / "file.txt").write_text("data")
+
+            new_path = media_dir / "episode-new"
+
+            validator = DirectoryValidator(
+                media_dir=str(media_dir),
+                validation_strategies=[],
+                repair_strategies=[],
+                dry_run=False
+            )
+
+            action = RepairAction(
+                action_type="rename",
+                source_path=episode_dir,
+                target_path=new_path,
+                reason="Rename for test"
+            )
+
+            assert validator._execute_repair_actions([action]) is True
+            assert new_path.exists()
+            assert not episode_dir.exists()
+
+    def test_execute_repair_actions_delete_file(self):
+        """Test delete action removes file."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            media_dir = temp_path / "media"
+            media_dir.mkdir(parents=True)
+            file_path = media_dir / "delete-me.txt"
+            file_path.write_text("data")
+
+            validator = DirectoryValidator(
+                media_dir=str(media_dir),
+                validation_strategies=[],
+                repair_strategies=[],
+                dry_run=False
+            )
+
+            action = RepairAction(
+                action_type="delete",
+                source_path=file_path,
+                target_path=None,
+                reason="Delete for test"
+            )
+
+            assert validator._execute_repair_actions([action]) is True
+            assert not file_path.exists()
+
+    def test_execute_repair_actions_move_contents(self):
+        """Test move_contents action relocates items and removes source."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            media_dir = temp_path / "media"
+            source_dir = media_dir / "source"
+            target_dir = media_dir / "target"
+            source_dir.mkdir(parents=True)
+            target_dir.mkdir(parents=True)
+
+            (source_dir / "one.txt").write_text("one")
+            (source_dir / "two.txt").write_text("two")
+
+            validator = DirectoryValidator(
+                media_dir=str(media_dir),
+                validation_strategies=[],
+                repair_strategies=[],
+                dry_run=False
+            )
+
+            action = RepairAction(
+                action_type="move_contents",
+                source_path=source_dir,
+                target_path=target_dir,
+                reason="Move contents for test"
+            )
+
+            assert validator._execute_repair_actions([action]) is True
+            assert (target_dir / "one.txt").exists()
+            assert (target_dir / "two.txt").exists()
+            assert not source_dir.exists()
     
     # test_extract_activity_instructor_normal removed - internal method moved to strategy
     
