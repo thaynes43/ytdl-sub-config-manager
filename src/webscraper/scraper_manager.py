@@ -236,10 +236,13 @@ class ScraperManager:
                 self.logger.info(f"Saving bearer token to {bearer_path}")
                 bearer_path.write_text(token.strip())
             else:
-                self.logger.warning("Bearer token not found in network requests - bearer token will not be saved")
+                error_message = "Bearer token not found in network requests - failing run"
+                self.logger.error(error_message)
+                raise RuntimeError(error_message)
                 
         except Exception as e:
             self.logger.error(f"Failed to save auth artifacts: {e}")
+            raise
 
     def scrape_activities(self, username: str, password: str, activities: List[str], 
                          configs: Dict[str, ScrapingConfig], media_dir: Optional[str] = None) -> Dict[str, ScrapingResult]:

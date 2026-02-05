@@ -27,4 +27,18 @@ __preset__:
       Authorization: ${PELOTON_BEARER}
       Origin: https://members.onepeloton.com
       Referer: https://members.onepeloton.com/
-Plex TV Show by Date: {}
+Plex TV Show by Date:
+  = Cycling (20 min):
+    20 min Pop Ride with Hannah Frankson:
+      download: https://members.onepeloton.com/classes/player/subs456
+      overrides:
+        tv_show_directory: /media/peloton/Cycling/Hannah Frankson
+        season_number: 20
+        episode_number: 1
+  = Yoga (30 min):
+    30 min Flow with Aditi Shah:
+      download: https://members.onepeloton.com/classes/player/subs789
+      overrides:
+        tv_show_directory: /media/peloton/Yoga/Aditi Shah
+        season_number: 30
+        episode_number: 1

@@ -610,21 +610,42 @@ class GenericDirectoryValidator:
                         self.logger.warning(f"Source video file does not exist: {action.source_path}. Skipping thumbnail generation.")
                         return True  # Don't fail if source file is missing
                     
-                    # Generate thumbnail from video
-                    # Using ss=2 to get frame at 2 seconds
                     try:
                         self.logger.info(f"Generating thumbnail for {action.source_path}")
-                        
-                        # Run ffmpeg command via ffmpeg-python wrapper
-                        # Equivalent to: ffmpeg -ss 00:00:02 -i input.mp4 -vframes 1 -q:v 2 -y output.jpg
-                        (
-                            ffmpeg
-                            .input(str(action.source_path), ss=2)
-                            .output(str(action.target_path), vframes=1, qscale=2)
-                            .overwrite_output()
-                            .run(capture_stdout=True, capture_stderr=True, quiet=True)
-                        )
-                        
+                        has_video_stream = None
+                        try:
+                            probe = ffmpeg.probe(str(action.source_path))
+                            streams = probe.get("streams", [])
+                            if isinstance(streams, list) and streams:
+                                has_video_stream = any(stream.get("codec_type") == "video" for stream in streams)
+                        except ffmpeg.Error as e:
+                            error_details = e.stderr.decode('utf8') if hasattr(e, 'stderr') and e.stderr else str(e)
+                            self.logger.debug(f"ffprobe error while checking streams: {error_details}")
+                        except Exception as e:
+                            self.logger.debug(f"Unexpected error checking streams: {e}")
+
+                        if has_video_stream is False:
+                            self.logger.info("Audio-only file detected, generating spectrogram thumbnail")
+                            (
+                                ffmpeg
+                                .input(str(action.source_path))
+                                .filter('showspectrumpic', s='640x360')
+                                .output(str(action.target_path))
+                                .overwrite_output()
+                                .run(capture_stdout=True, capture_stderr=True, quiet=True)
+                            )
+                        else:
+                            # Generate thumbnail from video
+                            # Using ss=2 to get frame at 2 seconds
+                            # Equivalent to: ffmpeg -ss 00:00:02 -i input.mp4 -vframes 1 -q:v 2 -y output.jpg
+                            (
+                                ffmpeg
+                                .input(str(action.source_path), ss=2)
+                                .output(str(action.target_path), vframes=1, qscale=2)
+                                .overwrite_output()
+                                .run(capture_stdout=True, capture_stderr=True, quiet=True)
+                            )
+
                         self.logger.info(f"Successfully generated thumbnail: {action.target_path}")
                         
                         # Track thumbnail generation in metrics

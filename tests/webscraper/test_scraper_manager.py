@@ -387,7 +387,7 @@ class TestScraperManager:
         assert not (media_dir / "bearer.txt").exists()
 
     def test_save_auth_artifacts_no_token(self, tmp_path):
-        """Test save_auth_artifacts when token is not in localStorage."""
+        """Test save_auth_artifacts when token cannot be captured."""
         media_dir = tmp_path / "test_media"
         media_dir.mkdir()
         
@@ -412,7 +412,8 @@ class TestScraperManager:
         manager = ScraperManager(session_manager, scraper_strategy)
         
         # Call the method
-        manager._save_auth_artifacts(str(media_dir))
+        with pytest.raises(RuntimeError, match="Bearer token not found"):
+            manager._save_auth_artifacts(str(media_dir))
         
         # Cookies should still be saved
         assert (media_dir / "cookies.txt").exists()

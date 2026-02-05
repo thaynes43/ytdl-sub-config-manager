@@ -310,6 +310,11 @@ class TestPullRequestManager:
         mock_pr.html_url = "https://github.com/test/repo/pull/123"
         mock_pr.mergeable = True
         mock_pr.merge.return_value.merged = True
+        mock_pr.head.ref = "test-branch"
+        mock_pr.base.ref = "main"
+        mock_pr.base.repo = mock_repo
+        mock_ref = Mock()
+        mock_repo.get_git_ref.return_value = mock_ref
         mock_repo.create_pull.return_value = mock_pr
         mock_github.get_repo.return_value = mock_repo
         mock_github_class.return_value = mock_github
@@ -322,6 +327,8 @@ class TestPullRequestManager:
         assert "Pull request created and auto-merged" in result.message
         mock_pr.update.assert_called_once()
         mock_pr.merge.assert_called_once()
+        mock_repo.get_git_ref.assert_called_once_with("heads/test-branch")
+        mock_ref.delete.assert_called_once()
     
     @patch('src.git_integration.repository_manager.Github')
     @patch('src.git_integration.repository_manager.time.sleep')

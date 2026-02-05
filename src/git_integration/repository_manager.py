@@ -377,6 +377,9 @@ class PullRequestManager:
             
             if merge_result.merged:
                 self.logger.info(f"Successfully auto-merged pull request: {pr.html_url}")
+                delete_result = self._delete_pull_request_branch(pr)
+                if not delete_result.success:
+                    return delete_result
                 return GitHubOperationResult(
                     status=GitHubOperationStatus.SUCCESS,
                     message="Pull request auto-merged successfully"
@@ -392,5 +395,39 @@ class PullRequestManager:
             return GitHubOperationResult(
                 status=GitHubOperationStatus.FAILED,
                 message=f"Auto-merge failed: {e}",
+                error=e
+            )
+
+    def _delete_pull_request_branch(self, pr) -> GitHubOperationResult:
+        """Delete the branch associated with a pull request."""
+        try:
+            branch_name = getattr(pr.head, "ref", None)
+            base_branch = getattr(pr.base, "ref", None)
+            repo = getattr(pr.base, "repo", None)
+
+            if not branch_name or not repo:
+                return GitHubOperationResult(
+                    status=GitHubOperationStatus.FAILED,
+                    message="Cannot delete branch: missing branch or repo information"
+                )
+
+            if base_branch and branch_name == base_branch:
+                return GitHubOperationResult(
+                    status=GitHubOperationStatus.FAILED,
+                    message=f"Refusing to delete base branch: {branch_name}"
+                )
+
+            self.logger.info(f"Deleting merged branch: {branch_name}")
+            repo.get_git_ref(f"heads/{branch_name}").delete()
+            self.logger.info(f"Deleted branch after merge: {branch_name}")
+            return GitHubOperationResult(
+                status=GitHubOperationStatus.SUCCESS,
+                message=f"Deleted branch {branch_name}"
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to delete branch after merge: {e}")
+            return GitHubOperationResult(
+                status=GitHubOperationStatus.FAILED,
+                message=f"Branch deletion failed: {e}",
                 error=e
             )
